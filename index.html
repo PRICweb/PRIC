@@ -1151,29 +1151,93 @@
         window.renderizarHistorial = function() { const tb = document.getElementById('tabla-historial'); if(!tb) return; tb.innerHTML = ''; let h = []; gastosGlobal.forEach(g => { h.push({f: new Date(g.fechaRegistro), t: g.titulo, m: g.importe||0, tp: 'g'}); }); ingresosGlobal.forEach(i => { h.push({f: new Date(i.fechaRegistro), t: i.titulo, m: (i.efectivo||0)+(i.transferencia||0), tp: 'i'}); }); reservasGlobales.forEach(r => { let tot=(r.pagoEfectivo||0)+(r.pagoTransferencia||0); if(tot>0) h.push({f: new Date(r.fechaRegistro), t: `Turno: ${r.jugador}`, m: tot, tp: 'i'}); }); h.sort((a,b)=>b.f.getTime()-a.f.getTime()).forEach(i => { tb.innerHTML += `<tr><td>${i.f.getDate()}/${i.f.getMonth()+1}</td><td>${i.t}</td><td style="color:${i.tp==='i'?'#10b981':'#ef4444'};">${i.tp==='i'?'+':'-'} $${window.formatearDinero(i.m)}</td></tr>`; }); }
 
         // --- CONFIGURACIÓN ADMIN ---
+        // Nuevas variables globales para soportar separaciones
+        let profeIndoorGlobal = "0"; let senaIndoorGlobal = "0"; let nombresIndoorGlobal = []; let duracionIndoorGlobal = 90;
+        let profeOutdoorGlobal = "0"; let senaOutdoorGlobal = "0"; let nombresOutdoorGlobal = []; let duracionOutdoorGlobal = 90;
+        let profeTenisGlobal = "0"; let senaTenisGlobal = "0"; let nombresTenisGlobal = []; let duracionTenisGlobal = 90;
+
         window.abrirModalConfig = function() { 
-            document.getElementById('input-primer-turno').value = primerTurno; document.getElementById('input-ultimo-turno').value = ultimoTurno; document.getElementById('input-duracion').value = duracionGlobal;
-            document.getElementById('input-canchas-in').value = canchasIndoorGlobal; document.getElementById('input-precio-in').value = precioIndoorGlobal;
-            document.getElementById('input-canchas-out').value = canchasOutdoorGlobal; document.getElementById('input-precio-out').value = precioOutdoorGlobal;
-            document.getElementById('input-canchas-tenis').value = canchasTenisGlobal; document.getElementById('input-precio-tenis').value = precioTenisGlobal;
-            document.getElementById('input-telefono-club').value = telefonoClubGlobal; document.getElementById('input-nombres-canchas').value = nombresCanchasGlobal.join(", ");
+            document.getElementById('input-primer-turno').value = primerTurno; 
+            document.getElementById('input-ultimo-turno').value = ultimoTurno; 
+            document.getElementById('input-telefono-club').value = telefonoClubGlobal; 
+            
+            // Días abiertos
             [0,1,2,3,4,5,6].forEach(d => { const cb = document.getElementById('dia-'+d); if(cb) cb.checked = diasAbiertosGlobal.includes(d); });
+            
+            // Indoor
+            document.getElementById('input-canchas-in').value = canchasIndoorGlobal; 
+            document.getElementById('input-precio-in').value = precioIndoorGlobal;
+            document.getElementById('input-profe-in').value = profeIndoorGlobal;
+            document.getElementById('input-sena-in').value = senaIndoorGlobal;
+            document.getElementById('input-nombres-in').value = nombresIndoorGlobal.join(", ");
+            document.getElementById('input-duracion-in').value = duracionIndoorGlobal;
+
+            // Outdoor
+            document.getElementById('input-canchas-out').value = canchasOutdoorGlobal; 
+            document.getElementById('input-precio-out').value = precioOutdoorGlobal;
+            document.getElementById('input-profe-out').value = profeOutdoorGlobal;
+            document.getElementById('input-sena-out').value = senaOutdoorGlobal;
+            document.getElementById('input-nombres-out').value = nombresOutdoorGlobal.join(", ");
+            document.getElementById('input-duracion-out').value = duracionOutdoorGlobal;
+
+            // Tenis
+            document.getElementById('input-canchas-tenis').value = canchasTenisGlobal; 
+            document.getElementById('input-precio-tenis').value = precioTenisGlobal;
+            document.getElementById('input-profe-tenis').value = profeTenisGlobal;
+            document.getElementById('input-sena-tenis').value = senaTenisGlobal;
+            document.getElementById('input-nombres-tenis').value = nombresTenisGlobal.join(", ");
+            document.getElementById('input-duracion-tenis').value = duracionTenisGlobal;
+
             document.getElementById('modal-config').style.display = 'flex'; 
         }
+
         window.cerrarModalConfig = function() { document.getElementById('modal-config').style.display = 'none'; }
         
         window.guardarConfiguracion = function() {
             let dias = []; [0,1,2,3,4,5,6].forEach(d => { if(document.getElementById('dia-'+d).checked) dias.push(d); });
-            const txtNombres = document.getElementById('input-nombres-canchas').value.trim();
-            nombresCanchasGlobal = txtNombres ? txtNombres.split(',').map(s => s.trim()) : [];
-            primerTurno = document.getElementById('input-primer-turno').value; ultimoTurno = document.getElementById('input-ultimo-turno').value;
-            canchasIndoorGlobal = parseInt(document.getElementById('input-canchas-in').value)||0; precioIndoorGlobal = document.getElementById('input-precio-in').value||"0";
-            canchasOutdoorGlobal = parseInt(document.getElementById('input-canchas-out').value)||0; precioOutdoorGlobal = document.getElementById('input-precio-out').value||"0";
-            canchasTenisGlobal = parseInt(document.getElementById('input-canchas-tenis').value)||0; precioTenisGlobal = document.getElementById('input-precio-tenis').value||"0";
-            duracionGlobal = parseInt(document.getElementById('input-duracion').value)||90; diasAbiertosGlobal = dias; telefonoClubGlobal = document.getElementById('input-telefono-club').value.trim();
-            alert("¡Configuración guardada exitosamente!"); window.cerrarModalConfig(); renderizarPantallas();
-        };
+            diasAbiertosGlobal = dias;
+            primerTurno = document.getElementById('input-primer-turno').value; 
+            ultimoTurno = document.getElementById('input-ultimo-turno').value;
+            telefonoClubGlobal = document.getElementById('input-telefono-club').value.trim();
 
+            // Guardado Indoor
+            canchasIndoorGlobal = parseInt(document.getElementById('input-canchas-in').value) || 0; 
+            precioIndoorGlobal = document.getElementById('input-precio-in').value || "0";
+            profeIndoorGlobal = document.getElementById('input-profe-in').value || "0";
+            senaIndoorGlobal = document.getElementById('input-sena-in').value || "0";
+            let txtIn = document.getElementById('input-nombres-in').value.trim();
+            nombresIndoorGlobal = txtIn ? txtIn.split(',').map(s => s.trim()) : [];
+            duracionIndoorGlobal = parseInt(document.getElementById('input-duracion-in').value) || 90;
+
+            // Guardado Outdoor
+            canchasOutdoorGlobal = parseInt(document.getElementById('input-canchas-out').value) || 0; 
+            precioOutdoorGlobal = document.getElementById('input-precio-out').value || "0";
+            profeOutdoorGlobal = document.getElementById('input-profe-out').value || "0";
+            senaOutdoorGlobal = document.getElementById('input-sena-out').value || "0";
+            let txtOut = document.getElementById('input-nombres-out').value.trim();
+            nombresOutdoorGlobal = txtOut ? txtOut.split(',').map(s => s.trim()) : [];
+            duracionOutdoorGlobal = parseInt(document.getElementById('input-duracion-out').value) || 90;
+
+            // Guardado Tenis
+            canchasTenisGlobal = parseInt(document.getElementById('input-canchas-tenis').value) || 0; 
+            precioTenisGlobal = document.getElementById('input-precio-tenis').value || "0";
+            profeTenisGlobal = document.getElementById('input-profe-tenis').value || "0";
+            senaTenisGlobal = document.getElementById('input-sena-tenis').value || "0";
+            let txtTenis = document.getElementById('input-nombres-tenis').value.trim();
+            nombresTenisGlobal = txtTenis ? txtTenis.split(',').map(s => s.trim()) : [];
+            duracionTenisGlobal = parseInt(document.getElementById('input-duracion-tenis').value) || 90;
+
+            // Concatenamos todos los nombres para inyectarlos en la grilla visual de las canchas
+            nombresCanchasGlobal = [...nombresIndoorGlobal, ...nombresOutdoorGlobal, ...nombresTenisGlobal];
+            
+            // Mantenemos la duración global referenciada al indoor para la estructura base del calendario
+            duracionGlobal = duracionIndoorGlobal;
+
+            alert("¡Configuración guardada exitosamente!"); 
+            window.cerrarModalConfig(); 
+            renderizarPantallas();
+        };
+        
         // --- MÉTRICAS ---
         window.abrirModalMetricas = function() { document.getElementById('modal-metricas').style.display = 'flex'; setTimeout(() => { window.actualizarGraficos(); }, 50); }
         window.cerrarModalMetricas = function() { document.getElementById('modal-metricas').style.display = 'none'; }
