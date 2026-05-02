@@ -506,6 +506,7 @@
                 <h3 style="margin: 0; margin-bottom: 15px; border-bottom: 1px solid #44505d; padding-bottom: 10px;">⚙️ Configuración del Club</h3>
                 <div class="scroll-interno" style="text-align: left; display: flex; flex-direction: column; gap: 15px; max-height: 70vh; overflow-y: auto; padding-right: 5px;">
                     
+                    <!-- Configuración Global -->
                     <div style="display: flex; gap: 10px; justify-content: space-between;">
                         <div style="flex: 1;"><label style="font-size: 0.85em; color: #d1d5db;">Primer Turno:</label><input type="time" id="input-primer-turno" class="input-form" style="margin-top: 4px;"></div>
                         <div style="flex: 1;"><label style="font-size: 0.85em; color: #d1d5db;">Último Turno:</label><input type="time" id="input-ultimo-turno" class="input-form" style="margin-top: 4px;"></div>
@@ -524,39 +525,98 @@
                         </div>
                     </div>
                     
-                    <div style="display: flex; gap: 10px; justify-content: space-between; border-top: 1px solid #2c3540; padding-top: 10px;">
-                        <div style="flex: 1;"><label style="font-size: 0.85em; color: #d1d5db;">Cant. Pádel Indoor:</label><input type="number" id="input-canchas-in" min="0" class="input-form" style="margin-top: 4px;"></div>
-                        <div style="flex: 1;"><label style="font-size: 0.85em; color: #d1d5db;">Precio P. Indoor:</label><input type="number" id="input-precio-in" step="500" class="input-form" style="margin-top: 4px;"></div>
-                    </div>
-                    <div style="display: flex; gap: 10px; justify-content: space-between;">
-                        <div style="flex: 1;"><label style="font-size: 0.85em; color: #d1d5db;">Cant. Pádel Outdoor:</label><input type="number" id="input-canchas-out" min="0" class="input-form" style="margin-top: 4px;"></div>
-                        <div style="flex: 1;"><label style="font-size: 0.85em; color: #d1d5db;">Precio P. Outdoor:</label><input type="number" id="input-precio-out" step="500" class="input-form" style="margin-top: 4px;"></div>
-                    </div>
-                    <div style="display: flex; gap: 10px; justify-content: space-between; border-top: 1px solid #2c3540; padding-top: 10px;">
-                        <div style="flex: 1;"><label style="font-size: 0.85em; color: #d1d5db;">Cant. Tenis:</label><input type="number" id="input-canchas-tenis" min="0" class="input-form" style="margin-top: 4px;"></div>
-                        <div style="flex: 1;"><label style="font-size: 0.85em; color: #d1d5db;">Precio Tenis:</label><input type="number" id="input-precio-tenis" step="500" class="input-form" style="margin-top: 4px;"></div>
-                    </div>
-
-                    <div class="config-item">
-                        <label>Monto de la Seña ($):</label>
-                        <input type="number" id="input-monto-sena" class="input-form" placeholder="Ej: 3000" style="margin-top: 4px;">
-                    </div>
-                    <div style="border-top: 1px solid #2c3540; padding-top: 10px; margin-top: 10px;">
-                        <label style="font-size: 0.85em; color: #d1d5db;">Números/Nombres personalizados (separados por coma):</label>
-                        <input type="text" id="input-nombres-canchas" class="input-form" placeholder="Ej: 1, 2, 4, Central" style="margin-top: 4px;">
-                        <small style="color: #9ca3af; font-size: 0.75em;">Deja vacío para usar el orden numérico normal.</small>
-                    </div>
-                    
-                    <div>
-                        <label style="font-size: 0.85em; color: #d1d5db;">Duración Standard:</label>
-                        <select id="input-duracion" class="input-form" style="margin-top: 4px;">
-                            <option value="60">60 Minutos (1h)</option>
-                            <option value="90">90 Minutos (1.5h)</option>
-                            <option value="120">120 Minutos (2h)</option>
-                        </select>
+                    <!-- Acordeón: PÁDEL INDOOR -->
+                    <div class="seccion-acordeon" style="margin-top: 5px; margin-bottom: 0;">
+                        <div class="header-acordeon" onclick="window.toggleAcordeon('ac-config-indoor')">
+                            <span>🏸 Pádel Indoor</span> <span id="flecha-ac-config-indoor">🔽</span>
+                        </div>
+                        <div id="ac-config-indoor" class="contenido-acordeon">
+                            <div style="display: flex; gap: 10px; justify-content: space-between; margin-bottom: 12px;">
+                                <div style="flex: 1;"><label style="font-size: 0.85em; color: #d1d5db;">Cant. Canchas:</label><input type="number" id="input-canchas-in" min="0" class="input-form" style="margin-top: 4px;"></div>
+                                <div style="flex: 1;"><label style="font-size: 0.85em; color: #d1d5db;">Precio Turno ($):</label><input type="number" id="input-precio-in" step="500" class="input-form" style="margin-top: 4px;"></div>
+                            </div>
+                            <div style="display: flex; gap: 10px; justify-content: space-between; margin-bottom: 12px;">
+                                <div style="flex: 1;"><label style="font-size: 0.85em; color: #d1d5db;">Precio Profes ($):</label><input type="number" id="input-profe-in" step="500" class="input-form" placeholder="Cobro al profe" style="margin-top: 4px;"></div>
+                                <div style="flex: 1;"><label style="font-size: 0.85em; color: #d1d5db;">Monto Seña ($):</label><input type="number" id="input-sena-in" step="500" class="input-form" placeholder="Ej: 3000" style="margin-top: 4px;"></div>
+                            </div>
+                            <div style="margin-bottom: 12px;">
+                                <label style="font-size: 0.85em; color: #d1d5db;">Números/Nombres personalizados (separados por coma):</label>
+                                <input type="text" id="input-nombres-in" class="input-form" placeholder="Ej: 1, 2, Central" style="margin-top: 4px;">
+                                <small style="color: #9ca3af; font-size: 0.75em;">Deja vacío para usar el orden numérico normal.</small>
+                            </div>
+                            <div>
+                                <label style="font-size: 0.85em; color: #d1d5db;">Duración Standard:</label>
+                                <select id="input-duracion-in" class="input-form" style="margin-top: 4px;">
+                                    <option value="60">60 Minutos (1h)</option>
+                                    <option value="90" selected>90 Minutos (1.5h)</option>
+                                    <option value="120">120 Minutos (2h)</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
 
-                    <div style="border-top: 1px solid #2c3540; padding-top: 10px; margin-top: 10px;">
+                    <!-- Acordeón: PÁDEL OUTDOOR -->
+                    <div class="seccion-acordeon" style="margin-bottom: 0;">
+                        <div class="header-acordeon" onclick="window.toggleAcordeon('ac-config-outdoor')">
+                            <span>☀️ Pádel Outdoor</span> <span id="flecha-ac-config-outdoor">🔽</span>
+                        </div>
+                        <div id="ac-config-outdoor" class="contenido-acordeon">
+                            <div style="display: flex; gap: 10px; justify-content: space-between; margin-bottom: 12px;">
+                                <div style="flex: 1;"><label style="font-size: 0.85em; color: #d1d5db;">Cant. Canchas:</label><input type="number" id="input-canchas-out" min="0" class="input-form" style="margin-top: 4px;"></div>
+                                <div style="flex: 1;"><label style="font-size: 0.85em; color: #d1d5db;">Precio Turno ($):</label><input type="number" id="input-precio-out" step="500" class="input-form" style="margin-top: 4px;"></div>
+                            </div>
+                            <div style="display: flex; gap: 10px; justify-content: space-between; margin-bottom: 12px;">
+                                <div style="flex: 1;"><label style="font-size: 0.85em; color: #d1d5db;">Precio Profes ($):</label><input type="number" id="input-profe-out" step="500" class="input-form" placeholder="Cobro al profe" style="margin-top: 4px;"></div>
+                                <div style="flex: 1;"><label style="font-size: 0.85em; color: #d1d5db;">Monto Seña ($):</label><input type="number" id="input-sena-out" step="500" class="input-form" placeholder="Ej: 3000" style="margin-top: 4px;"></div>
+                            </div>
+                            <div style="margin-bottom: 12px;">
+                                <label style="font-size: 0.85em; color: #d1d5db;">Números/Nombres personalizados (separados por coma):</label>
+                                <input type="text" id="input-nombres-out" class="input-form" placeholder="Ej: 1, 2, Central" style="margin-top: 4px;">
+                                <small style="color: #9ca3af; font-size: 0.75em;">Deja vacío para usar el orden numérico normal.</small>
+                            </div>
+                            <div>
+                                <label style="font-size: 0.85em; color: #d1d5db;">Duración Standard:</label>
+                                <select id="input-duracion-out" class="input-form" style="margin-top: 4px;">
+                                    <option value="60">60 Minutos (1h)</option>
+                                    <option value="90" selected>90 Minutos (1.5h)</option>
+                                    <option value="120">120 Minutos (2h)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Acordeón: TENIS -->
+                    <div class="seccion-acordeon">
+                        <div class="header-acordeon" onclick="window.toggleAcordeon('ac-config-tenis')">
+                            <span>🎾 Tenis</span> <span id="flecha-ac-config-tenis">🔽</span>
+                        </div>
+                        <div id="ac-config-tenis" class="contenido-acordeon">
+                            <div style="display: flex; gap: 10px; justify-content: space-between; margin-bottom: 12px;">
+                                <div style="flex: 1;"><label style="font-size: 0.85em; color: #d1d5db;">Cant. Canchas:</label><input type="number" id="input-canchas-tenis" min="0" class="input-form" style="margin-top: 4px;"></div>
+                                <div style="flex: 1;"><label style="font-size: 0.85em; color: #d1d5db;">Precio Turno ($):</label><input type="number" id="input-precio-tenis" step="500" class="input-form" style="margin-top: 4px;"></div>
+                            </div>
+                            <div style="display: flex; gap: 10px; justify-content: space-between; margin-bottom: 12px;">
+                                <div style="flex: 1;"><label style="font-size: 0.85em; color: #d1d5db;">Precio Profes ($):</label><input type="number" id="input-profe-tenis" step="500" class="input-form" placeholder="Cobro al profe" style="margin-top: 4px;"></div>
+                                <div style="flex: 1;"><label style="font-size: 0.85em; color: #d1d5db;">Monto Seña ($):</label><input type="number" id="input-sena-tenis" step="500" class="input-form" placeholder="Ej: 3000" style="margin-top: 4px;"></div>
+                            </div>
+                            <div style="margin-bottom: 12px;">
+                                <label style="font-size: 0.85em; color: #d1d5db;">Números/Nombres personalizados (separados por coma):</label>
+                                <input type="text" id="input-nombres-tenis" class="input-form" placeholder="Ej: 1, 2, Central" style="margin-top: 4px;">
+                                <small style="color: #9ca3af; font-size: 0.75em;">Deja vacío para usar el orden numérico normal.</small>
+                            </div>
+                            <div>
+                                <label style="font-size: 0.85em; color: #d1d5db;">Duración Standard:</label>
+                                <select id="input-duracion-tenis" class="input-form" style="margin-top: 4px;">
+                                    <option value="60">60 Minutos (1h)</option>
+                                    <option value="90" selected>90 Minutos (1.5h)</option>
+                                    <option value="120">120 Minutos (2h)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Datos Adicionales -->
+                    <div style="border-top: 1px solid #2c3540; padding-top: 10px;">
                         <label style="font-size: 0.85em; color: #d1d5db;">Teléfono de WhatsApp del Club (Con código, ej: 549...):</label>
                         <input type="tel" id="input-telefono-club" class="input-form" placeholder="Ej: 5493511234567" style="margin-top: 4px;">
                     </div>
@@ -571,9 +631,7 @@
                 <button class="btn-modal btn-cerrar" style="margin-top: 0;" onclick="window.cerrarModalConfig()">Cancelar</button>
             </div>
         </div>
-
-    </div> 
-
+        
     <!-- --- LÓGICA JAVASCRIPT --- -->
     <script>
         // VARIABLES GLOBALES (Modo Local / Sin Firebase)
