@@ -935,9 +935,19 @@
             document.getElementById('btn-whatsapp').style.display = (res.telefono && res.telefono.trim() !== "") ? 'block' : 'none';
             document.getElementById('btn-excepcion').style.display = res.fijo ? 'block' : 'none';
             
-            let factorPrecio = (res.duracion || duracionGlobal) / duracionGlobal;
-            let cNum = parseInt(res.cancha || "1"); let pCancha = cNum <= canchasIndoorGlobal ? parseInt(precioIndoorGlobal) : (cNum <= (canchasIndoorGlobal + canchasOutdoorGlobal) ? parseInt(precioOutdoorGlobal) : parseInt(precioTenisGlobal));
-            pCancha = pCancha * factorPrecio; let totalConsumos = (res.consumos || []).reduce((acc, curr) => acc + (parseFloat(curr.precio) || 0), 0);
+           let factorPrecio = (res.duracion || duracionGlobal) / duracionGlobal;
+            let cNum = parseInt(res.cancha || "1"); let maxP = canchasIndoorGlobal + canchasOutdoorGlobal;
+            let pCancha = 0;
+            
+            // Evaluamos si es clase para aplicar la tarifa de profesor
+            if (res.esClase) {
+                pCancha = cNum <= canchasIndoorGlobal ? parseInt(profeIndoorGlobal) : (cNum <= maxP ? parseInt(profeOutdoorGlobal) : parseInt(profeTenisGlobal));
+            } else {
+                pCancha = cNum <= canchasIndoorGlobal ? parseInt(precioIndoorGlobal) : (cNum <= maxP ? parseInt(precioOutdoorGlobal) : parseInt(precioTenisGlobal));
+            }
+            
+            pCancha = pCancha * factorPrecio; 
+            let totalConsumos = (res.consumos || []).reduce((acc, curr) => acc + (parseFloat(curr.precio) || 0), 0);
             let desc = parseFloat(res.descuento) || 0; let totalGeneral = pCancha + totalConsumos - desc; if(totalGeneral < 0) totalGeneral = 0;
             
             document.getElementById('res-precio-cancha').innerText = `$${window.formatearDinero(pCancha)}`; document.getElementById('res-precio-consumos').innerText = `$${window.formatearDinero(totalConsumos)}`; document.getElementById('res-precio-total').innerText = `$${window.formatearDinero(totalGeneral)}`;
