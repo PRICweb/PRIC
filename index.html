@@ -1100,7 +1100,8 @@
                 if (fechaClase > ahora) return;
 
                 let cNum = parseInt(c.cancha || "1"); let maxP = canchasIndoorGlobal + canchasOutdoorGlobal;
-                let pCancha = (cNum<=canchasIndoorGlobal ? parseInt(precioIndoorGlobal) : (cNum<=maxP ? parseInt(precioOutdoorGlobal) : parseInt(precioTenisGlobal))) * ((c.duracion||duracionGlobal)/duracionGlobal);
+                let pBase = cNum <= canchasIndoorGlobal ? parseInt(profeIndoorGlobal) : (cNum <= maxP ? parseInt(profeOutdoorGlobal) : parseInt(profeTenisGlobal));
+                let pCancha = (pBase || 0) * ((c.duracion||duracionGlobal)/duracionGlobal);
                 let tGen = pCancha + (c.consumos||[]).reduce((acc, x) => acc + parseFloat(x.precio), 0) - (parseFloat(c.descuento)||0);
                 let ab = (parseFloat(c.pagoEfectivo)||0) + (parseFloat(c.pagoTransferencia)||0);
                 
