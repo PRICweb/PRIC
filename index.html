@@ -997,7 +997,14 @@
 
         window.calcularFaltante = function() {
             if(!reservaSeleccionadaId) return; const res = reservasGlobales.find(r => r.id === reservaSeleccionadaId); if(!res) return;
-            let cNum = parseInt(res.cancha || "1"); let pCancha = cNum <= canchasIndoorGlobal ? parseInt(precioIndoorGlobal) : (cNum <= (canchasIndoorGlobal + canchasOutdoorGlobal) ? parseInt(precioOutdoorGlobal) : parseInt(precioTenisGlobal));
+            let cNum = parseInt(res.cancha || "1"); let maxP = canchasIndoorGlobal + canchasOutdoorGlobal;
+            let pCancha = 0;
+            
+            if (res.esClase) {
+                pCancha = cNum <= canchasIndoorGlobal ? parseInt(profeIndoorGlobal) : (cNum <= maxP ? parseInt(profeOutdoorGlobal) : parseInt(profeTenisGlobal));
+            } else {
+                pCancha = cNum <= canchasIndoorGlobal ? parseInt(precioIndoorGlobal) : (cNum <= maxP ? parseInt(precioOutdoorGlobal) : parseInt(precioTenisGlobal));
+            }
             pCancha = pCancha * ((res.duracion || duracionGlobal) / duracionGlobal);
             let tGen = pCancha + (res.consumos || []).reduce((acc, c) => acc + parseFloat(c.precio), 0) - (parseFloat(document.getElementById('pago-descuento').value) || 0);
             if(tGen < 0) tGen = 0; let faltante = tGen - ((parseFloat(document.getElementById('pago-efectivo').value) || 0) + (parseFloat(document.getElementById('pago-transferencia').value) || 0));
