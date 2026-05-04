@@ -1156,11 +1156,7 @@
         window.renderizarHistorial = function() { const tb = document.getElementById('tabla-historial'); if(!tb) return; tb.innerHTML = ''; let h = []; gastosGlobal.forEach(g => { h.push({f: new Date(g.fechaRegistro), t: g.titulo, m: g.importe||0, tp: 'g'}); }); ingresosGlobal.forEach(i => { h.push({f: new Date(i.fechaRegistro), t: i.titulo, m: (i.efectivo||0)+(i.transferencia||0), tp: 'i'}); }); reservasGlobales.forEach(r => { let tot=(r.pagoEfectivo||0)+(r.pagoTransferencia||0); if(tot>0) h.push({f: new Date(r.fechaRegistro), t: `Turno: ${r.jugador}`, m: tot, tp: 'i'}); }); h.sort((a,b)=>b.f.getTime()-a.f.getTime()).forEach(i => { tb.innerHTML += `<tr><td>${i.f.getDate()}/${i.f.getMonth()+1}</td><td>${i.t}</td><td style="color:${i.tp==='i'?'#10b981':'#ef4444'};">${i.tp==='i'?'+':'-'} $${window.formatearDinero(i.m)}</td></tr>`; }); }
 
         // --- CONFIGURACIÓN ADMIN ---
-        // Nuevas variables globales para soportar separaciones
-        let profeIndoorGlobal = "0"; let senaIndoorGlobal = "0"; let nombresIndoorGlobal = []; let duracionIndoorGlobal = 90;
-        let profeOutdoorGlobal = "0"; let senaOutdoorGlobal = "0"; let nombresOutdoorGlobal = []; let duracionOutdoorGlobal = 90;
-        let profeTenisGlobal = "0"; let senaTenisGlobal = "0"; let nombresTenisGlobal = []; let duracionTenisGlobal = 90;
-
+      
         window.abrirModalConfig = function() { 
             document.getElementById('input-primer-turno').value = primerTurno; 
             document.getElementById('input-ultimo-turno').value = ultimoTurno; 
