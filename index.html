@@ -9,72 +9,20 @@
         /* --- ESTILOS GENERALES --- */
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background-color: #1a1e24; 
-            color: #ffffff; 
+            background-color: #171d24; color: #ffffff; 
             margin: 0; padding: 20px; 
             display: flex; flex-direction: column; align-items: center;
         }
-        
         .vista-club {
-            background-color: transparent; 
-            width: 100%; max-width: 900px;
-            padding: 0; box-sizing: border-box; margin-bottom: 30px;
+            background-color: #1e252d; width: 100%; max-width: 900px;
+            border-radius: 12px; padding: 20px; box-sizing: border-box; margin-bottom: 30px;
         }
-        
         .scroll-interno::-webkit-scrollbar { width: 6px; }
         .scroll-interno::-webkit-scrollbar-thumb { background: #44505d; border-radius: 4px; }
         .text-neutral-main { color: #ffffff; }
         .text-neutral-sub { color: #9ca3af; }
         .text-neutral-bold { color: #d1d5db; font-weight: bold; }
         
-        /* --- ESTILO TARJETAS AZULES --- */
-        .blue-card {
-            background: linear-gradient(145deg, #4b84f3 0%, #3567d6 100%);
-            border: 1px solid #6b9dfa;
-            border-radius: 12px;
-            color: #ffffff;
-            box-shadow: 0 4px 14px rgba(0,0,0,0.25);
-        }
-        
-        /* --- GRID DE BOTONES --- */
-        .grid-acciones {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            width: 100%;
-            margin-bottom: 25px;
-        }
-        .action-btn {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 25px 10px;
-            cursor: pointer;
-            transition: transform 0.2s, filter 0.2s;
-            font-weight: bold;
-            font-size: 1.1em;
-            text-align: center;
-        }
-        .action-btn:hover {
-            transform: translateY(-2px);
-            filter: brightness(1.05);
-        }
-        .action-icon {
-            font-size: 2.2em;
-            margin-bottom: 12px;
-        }
-
-        /* --- BOTONES TRANSLÚCIDOS PARA LA TARJETA AZUL --- */
-        .btn-translucido {
-            background-color: rgba(255, 255, 255, 0.15);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            color: #ffffff;
-        }
-        .btn-translucido:hover {
-            background-color: rgba(255, 255, 255, 0.25);
-        }
-
         /* --- FORMULARIOS Y TABLAS --- */
         .input-form {
             padding: 10px; border-radius: 6px; border: 1px solid #44505d; background-color: #171d24; 
@@ -86,23 +34,25 @@
 
         /* --- BOTONES AGRUPADOS --- */
         .btn-modal { padding: 12px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; color: white; font-size: 1em; transition: 0.2s; width: 100%; box-sizing: border-box;}
-        
         .btn-guardar, .btn-fijar, .btn-cobrar-clase { background-color: #10b981; } 
         .btn-guardar:hover, .btn-fijar:hover, .btn-cobrar-clase:hover { background-color: #059669; }
-        
-        .btn-cerrar, .btn-stock { background-color: #4b5563; color: white; } 
-        .btn-cerrar:hover, .btn-stock:hover { background-color: #374151; }
-        
-        /* Gastos y Balances en Azul */
-        .btn-gasto, .btn-balance { background-color: #3b82f6; color: white; } 
-        .btn-gasto:hover, .btn-balance:hover { background-color: #2563eb; }
-
+        .btn-gasto, .btn-cerrar, .btn-stock, .btn-balance { background-color: #4b5563; color: white; } 
+        .btn-gasto:hover, .btn-cerrar:hover, .btn-stock:hover, .btn-balance:hover { background-color: #374151; }
         .btn-eliminar { background-color: #ef4444; } .btn-eliminar:hover { background-color: #dc2626; }
         .btn-whatsapp { background-color: #25d366; color: #171d24; } .btn-whatsapp:hover { background-color: #1ebd57; }
         .btn-excepcion { background-color: #f59e0b; color: #171d24;} .btn-excepcion:hover { background-color: #d97706; }
         
         /* --- CALENDARIO Y GRILLA --- */
-        .contenedor-grilla { display: flex; overflow-x: auto; background: #1e252d; border: 1px solid #2c3540; border-radius: 12px; margin-top: 15px; user-select: none; position: relative; }
+        .calendario-strip { display: flex; overflow-x: auto; gap: 10px; padding-bottom: 12px; margin-bottom: 15px; border-bottom: 1px solid #2c3540; }
+        .calendario-strip::-webkit-scrollbar { height: 6px; }
+        .calendario-strip::-webkit-scrollbar-thumb { background: #44505d; border-radius: 4px; }
+        .dia-item { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 65px; padding: 12px 8px; background-color: #242c36; border-radius: 10px; cursor: pointer; border: 1px solid transparent; transition: 0.2s; }
+        .dia-item:hover { background-color: #2c3540; }
+        .dia-item.activo { background-color: #3b82f6; border-color: #3b82f6; color: white; transform: scale(1.05); }
+        .dia-nombre { font-size: 0.8em; color: #9ca3af; text-transform: uppercase; font-weight: bold;}
+        .dia-item.activo .dia-nombre { color: #e5e7eb; }
+        .dia-numero { font-size: 1.4em; font-weight: bold; margin-top: 4px; }
+        .contenedor-grilla { display: flex; overflow-x: auto; background: #1e252d; border: 1px solid #2c3540; border-radius: 8px; margin-top: 15px; user-select: none; position: relative; }
         .contenedor-grilla::-webkit-scrollbar { height: 8px; }
         .contenedor-grilla::-webkit-scrollbar-thumb { background: #44505d; border-radius: 4px; }
         .celda-vacia-hover { transition: background-color 0.1s; }
@@ -117,7 +67,7 @@
         
         /* --- PANTALLAS COMPLETAS (Módulos de Arriba) --- */
         #modal-profesores, #modal-finanzas, #modal-metricas, #modal-config {
-            background-color: #1a1e24; 
+            background-color: #171d24; 
             padding: 0; align-items: flex-start; overflow-y: auto;
         }
         #modal-profesores .modal-content, #modal-finanzas .modal-content, #modal-metricas .modal-content, #modal-config .modal-content {
@@ -134,6 +84,7 @@
         /* --- RESPONSIVE (MÓVIL) --- */
         @media (max-width: 600px) {
             body { padding: 10px; }
+            .vista-club { padding: 15px; }
             #controles-fecha-club { flex-direction: column; gap: 15px; }
         }
     </style>
@@ -145,50 +96,28 @@
         <!-- VISTA DEL CLUB -->
         <div id="pantalla-club" class="vista-club" style="display: block;">
             
-            <!-- HEADER PRINCIPAL -->
+            <!-- ENCABEZADO TIPO DASHBOARD (Sin recuadros, en una línea) -->
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; width: 100%;">
-                <h2 style="margin: 0; font-size: 1.6em; color: white;">👋 Hola, <span id="lbl-nombre-club" style="color: #60a5fa;">Admin</span></h2>
-                <div style="display: flex; gap: 15px; color: #6b7280; font-size: 1.4em;">
-                    <span title="Notificaciones" style="cursor: pointer;">🔔</span>
-                    <span title="Perfil" style="cursor: pointer;">👤</span>
-                    <span title="Menú" style="cursor: pointer;">☰</span>
+                <h2 style="margin: 0; font-size: 1.6em; color: white;">👋 Hola, <span id="lbl-nombre-club" style="color: #3b82f6; text-transform: capitalize;">Admin</span></h2>
+                <div class="header-panel-botones" style="display: flex; gap: 15px; align-items: center;">
+                    <button onclick="window.abrirModalProfesores()" style="background: none; border: none; font-size: 1.6em; cursor: pointer; transition: transform 0.2s; padding: 0;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Gestión de Profesores">🧑‍🏫</button>
+                    <button onclick="window.abrirModalFinanzas()" style="background: none; border: none; font-size: 1.6em; cursor: pointer; transition: transform 0.2s; padding: 0;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Finanzas e Inventario">💰</button>
+                    <button onclick="window.abrirModalMetricas()" style="background: none; border: none; font-size: 1.6em; cursor: pointer; transition: transform 0.2s; padding: 0;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Métricas">📊</button>
+                    <button onclick="window.abrirModalConfig()" style="background: none; border: none; font-size: 1.6em; cursor: pointer; transition: transform 0.2s; padding: 0;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Configuración del Club">⚙️</button>
                 </div>
             </div>
 
-            <!-- CUADRÍCULA DE ACCIONES -->
-            <h4 style="text-align: center; color: #9ca3af; margin: 10px 0 15px 0; font-weight: normal;">¿Qué querés hacer?</h4>
-            <div class="grid-acciones">
-                <div class="blue-card action-btn" onclick="window.abrirModalProfesores()">
-                    <div class="action-icon">🧑‍🏫</div>
-                    <div>Profesores</div>
-                </div>
-                <div class="blue-card action-btn" onclick="window.abrirModalFinanzas()">
-                    <div class="action-icon">💰</div>
-                    <div>Finanzas</div>
-                </div>
-                <div class="blue-card action-btn" onclick="window.abrirModalMetricas()">
-                    <div class="action-icon">📊</div>
-                    <div>Métricas</div>
-                </div>
-                <div class="blue-card action-btn" onclick="window.abrirModalConfig()">
-                    <div class="action-icon">⚙️</div>
-                    <div>Configuración</div>
-                </div>
-            </div>
-
-            <h4 style="text-align: left; color: #9ca3af; margin: 30px 0 10px 0; font-weight: normal; width: 100%;">GRILLA DE RESERVAS</h4>
-            
-            <!-- CONTROLES DE FECHA (Tarjeta Azul) -->
-            <div id="controles-fecha-club" class="blue-card" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 15px 20px; flex-wrap: wrap; gap: 15px;">
+            <!-- CONTROLES DE FECHA -->
+            <div id="controles-fecha-club" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: #242c36; padding: 10px 15px; border-radius: 8px; border: 1px solid #2c3540;">
                 <div style="display: flex; align-items: center; gap: 15px; justify-content: center; flex: 1;">
-                    <button style="background: transparent; border: none; font-size: 1.8em; color: #ffffff; cursor: pointer; padding: 0 10px;" onclick="window.cambiarDiaClub(-1)">&#10094;</button>
-                    <span id="lbl-fecha-club" style="font-size: 1.2em; font-weight: bold; color: #ffffff; min-width: 110px; text-align: center; text-transform: uppercase;">HOY</span>
-                    <button style="background: transparent; border: none; font-size: 1.8em; color: #ffffff; cursor: pointer; padding: 0 10px;" onclick="window.cambiarDiaClub(1)">&#10095;</button>
+                    <button style="background: transparent; border: none; font-size: 1.8em; color: #9ca3af; cursor: pointer; padding: 0 10px;" onclick="window.cambiarDiaClub(-1)">&#10094;</button>
+                    <span id="lbl-fecha-club" style="font-size: 1.2em; font-weight: bold; color: #ffffff; min-width: 100px; text-align: center; text-transform: uppercase;">HOY</span>
+                    <button style="background: transparent; border: none; font-size: 1.8em; color: #9ca3af; cursor: pointer; padding: 0 10px;" onclick="window.cambiarDiaClub(1)">&#10095;</button>
                 </div>
                 <div style="display: flex; gap: 10px; justify-content: center; flex: 1; flex-wrap: wrap;">
-                    <button class="btn-modal btn-translucido" style="width: auto; padding: 8px 15px; font-size: 0.85em; margin: 0;" onclick="window.irAHoyClub()">Hoy</button>
+                    <button class="btn-modal btn-guardar" style="width: auto; padding: 8px 15px; font-size: 0.85em; background-color: #3b82f6; margin: 0;" onclick="window.irAHoyClub()">Hoy</button>
                     <div style="position: relative; display: flex; align-items: center;">
-                        <button class="btn-modal btn-translucido" style="width: auto; padding: 8px 15px; font-size: 0.85em; margin: 0;" onclick="try{ document.getElementById('picker-fecha-club').showPicker(); } catch(e) { document.getElementById('picker-fecha-club').focus(); }">📅 Calendario</button>
+                        <button class="btn-modal btn-gasto" style="width: auto; padding: 8px 15px; font-size: 0.85em; margin: 0;" onclick="try{ document.getElementById('picker-fecha-club').showPicker(); } catch(e) { document.getElementById('picker-fecha-club').focus(); }">📅 Calendario</button>
                         <input type="date" id="picker-fecha-club" style="position: absolute; width: 1px; height: 1px; border: none; padding: 0; margin: 0; opacity: 0; bottom: 0; right: 0; pointer-events: none;" onchange="if(this.value) window.seleccionarFecha(this.value)">
                     </div>
                 </div>
@@ -200,7 +129,7 @@
         <!-- MODAL PROFESORES -->
         <div id="modal-profesores" class="modal-overlay">
             <div class="modal-content scroll-interno">
-                <h3 style="margin: 0; border-bottom: 1px solid #44505d; padding-bottom: 10px; color: #60a5fa;">🧑‍🏫 Profesores del Club</h3>
+                <h3 style="margin: 0; border-bottom: 1px solid #44505d; padding-bottom: 10px;">🧑‍🏫 Profesores del Club</h3>
                 <div style="display: flex; gap: 10px; margin-top: 10px; margin-bottom: 10px; flex-wrap: wrap;">
                     <input type="text" id="input-nuevo-profe" class="input-form" placeholder="Nombre del Profesor" style="flex: 1; min-width: 200px;">
                     <button class="btn-modal btn-guardar" style="width: auto; padding: 10px 15px;" onclick="window.agregarProfe()">Añadir</button>
@@ -229,7 +158,7 @@
         <!-- MODAL METRICAS -->
         <div id="modal-metricas" class="modal-overlay">
             <div class="modal-content scroll-interno">
-                <h3 style="margin: 0; border-bottom: 1px solid #44505d; padding-bottom: 10px; color: #60a5fa;">📊 Métricas e Informes</h3>
+                <h3 style="margin: 0; border-bottom: 1px solid #44505d; padding-bottom: 10px;">📊 Métricas e Informes</h3>
                 <div style="display: flex; gap: 10px; margin-top: 10px; margin-bottom: 15px; flex-wrap: wrap;">
                     <div style="flex: 1; min-width: 200px; text-align: left;">
                         <label style="font-size: 0.85em; color: #d1d5db;">Período de Tiempo:</label>
@@ -271,7 +200,7 @@
         <!-- MODAL AGENDAR RESERVA ADMIN -->
         <div id="modal-reserva-admin" class="modal-overlay" style="z-index: 1050;">
             <div class="modal-content">
-                <h3 style="margin: 0; margin-bottom: 5px; color: #60a5fa;">Agendar Evento</h3>
+                <h3 style="margin: 0; margin-bottom: 5px;">Agendar Evento</h3>
                 <p style="margin: 0; color: #9ca3af; margin-bottom: 15px;">Fecha: <strong id="admin-fecha-display" style="color:white;"></strong><br>Horario: <strong id="admin-hora-display" style="color:white;"></strong><br>Cancha: <strong id="admin-cancha-display" style="color:white;"></strong></p>
                 <input type="hidden" id="admin-cancha-id">
 
@@ -321,7 +250,7 @@
         <!-- MODAL FINANZAS -->
         <div id="modal-finanzas" class="modal-overlay">
             <div class="modal-content scroll-interno"> 
-                <h3 style="margin: 0; margin-bottom: 15px; border-bottom: 1px solid #44505d; padding-bottom: 10px; color: #60a5fa;">💰 Finanzas e Inventario</h3>
+                <h3 style="margin: 0; margin-bottom: 15px; border-bottom: 1px solid #44505d; padding-bottom: 10px;">💰 Finanzas e Inventario</h3>
                 <div style="text-align: left;">
                     
                     <!-- 1. Inventario y Stock -->
@@ -344,7 +273,7 @@
                                 <input type="number" id="inv-costo" class="input-form" placeholder="Costo Unit. $" style="flex: 1; min-width: 80px;" min="0">
                                 <input type="number" id="inv-precio" class="input-form" placeholder="Precio Venta $" style="flex: 1; min-width: 80px;" min="0">
                             </div>
-                            <!-- Botón azul para inventario -->
+                            <!-- Botón en azul para añadir inventario -->
                             <button class="btn-modal btn-gasto" onclick="window.agregarInventario()" style="margin-bottom: 20px;">Añadir al Inventario</button>
                             
                             <div class="scroll-interno" style="max-height: 200px; overflow-y: auto; border: 1px solid #2c3540; border-radius: 6px; padding: 5px; background: #171d24;">
@@ -374,8 +303,7 @@
                                     <input type="number" id="mov-monto" class="input-form" placeholder="Monto Total $" style="flex: 1; min-width: 80px;" min="0">
                                 </div>
                                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                                    <!-- Botón azul para gasto de stock -->
-                                    <button class="btn-modal btn-gasto" style="flex: 1; min-width: 120px;" onclick="window.agregarStockGasto()">+ Stock (Gasto)</button>
+                                    <button class="btn-modal btn-gasto" style="background-color: #ef4444; flex: 1; min-width: 120px;" onclick="window.agregarStockGasto()">+ Stock (Gasto)</button>
                                     <button class="btn-modal btn-guardar" style="flex: 1; min-width: 120px;" onclick="window.venderProductoMostradorMov()">- Vender (Ingreso)</button>
                                 </div>
                             </div>
@@ -387,8 +315,7 @@
                                     <input type="text" id="gasto-titulo" class="input-form" placeholder="Título (Ej: Luz, Alquiler)" style="flex: 1; min-width: 120px;">
                                     <input type="number" id="gasto-importe" class="input-form" placeholder="Importe Gastado $" style="flex: 1; min-width: 120px;">
                                 </div>
-                                <!-- Botón azul para registrar gasto -->
-                                <button class="btn-modal btn-gasto" onclick="window.agregarGasto()">Registrar Gasto</button>
+                                <button class="btn-modal btn-gasto" style="background-color: #ef4444;" onclick="window.agregarGasto()">Registrar Gasto</button>
                             </div>
 
                             <!-- Sub Opción 3: Ganancias -->
@@ -424,12 +351,11 @@
                                     <input type="date" id="exportar-hasta" class="input-form" style="margin-top: 4px;">
                                 </div>
                             </div>
-                            <!-- Botón azul para exportar -->
                             <button class="btn-modal btn-balance" onclick="window.exportarAExcel()" style="margin-bottom: 5px;">📥 Descargar Excel (CSV)</button>
                         </div>
                     </div>
 
-                    <!-- 4. Historial Único -->
+                    <!-- 4. Historial (Solo historial general) -->
                     <div class="seccion-acordeon">
                         <div class="header-acordeon" onclick="window.toggleAcordeon('ac-historial')">
                             <span>📜 Historial de Transacciones</span> <span id="flecha-ac-historial">🔽</span>
@@ -461,7 +387,7 @@
                     <label style="font-size: 0.85em; color: #d1d5db;">Nuevo Precio de Venta ($):</label>
                     <input type="number" id="editar-precio-nuevo" class="input-form" min="0" placeholder="Ej: 1500" style="margin-top: 4px;">
                 </div>
-                <button class="btn-modal btn-guardar" style="margin-top: 15px;" onclick="window.confirmarEditarPrecio()">Guardar Precio</button>
+                <button class="btn-modal btn-guardar" style="margin-top: 15px; background-color:#3b82f6;" onclick="window.confirmarEditarPrecio()">Guardar Precio</button>
                 <button class="btn-modal btn-cerrar" onclick="window.cerrarModalEditarPrecio()">Cancelar</button>
             </div>
         </div>
@@ -576,7 +502,7 @@
         <!-- MODAL CONFIGURACION PANTALLA COMPLETA -->
         <div id="modal-config" class="modal-overlay">
             <div class="modal-content">
-                <h3 style="margin: 0; margin-bottom: 15px; border-bottom: 1px solid #44505d; padding-bottom: 10px; color: #60a5fa;">⚙️ Configuración del Club</h3>
+                <h3 style="margin: 0; margin-bottom: 15px; border-bottom: 1px solid #44505d; padding-bottom: 10px;">⚙️ Configuración del Club</h3>
                 <div class="scroll-interno" style="text-align: left; display: flex; flex-direction: column; gap: 15px; max-height: 70vh; overflow-y: auto; padding-right: 5px;">
                     
                     <!-- Acordeón: INFORMACIÓN -->
@@ -1018,6 +944,7 @@
             let cNum = parseInt(res.cancha || "1"); let maxP = canchasIndoorGlobal + canchasOutdoorGlobal;
             let pCancha = 0;
             
+            // Evaluamos si es clase para aplicar la tarifa de profesor
             if (res.esClase) {
                 pCancha = cNum <= canchasIndoorGlobal ? parseInt(profeIndoorGlobal) : (cNum <= maxP ? parseInt(profeOutdoorGlobal) : parseInt(profeTenisGlobal));
             } else {
