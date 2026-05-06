@@ -86,7 +86,7 @@
             body { padding: 10px; }
             .vista-club { padding: 15px; }
             #controles-fecha-club { flex-direction: column; gap: 15px; }
-            .header-panel-botones { flex-wrap: wrap; justify-content: center; }
+            .header-panel-botones { justify-content: space-around !important; }
         }
     </style>
 </head>
@@ -97,12 +97,14 @@
         <!-- VISTA DEL CLUB -->
         <div id="pantalla-club" class="vista-club" style="display: block;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
-                <h2 style="margin: 0; width: 100%; text-align: center; font-size: 1.5em;">Panel de Control <span id="lbl-nombre-club" style="color: #3b82f6; font-size: 0.8em; margin-left: 10px; text-transform: capitalize;"></span></h2>
-                <div class="header-panel-botones" style="display: flex; gap: 15px; align-items: center; width: 100%; justify-content: space-evenly; background: #242c36; padding: 10px; border-radius: 8px; border: 1px solid #2c3540;">
-                    <button onclick="window.abrirModalProfesores()" style="background: none; border: none; font-size: 1.5em; cursor: pointer; color: #9ca3af; transition: 0.2s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='#9ca3af'" title="Gestión de Profesores">🧑‍🏫</button>
-                    <button onclick="window.abrirModalFinanzas()" style="background: none; border: none; font-size: 1.5em; cursor: pointer; color: #9ca3af; transition: 0.2s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='#9ca3af'" title="Finanzas e Inventario">💰</button>
-                    <button onclick="window.abrirModalMetricas()" style="background: none; border: none; font-size: 1.5em; cursor: pointer; color: #9ca3af; transition: 0.2s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='#9ca3af'" title="Métricas">📊</button>
-                    <button onclick="window.abrirModalConfig()" style="background: none; border: none; font-size: 1.5em; cursor: pointer; color: #9ca3af; transition: 0.2s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='#9ca3af'" title="Configuración del Club">⚙️</button>
+                <h2 style="margin: 0; width: 100%; text-align: center; font-size: 1.5em; color: #ffffff;">Panel de Control <span id="lbl-nombre-club" style="color: #3b82f6; font-size: 0.8em; margin-left: 10px; text-transform: capitalize;"></span></h2>
+                
+                <!-- ICONOS LIMPIOS Y EN LÍNEA -->
+                <div class="header-panel-botones" style="display: flex; gap: 20px; align-items: center; justify-content: center; width: 100%; border: none; background: transparent; padding: 10px 0;">
+                    <button onclick="window.abrirModalProfesores()" style="background: none; border: none; font-size: 1.8em; cursor: pointer; color: #d1d5db; transition: 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Gestión de Profesores">🧑‍🏫</button>
+                    <button onclick="window.abrirModalFinanzas()" style="background: none; border: none; font-size: 1.8em; cursor: pointer; color: #d1d5db; transition: 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Finanzas e Inventario">💰</button>
+                    <button onclick="window.abrirModalMetricas()" style="background: none; border: none; font-size: 1.8em; cursor: pointer; color: #d1d5db; transition: 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Métricas">📊</button>
+                    <button onclick="window.abrirModalConfig()" style="background: none; border: none; font-size: 1.8em; cursor: pointer; color: #d1d5db; transition: 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Configuración del Club">⚙️</button>
                 </div>
             </div>
 
@@ -249,16 +251,17 @@
         <!-- MODAL FINANZAS -->
         <div id="modal-finanzas" class="modal-overlay">
             <div class="modal-content scroll-interno"> 
-                <h3 style="margin: 0; margin-bottom: 15px; border-bottom: 1px solid #44505d; padding-bottom: 10px;">Finanzas e Inventario</h3>
+                <h3 style="margin: 0; margin-bottom: 15px; border-bottom: 1px solid #44505d; padding-bottom: 10px; color: #60a5fa;">💰 Finanzas e Inventario</h3>
                 <div style="text-align: left;">
                     
+                    <!-- 1. Inventario y Stock -->
                     <div class="seccion-acordeon">
                         <div class="header-acordeon" onclick="window.toggleAcordeon('ac-inv')">
                             <span>📦 Inventario y Stock</span> <span id="flecha-ac-inv">🔽</span>
                         </div>
                         <div id="ac-inv" class="contenido-acordeon">
                             <div style="display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;">
-                                <input type="text" id="inv-nombre" class="input-form" placeholder="Producto" style="flex: 2; min-width: 150px;">
+                                <input type="text" id="inv-nombre" class="input-form" placeholder="Nombre de Producto" style="flex: 2; min-width: 150px;">
                                 <select id="inv-categoria" class="input-form" style="flex: 2; min-width: 150px;">
                                     <option value="" disabled selected>Categoría...</option>
                                     <option value="Bebidas">Bebidas</option>
@@ -282,32 +285,42 @@
                         </div>
                     </div>
 
+                    <!-- 2. Movimientos Unificados -->
                     <div class="seccion-acordeon">
-                        <div class="header-acordeon" onclick="window.toggleAcordeon('ac-gastos')">
-                            <span>🔀 Externos (Manuales)</span> <span id="flecha-ac-gastos">🔽</span>
+                        <div class="header-acordeon" onclick="window.toggleAcordeon('ac-movimientos')">
+                            <span>🔀 Movimientos</span> <span id="flecha-ac-movimientos">🔽</span>
                         </div>
-                        <div id="ac-gastos" class="contenido-acordeon">
+                        <div id="ac-movimientos" class="contenido-acordeon">
+                            
+                            <!-- Sub Opción 1: Stock y Venta -->
                             <div style="border: 1px solid #2c3540; padding: 10px; border-radius: 8px; margin-bottom: 15px;">
-                                <label style="font-size: 0.85em; color: #ef4444; font-weight: bold;">Registrar Gasto Manual:</label>
+                                <label style="font-size: 0.85em; color: #3b82f6; font-weight: bold;">1. Operaciones de Stock Rápido:</label>
+                                <div style="display: flex; gap: 8px; margin-top: 5px; margin-bottom: 5px;">
+                                    <select id="mov-select-prod" class="input-form" style="flex: 2;"></select>
+                                </div>
+                                <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px;">
+                                    <input type="number" id="mov-cant" class="input-form" placeholder="Cantidad" style="flex: 1; min-width: 80px;" min="1">
+                                    <input type="number" id="mov-monto" class="input-form" placeholder="Monto Total $" style="flex: 1; min-width: 80px;" min="0">
+                                </div>
+                                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                    <button class="btn-modal btn-gasto" style="background-color: #ef4444; flex: 1; min-width: 120px;" onclick="window.agregarStockGasto()">+ Stock (Gasto)</button>
+                                    <button class="btn-modal btn-guardar" style="flex: 1; min-width: 120px;" onclick="window.venderProductoMostradorMov()">- Vender (Ingreso)</button>
+                                </div>
+                            </div>
+
+                            <!-- Sub Opción 2: Gastos -->
+                            <div style="border: 1px solid #2c3540; padding: 10px; border-radius: 8px; margin-bottom: 15px;">
+                                <label style="font-size: 0.85em; color: #ef4444; font-weight: bold;">2. Cargar Gasto Manual:</label>
                                 <div style="display: flex; gap: 8px; margin-bottom: 10px; margin-top: 5px; flex-wrap: wrap;">
                                     <input type="text" id="gasto-titulo" class="input-form" placeholder="Título (Ej: Luz, Alquiler)" style="flex: 1; min-width: 120px;">
                                     <input type="number" id="gasto-importe" class="input-form" placeholder="Importe Gastado $" style="flex: 1; min-width: 120px;">
                                 </div>
-                                <div style="margin-bottom: 10px;">
-                                    <input type="text" id="gasto-desc" class="input-form" placeholder="Descripción corta (Opcional)">
-                                </div>
-                                <button class="btn-modal btn-gasto" onclick="window.agregarGasto()">Registrar Gasto</button>
-                                
-                                <div class="scroll-interno" style="max-height: 150px; overflow-y: auto; border: 1px solid #2c3540; border-radius: 6px; padding: 5px; background: #171d24; margin-top: 10px;">
-                                    <table>
-                                        <thead><tr><th>Detalle del Gasto</th><th style="text-align: right;">Importe</th><th style="text-align: center;">Borrar</th></tr></thead>
-                                        <tbody id="tabla-gastos"></tbody>
-                                    </table>
-                                </div>
+                                <button class="btn-modal btn-gasto" style="background-color: #ef4444;" onclick="window.agregarGasto()">Registrar Gasto</button>
                             </div>
 
+                            <!-- Sub Opción 3: Ganancias -->
                             <div style="border: 1px solid #2c3540; padding: 10px; border-radius: 8px;">
-                                <label style="font-size: 0.85em; color: #10b981; font-weight: bold;">Registrar Ingreso Manual Libre:</label>
+                                <label style="font-size: 0.85em; color: #10b981; font-weight: bold;">3. Cargar Ingreso Manual Libre:</label>
                                 <div style="display: flex; gap: 8px; margin-top: 5px;">
                                     <input type="text" id="ingreso-titulo" class="input-form" placeholder="Detalle..." style="flex: 2;">
                                 </div>
@@ -315,66 +328,32 @@
                                     <input type="number" id="ingreso-efectivo" class="input-form" placeholder="Efectivo $" style="flex: 1; min-width: 100px;">
                                     <input type="number" id="ingreso-transferencia" class="input-form" placeholder="Transf. $" style="flex: 1; min-width: 100px;">
                                 </div>
-                                <button class="btn-modal btn-gasto" onclick="window.agregarIngresoLibre()" style="margin-top: 10px; padding: 8px;">Registrar Ingreso</button>
+                                <button class="btn-modal btn-guardar" onclick="window.agregarIngresoLibre()" style="margin-top: 10px; padding: 8px;">Registrar Ingreso</button>
                             </div>
+
                         </div>
                     </div>
 
-                    <div class="seccion-acordeon">
-                        <div class="header-acordeon" onclick="window.toggleAcordeon('ac-ingresos')">
-                            <span>📈 Ingresos y Ventas</span> <span id="flecha-ac-ingresos">🔽</span>
-                        </div>
-                        <div id="ac-ingresos" class="contenido-acordeon">
-                            <p style="font-size: 0.85em; color: #9ca3af; margin-top: 0;">Pagos de turnos y ventas de mostrador.</p>
-                            <div style="border: 1px solid #2c3540; padding: 10px; border-radius: 8px; margin-bottom: 15px;">
-                                <label style="font-size: 0.85em; color: #d1d5db; font-weight: bold;">Venta Rápida (Descuenta Stock):</label>
-                                <div style="display: flex; gap: 8px; margin-top: 5px; margin-bottom: 5px;">
-                                    <select id="ingreso-select-prod" class="input-form" style="flex: 2;"></select>
-                                </div>
-                                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                                    <input type="number" id="ingreso-efectivo-prod" class="input-form" placeholder="Efectivo $" style="flex: 1; min-width: 100px;">
-                                    <input type="number" id="ingreso-transferencia-prod" class="input-form" placeholder="Transf. $" style="flex: 1; min-width: 100px;">
-                                </div>
-                                <button class="btn-modal btn-gasto" onclick="window.venderProductoMostrador()" style="margin-top: 10px; padding: 8px;">Vender Producto</button>
-                            </div>
-
-                            <div class="scroll-interno" style="max-height: 150px; overflow-y: auto; border: 1px solid #2c3540; border-radius: 6px; padding: 5px; background: #171d24;">
-                                <table>
-                                    <thead><tr><th>Detalle</th><th style="text-align: right;">Efectivo</th><th style="text-align: right;">Transf.</th><th style="text-align: center;">Borrar</th></tr></thead>
-                                    <tbody id="tabla-ingresos"></tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-
+                    <!-- 3. Exportar Excel -->
                     <div class="seccion-acordeon">
                         <div class="header-acordeon" onclick="window.toggleAcordeon('ac-balances')">
-                            <span>📊 Balance de Ganancias</span> <span id="flecha-ac-balances">🔽</span>
+                            <span>📊 Exportar Balance</span> <span id="flecha-ac-balances">🔽</span>
                         </div>
                         <div id="ac-balances" class="contenido-acordeon">
-                            <p style="font-size: 0.85em; color: #9ca3af; margin-top: 0;">(Ingresos Turnos/Clases + Ventas) - (Gastos + Costo Reposición Stock).</p>
+                            <p style="font-size: 0.85em; color: #9ca3af; margin-top: 0;">Descarga un reporte en formato Excel (CSV) con el balance del periodo seleccionado.</p>
                             <div style="display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap;">
-                                <input type="text" id="balance-titulo" class="input-form" placeholder="Nombre (Ej: Cierre Mes)" style="flex: 2; min-width: 150px;">
-                                <select id="balance-periodo" class="input-form" style="flex: 2; min-width: 150px;">
-                                    <option value="" disabled selected>Período...</option>
+                                <select id="exportar-periodo" class="input-form" style="flex: 2; min-width: 150px;">
                                     <option value="1">Últimas 24hs</option>
                                     <option value="7">Última Semana</option>
                                     <option value="30">Último Mes</option>
-                                    <option value="todo">Historial Completo</option>
+                                    <option value="todo" selected>Historial Completo</option>
                                 </select>
                             </div>
-                            <button class="btn-modal btn-balance" onclick="window.generarBalance()" style="margin-bottom: 20px;">Calcular y Guardar Cierre</button>
-                            <div class="scroll-interno" style="max-height: 200px; overflow-y: auto; border: 1px solid #2c3540; border-radius: 6px; padding: 5px; background: #171d24;">
-                                <table>
-                                    <thead>
-                                        <tr><th>Cierre / Período</th><th style="text-align: right;">Ingresos</th><th style="text-align: right;">Gastos</th><th style="text-align: right;">Neta</th><th style="text-align: center;">Borrar</th></tr>
-                                    </thead>
-                                    <tbody id="tabla-balances"></tbody>
-                                </table>
-                            </div>
+                            <button class="btn-modal btn-balance" onclick="window.exportarAExcel()" style="margin-bottom: 5px; background-color: #10b981;">📥 Descargar Excel (CSV)</button>
                         </div>
                     </div>
 
+                    <!-- 4. Historial (Solo historial general) -->
                     <div class="seccion-acordeon">
                         <div class="header-acordeon" onclick="window.toggleAcordeon('ac-historial')">
                             <span>📜 Historial de Transacciones</span> <span id="flecha-ac-historial">🔽</span>
@@ -396,6 +375,7 @@
             </div>
         </div>
         
+        <!-- MODALES EXTRAS DE FINANZAS (Editar precio / Reponer stock) -->
         <div id="modal-editar-precio" class="modal-overlay" style="z-index: 1100;">
             <div class="modal-content" style="max-width: 300px;">
                 <h3 style="margin: 0; color: #ffffff;">Editar Precio</h3>
@@ -519,7 +499,7 @@
         <!-- MODAL CONFIGURACION PANTALLA COMPLETA -->
         <div id="modal-config" class="modal-overlay">
             <div class="modal-content">
-                <h3 style="margin: 0; margin-bottom: 15px; border-bottom: 1px solid #44505d; padding-bottom: 10px;">⚙️ Configuración del Club</h3>
+                <h3 style="margin: 0; margin-bottom: 15px; border-bottom: 1px solid #44505d; padding-bottom: 10px; color: #60a5fa;">⚙️ Configuración del Club</h3>
                 <div class="scroll-interno" style="text-align: left; display: flex; flex-direction: column; gap: 15px; max-height: 70vh; overflow-y: auto; padding-right: 5px;">
                     
                     <!-- Acordeón: INFORMACIÓN -->
@@ -1149,7 +1129,7 @@
         }
 
         // --- FINANZAS E INVENTARIO ---
-        window.abrirModalFinanzas = function() { document.getElementById('modal-finanzas').style.display = 'flex'; renderizarInventario(); renderizarGastos(); renderizarIngresos(); renderizarHistorial(); renderizarBalances(); }
+        window.abrirModalFinanzas = function() { document.getElementById('modal-finanzas').style.display = 'flex'; renderizarInventario(); renderizarHistorial(); }
         window.cerrarModalFinanzas = function() { document.getElementById('modal-finanzas').style.display = 'none'; }
         
         window.agregarInventario = function() {
@@ -1161,6 +1141,41 @@
         }
         window.eliminarInventario = function(id) { if(confirm("¿Borrar?")) { inventarioGlobal = inventarioGlobal.filter(x => x.id !== id); renderizarInventario(); } }
         
+        // Agregar Stock y Guardar como Gasto
+        window.agregarStockGasto = function() {
+            const id = document.getElementById('mov-select-prod').value;
+            const cant = parseInt(document.getElementById('mov-cant').value);
+            const monto = parseFloat(document.getElementById('mov-monto').value);
+            if(!id || isNaN(cant) || cant <= 0 || isNaN(monto) || monto <= 0) { alert("Completa cantidad y monto total."); return; }
+            
+            const prod = inventarioGlobal.find(p => p.id === id);
+            if(prod) {
+                prod.stock += cant;
+                gastosGlobal.push({ id: Date.now().toString(), titulo: `Stock: ${prod.nombre}`, descripcion: `${cant} u`, importe: monto, fechaRegistro: new Date() });
+                alert("Stock agregado y gasto registrado exitosamente.");
+                document.getElementById('mov-cant').value = ''; document.getElementById('mov-monto').value = '';
+                renderizarInventario(); renderizarHistorial();
+            }
+        };
+
+        // Vender desde Mostrador
+        window.venderProductoMostradorMov = function() {
+            const id = document.getElementById('mov-select-prod').value;
+            const cant = parseInt(document.getElementById('mov-cant').value);
+            const monto = parseFloat(document.getElementById('mov-monto').value);
+            if(!id || isNaN(cant) || cant <= 0 || isNaN(monto) || monto <= 0) { alert("Completa cantidad y monto cobrado."); return; }
+            
+            const prod = inventarioGlobal.find(p => p.id === id);
+            if(prod) {
+                if(prod.stock < cant) { alert("Stock insuficiente para esa venta."); return; }
+                prod.stock -= cant;
+                ingresosGlobal.push({ id: Date.now().toString(), titulo: `Venta: ${prod.nombre} (x${cant})`, efectivo: monto, transferencia: 0, fechaRegistro: new Date() });
+                alert("Venta registrada exitosamente.");
+                document.getElementById('mov-cant').value = ''; document.getElementById('mov-monto').value = '';
+                renderizarInventario(); renderizarHistorial();
+            }
+        };
+
         window.abrirModalReposicion = function(id, n, c) { document.getElementById('reponer-id-prod').value = id; document.getElementById('lbl-reponer-prod').innerText = `Reponiendo: ${n}`; document.getElementById('reponer-cantidad').value = ''; document.getElementById('reponer-costo').value = c || ''; document.getElementById('modal-reponer-stock').style.display = 'flex'; }
         window.cerrarModalReposicion = function() { document.getElementById('modal-reponer-stock').style.display = 'none'; }
         window.confirmarReposicionStock = function() {
@@ -1169,7 +1184,7 @@
             if(prod) { 
                 prod.stock += cant; prod.costo = c; 
                 if((cant * c) > 0) gastosGlobal.push({ id: Date.now().toString(), titulo: `Stock: ${prod.nombre}`, descripcion: `${cant} u a $${c}`, importe: (cant * c), fechaRegistro: new Date() }); 
-                window.cerrarModalReposicion(); renderizarInventario(); renderizarGastos(); renderizarHistorial();
+                window.cerrarModalReposicion(); renderizarInventario(); renderizarHistorial();
             }
         }
 
@@ -1180,21 +1195,60 @@
         window.renderizarInventario = function() {
             const tb = document.getElementById('tabla-inventario'); if(!tb) return; tb.innerHTML = '';
             inventarioGlobal.sort((a,b)=>a.nombre.localeCompare(b.nombre)).forEach(p => { tb.innerHTML += `<tr><td>${p.nombre}<br><small>${p.categoria}</small></td><td style="color:${p.stock<=0?'#ef4444':'#d1d5db'};">${p.stock}</td><td>$${window.formatearDinero(p.precio)}</td><td><button class="btn-modal btn-stock" onclick="window.abrirModalReposicion('${p.id}', '${p.nombre}', ${p.costo||0})">➕</button><button class="btn-modal btn-stock" style="background:#3b82f6;" onclick="window.abrirModalEditarPrecio('${p.id}', '${p.nombre}', ${p.precio||0})">✏️</button><button onclick="window.eliminarInventario('${p.id}')" style="background:none;border:none;">🗑️</button></td></tr>`; });
-            const sVR = document.getElementById('ingreso-select-prod'); if(sVR) { sVR.innerHTML = '<option value="" disabled selected>Selecciona producto...</option>'; inventarioGlobal.forEach(p => { if(p.stock>0) sVR.innerHTML += `<option value="${p.id}">${p.nombre} - Disp: ${p.stock}</option>`; }); }
+            const sVR = document.getElementById('mov-select-prod'); if(sVR) { sVR.innerHTML = '<option value="" disabled selected>Selecciona producto...</option>'; inventarioGlobal.forEach(p => { sVR.innerHTML += `<option value="${p.id}">${p.nombre} - Stock: ${p.stock}</option>`; }); }
         }
 
-        window.agregarGasto = function() { const t = document.getElementById('gasto-titulo').value.trim(); const i = document.getElementById('gasto-importe').value; if(!t || !i) return; gastosGlobal.push({ id: Date.now().toString(), titulo: t, descripcion: document.getElementById('gasto-desc').value.trim(), importe: parseFloat(i), fechaRegistro: new Date() }); renderizarGastos(); renderizarHistorial(); }
-        window.eliminarGasto = function(id) { if(confirm("¿Eliminar?")) { gastosGlobal = gastosGlobal.filter(x => x.id !== id); renderizarGastos(); renderizarHistorial(); } }
-        window.renderizarGastos = function() { const tb = document.getElementById('tabla-gastos'); if(!tb) return; tb.innerHTML = ''; gastosGlobal.sort((a,b)=>b.fechaRegistro-a.fechaRegistro).forEach(g => { tb.innerHTML += `<tr><td>${g.titulo}</td><td>$${window.formatearDinero(g.importe)}</td><td><button onclick="window.eliminarGasto('${g.id}')" style="background:none;border:none;">🗑️</button></td></tr>`; }); }
+        window.agregarGasto = function() { const t = document.getElementById('gasto-titulo').value.trim(); const i = document.getElementById('gasto-importe').value; if(!t || !i) return; gastosGlobal.push({ id: Date.now().toString(), titulo: t, descripcion: "", importe: parseFloat(i), fechaRegistro: new Date() }); renderizarHistorial(); document.getElementById('gasto-titulo').value=''; document.getElementById('gasto-importe').value=''; alert('Gasto registrado'); }
 
-        window.venderProductoMostrador = function() { const id = document.getElementById('ingreso-select-prod').value; const e = parseFloat(document.getElementById('ingreso-efectivo-prod').value)||0; const t = parseFloat(document.getElementById('ingreso-transferencia-prod').value)||0; if(!id || (e===0 && t===0)) return; const p = inventarioGlobal.find(x=>x.id===id); if(!p || p.stock<=0) return; ingresosGlobal.push({ id: Date.now().toString(), titulo: `Venta: ${p.nombre}`, efectivo: e, transferencia: t, fechaRegistro: new Date() }); p.stock -= 1; renderizarIngresos(); renderizarInventario(); renderizarHistorial(); }
-        window.agregarIngresoLibre = function() { const t = document.getElementById('ingreso-titulo').value.trim(); const e = parseFloat(document.getElementById('ingreso-efectivo').value)||0; const tr = parseFloat(document.getElementById('ingreso-transferencia').value)||0; if(!t || (e===0 && tr===0)) return; ingresosGlobal.push({ id: Date.now().toString(), titulo: t, efectivo: e, transferencia: tr, fechaRegistro: new Date() }); renderizarIngresos(); renderizarHistorial(); }
-        window.eliminarIngreso = function(id) { if(confirm("¿Borrar?")) { ingresosGlobal = ingresosGlobal.filter(x => x.id !== id); renderizarIngresos(); renderizarHistorial(); } }
-        window.renderizarIngresos = function() { const tb = document.getElementById('tabla-ingresos'); if(!tb) return; tb.innerHTML = ''; let l = []; reservasGlobales.forEach(r => { if((r.pagoEfectivo||0)>0 || (r.pagoTransferencia||0)>0) l.push({id: r.id, tipo:'res', titulo:`Turno: ${r.jugador}`, e: r.pagoEfectivo||0, t: r.pagoTransferencia||0, f: new Date(r.fechaRegistro).getTime()}); }); ingresosGlobal.forEach(i => { l.push({id: i.id, tipo:'man', titulo:i.titulo, e: i.efectivo||0, t: i.transferencia||0, f: new Date(i.fechaRegistro).getTime()}); }); l.sort((a,b)=>b.f-a.f).forEach(i => { tb.innerHTML += `<tr><td>${i.titulo}</td><td>$${window.formatearDinero(i.e)}</td><td>$${window.formatearDinero(i.t)}</td><td>${i.tipo==='man'?`<button onclick="window.eliminarIngreso('${i.id}')" style="background:none;border:none;">🗑️</button>`:'-'}</td></tr>`; }); }
+        window.agregarIngresoLibre = function() { const t = document.getElementById('ingreso-titulo').value.trim(); const e = parseFloat(document.getElementById('ingreso-efectivo').value)||0; const tr = parseFloat(document.getElementById('ingreso-transferencia').value)||0; if(!t || (e===0 && tr===0)) return; ingresosGlobal.push({ id: Date.now().toString(), titulo: t, efectivo: e, transferencia: tr, fechaRegistro: new Date() }); renderizarHistorial(); document.getElementById('ingreso-titulo').value=''; document.getElementById('ingreso-efectivo').value=''; document.getElementById('ingreso-transferencia').value=''; alert('Ingreso registrado'); }
 
-        window.generarBalance = function() { const t = document.getElementById('balance-titulo').value.trim(); const p = document.getElementById('balance-periodo').value; if(!t || !p) return; let lim = new Date(); if(p!=='todo') lim.setDate(lim.getDate()-parseInt(p)); else lim = new Date(2000,0,1); let ing=0; let gas=0; reservasGlobales.forEach(r => { if(new Date(r.fechaRegistro)>=lim) ing+= (r.pagoEfectivo||0)+(r.pagoTransferencia||0); }); ingresosGlobal.forEach(i => { if(new Date(i.fechaRegistro)>=lim) ing+= (i.efectivo||0)+(i.transferencia||0); }); gastosGlobal.forEach(g => { if(new Date(g.fechaRegistro)>=lim) gas+= (g.importe||0); }); balancesGlobal.push({ id: Date.now().toString(), titulo: t, periodoTexto: p, ingresos: ing, gastos: gas, ganancia: ing-gas, fechaCreacion: new Date() }); renderizarBalances(); }
-        window.eliminarBalance = function(id) { if(confirm("¿Borrar?")) { balancesGlobal = balancesGlobal.filter(x => x.id !== id); renderizarBalances(); } }
-        window.renderizarBalances = function() { const tb = document.getElementById('tabla-balances'); if(!tb) return; tb.innerHTML = ''; balancesGlobal.sort((a,b)=>b.fechaCreacion-a.fechaCreacion).forEach(b => { tb.innerHTML += `<tr><td>${b.titulo}</td><td>$${window.formatearDinero(b.ingresos)}</td><td>$${window.formatearDinero(b.gastos)}</td><td>$${window.formatearDinero(b.ganancia)}</td><td><button onclick="window.eliminarBalance('${b.id}')" style="background:none;border:none;">🗑️</button></td></tr>`; }); }
+        window.exportarAExcel = function() {
+            const p = document.getElementById('exportar-periodo').value;
+            let lim = new Date();
+            if(p !== 'todo') { lim.setDate(lim.getDate() - parseInt(p)); } 
+            else { lim = new Date(2000, 0, 1); }
+            
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "Fecha,Tipo,Detalle,Ingreso,Gasto\n";
+            
+            let ingresosTotal = 0; let gastosTotal = 0;
+            
+            reservasGlobales.forEach(r => {
+                let fecha = new Date(r.fechaRegistro);
+                if(fecha >= lim) {
+                    let total = (r.pagoEfectivo||0) + (r.pagoTransferencia||0);
+                    if(total > 0) { ingresosTotal += total; csvContent += `${fecha.toLocaleDateString()},Reserva,Turno: ${r.jugador},${total},0\n`; }
+                }
+            });
+            
+            ingresosGlobal.forEach(i => {
+                let fecha = new Date(i.fechaRegistro);
+                if(fecha >= lim) {
+                    let total = (i.efectivo||0) + (i.transferencia||0);
+                    if(total > 0) { ingresosTotal += total; csvContent += `${fecha.toLocaleDateString()},Ingreso Manual,${i.titulo},${total},0\n`; }
+                }
+            });
+            
+            gastosGlobal.forEach(g => {
+                let fecha = new Date(g.fechaRegistro);
+                if(fecha >= lim) {
+                    let total = g.importe || 0;
+                    if(total > 0) { gastosTotal += total; csvContent += `${fecha.toLocaleDateString()},Gasto,${g.titulo},0,${total}\n`; }
+                }
+            });
+            
+            csvContent += `\nTOTALES,-,-,${ingresosTotal},${gastosTotal}\n`;
+            csvContent += `BALANCE NETO,-,-,${ingresosTotal - gastosTotal},-\n`;
+            
+            var encodedUri = encodeURI(csvContent);
+            var link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "balance_club.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        };
+
         window.renderizarHistorial = function() { const tb = document.getElementById('tabla-historial'); if(!tb) return; tb.innerHTML = ''; let h = []; gastosGlobal.forEach(g => { h.push({f: new Date(g.fechaRegistro), t: g.titulo, m: g.importe||0, tp: 'g'}); }); ingresosGlobal.forEach(i => { h.push({f: new Date(i.fechaRegistro), t: i.titulo, m: (i.efectivo||0)+(i.transferencia||0), tp: 'i'}); }); reservasGlobales.forEach(r => { let tot=(r.pagoEfectivo||0)+(r.pagoTransferencia||0); if(tot>0) h.push({f: new Date(r.fechaRegistro), t: `Turno: ${r.jugador}`, m: tot, tp: 'i'}); }); h.sort((a,b)=>b.f.getTime()-a.f.getTime()).forEach(i => { tb.innerHTML += `<tr><td>${i.f.getDate()}/${i.f.getMonth()+1}</td><td>${i.t}</td><td style="color:${i.tp==='i'?'#10b981':'#ef4444'};">${i.tp==='i'?'+':'-'} $${window.formatearDinero(i.m)}</td></tr>`; }); }
 
         // --- CONFIGURACIÓN ADMIN ---
