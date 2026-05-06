@@ -60,12 +60,21 @@
         #linea-tiempo-actual { position: absolute; left: 55px; right: 0; height: 2px; background-color: #3b82f6; z-index: 20; display: none; pointer-events: none; }
         #linea-tiempo-actual::before { content: ''; position: absolute; left: -4px; top: -4px; width: 10px; height: 10px; border-radius: 50%; background-color: #3b82f6; }
 
-        /* --- MODALES Y ACORDEONES --- */
+        /* --- MODALES TRADICIONALES --- */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; z-index: 1000; }
         .modal-content { background: #1e252d; padding: 25px; border-radius: 12px; width: 90%; max-width: 360px; display: flex; flex-direction: column; gap: 12px; border: 1px solid #44505d; text-align: center; }
-        #modal-finanzas .modal-content, #modal-acciones .modal-content, #modal-config .modal-content, #modal-profesores .modal-content, #modal-metricas .modal-content { max-width: 580px; max-height: 90vh; overflow-y: auto; }
-        #modal-metricas .modal-content { max-width: 800px; }
+        #modal-acciones .modal-content { max-width: 580px; max-height: 90vh; overflow-y: auto; }
         
+        /* --- PANTALLAS COMPLETAS (Módulos de Arriba) --- */
+        #modal-profesores, #modal-finanzas, #modal-metricas, #modal-config {
+            background-color: #171d24; 
+            padding: 0; align-items: flex-start; overflow-y: auto;
+        }
+        #modal-profesores .modal-content, #modal-finanzas .modal-content, #modal-metricas .modal-content, #modal-config .modal-content {
+            width: 100%; max-width: 900px; min-height: 100vh; max-height: none; border-radius: 0; border: none; background-color: #1e252d; margin: 0 auto; box-sizing: border-box;
+        }
+
+        /* --- ACORDEONES --- */
         .seccion-acordeon { border: 1px solid #2c3540; border-radius: 8px; margin-bottom: 15px; overflow: hidden; background: #171d24;}
         .header-acordeon { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; background: #242c36; cursor: pointer; font-weight: bold; font-size: 1.05em; user-select: none; color: #d1d5db; }
         .header-acordeon:hover { background: #2c3540; }
@@ -134,7 +143,7 @@
                         </div>
                     </div>
                 </div>
-                <button class="btn-modal btn-cerrar" onclick="window.cerrarModalProfesores()">Cerrar</button>
+                <button class="btn-modal btn-cerrar" onclick="window.cerrarModalProfesores()">Volver al Panel</button>
             </div>
         </div>
 
@@ -176,7 +185,7 @@
                 <div style="background: #242c36; padding: 15px; border-radius: 8px; border: 1px solid #2c3540; height: 350px; display: flex; align-items: center; justify-content: center;">
                     <canvas id="graficoMetricas" style="width: 100%; height: 100%;"></canvas>
                 </div>
-                <button class="btn-modal btn-cerrar" style="margin-top: 20px;" onclick="window.cerrarModalMetricas()">Cerrar Métricas</button>
+                <button class="btn-modal btn-cerrar" style="margin-top: 20px;" onclick="window.cerrarModalMetricas()">Volver al Panel</button>
             </div>
         </div>
 
@@ -376,7 +385,7 @@
                     </div>
 
                 </div>
-                <button class="btn-modal btn-cerrar" style="margin-top: 20px;" onclick="window.cerrarModalFinanzas()">Cerrar Finanzas</button>
+                <button class="btn-modal btn-cerrar" style="margin-top: 20px;" onclick="window.cerrarModalFinanzas()">Volver al Panel</button>
             </div>
         </div>
         
@@ -500,7 +509,7 @@
             </div>
         </div>
 
-       <!-- MODAL CONFIGURACION -->
+        <!-- MODAL CONFIGURACION PANTALLA COMPLETA -->
         <div id="modal-config" class="modal-overlay">
             <div class="modal-content">
                 <h3 style="margin: 0; margin-bottom: 15px; border-bottom: 1px solid #44505d; padding-bottom: 10px;">⚙️ Configuración del Club</h3>
@@ -558,13 +567,17 @@
                                 <input type="text" id="input-nombres-in" class="input-form" placeholder="Ej: 1, 2, Central" style="margin-top: 4px;">
                                 <small style="color: #9ca3af; font-size: 0.75em;">Deja vacío para usar el orden normal.</small>
                             </div>
-                            <div>
+                            <div style="margin-bottom: 12px;">
                                 <label style="font-size: 0.85em; color: #d1d5db;">Duración Standard:</label>
                                 <select id="input-duracion-in" class="input-form" style="margin-top: 4px;">
                                     <option value="60">60 Minutos (1h)</option>
                                     <option value="90" selected>90 Minutos (1.5h)</option>
                                     <option value="120">120 Minutos (2h)</option>
                                 </select>
+                            </div>
+                            <div>
+                                <label style="font-size: 0.85em; color: #d1d5db;">Foto de la Cancha (URL):</label>
+                                <input type="text" id="input-foto-in" class="input-form" placeholder="Ej: https://misitio.com/foto-indoor.jpg" style="margin-top: 4px;">
                             </div>
                         </div>
                     </div>
@@ -588,13 +601,17 @@
                                 <input type="text" id="input-nombres-out" class="input-form" placeholder="Ej: 1, 2, Central" style="margin-top: 4px;">
                                 <small style="color: #9ca3af; font-size: 0.75em;">Deja vacío para usar el orden normal.</small>
                             </div>
-                            <div>
+                            <div style="margin-bottom: 12px;">
                                 <label style="font-size: 0.85em; color: #d1d5db;">Duración Standard:</label>
                                 <select id="input-duracion-out" class="input-form" style="margin-top: 4px;">
                                     <option value="60">60 Minutos (1h)</option>
                                     <option value="90" selected>90 Minutos (1.5h)</option>
                                     <option value="120">120 Minutos (2h)</option>
                                 </select>
+                            </div>
+                            <div>
+                                <label style="font-size: 0.85em; color: #d1d5db;">Foto de la Cancha (URL):</label>
+                                <input type="text" id="input-foto-out" class="input-form" placeholder="Ej: https://misitio.com/foto-outdoor.jpg" style="margin-top: 4px;">
                             </div>
                         </div>
                     </div>
@@ -618,7 +635,7 @@
                                 <input type="text" id="input-nombres-tenis" class="input-form" placeholder="Ej: 1, 2, Central" style="margin-top: 4px;">
                                 <small style="color: #9ca3af; font-size: 0.75em;">Deja vacío para usar el orden normal.</small>
                             </div>
-                            <div>
+                            <div style="margin-bottom: 12px;">
                                 <label style="font-size: 0.85em; color: #d1d5db;">Duración Standard:</label>
                                 <select id="input-duracion-tenis" class="input-form" style="margin-top: 4px;">
                                     <option value="60">60 Minutos (1h)</option>
@@ -626,12 +643,16 @@
                                     <option value="120">120 Minutos (2h)</option>
                                 </select>
                             </div>
+                            <div>
+                                <label style="font-size: 0.85em; color: #d1d5db;">Foto de la Cancha (URL):</label>
+                                <input type="text" id="input-foto-tenis" class="input-form" placeholder="Ej: https://misitio.com/foto-tenis.jpg" style="margin-top: 4px;">
+                            </div>
                         </div>
                     </div>
 
                 </div>
                 <button class="btn-modal btn-guardar" style="margin-top: 20px;" onclick="window.guardarConfiguracion()">Guardar Todo</button>
-                <button class="btn-modal btn-cerrar" style="margin-top: 0;" onclick="window.cerrarModalConfig()">Cancelar</button>
+                <button class="btn-modal btn-cerrar" style="margin-top: 0;" onclick="window.cerrarModalConfig()">Volver al Panel</button>
             </div>
         </div>
         
@@ -651,13 +672,13 @@
         let primerTurno = "08:00"; let ultimoTurno = "21:30"; let duracionGlobal = 90; 
         let canchasIndoorGlobal = 1; let canchasOutdoorGlobal = 0; let canchasTenisGlobal = 0;
         let precioIndoorGlobal = "15000"; let precioOutdoorGlobal = "12000"; let precioTenisGlobal = "10000";
-       let diasAbiertosGlobal = [0,1,2,3,4,5,6]; let telefonoClubGlobal = ""; let ubicacionClubGlobal = "";
+        let diasAbiertosGlobal = [0,1,2,3,4,5,6]; let telefonoClubGlobal = ""; let ubicacionClubGlobal = "";
         let nombresCanchasGlobal = [];
 
         // --- NUEVAS VARIABLES GLOBALES ---
-        let profeIndoorGlobal = "0"; let senaIndoorGlobal = "0"; let nombresIndoorGlobal = []; let duracionIndoorGlobal = 90;
-        let profeOutdoorGlobal = "0"; let senaOutdoorGlobal = "0"; let nombresOutdoorGlobal = []; let duracionOutdoorGlobal = 90;
-        let profeTenisGlobal = "0"; let senaTenisGlobal = "0"; let nombresTenisGlobal = []; let duracionTenisGlobal = 90;
+        let profeIndoorGlobal = "0"; let senaIndoorGlobal = "0"; let nombresIndoorGlobal = []; let duracionIndoorGlobal = 90; let fotoIndoorGlobal = "";
+        let profeOutdoorGlobal = "0"; let senaOutdoorGlobal = "0"; let nombresOutdoorGlobal = []; let duracionOutdoorGlobal = 90; let fotoOutdoorGlobal = "";
+        let profeTenisGlobal = "0"; let senaTenisGlobal = "0"; let nombresTenisGlobal = []; let duracionTenisGlobal = 90; let fotoTenisGlobal = "";
 
         // DATOS EN MEMORIA
         let reservasGlobales = []; let inventarioGlobal = []; let gastosGlobal = []; 
@@ -1194,6 +1215,7 @@
             document.getElementById('input-sena-in').value = senaIndoorGlobal;
             document.getElementById('input-nombres-in').value = nombresIndoorGlobal.join(", ");
             document.getElementById('input-duracion-in').value = duracionIndoorGlobal;
+            document.getElementById('input-foto-in').value = fotoIndoorGlobal;
 
             // Outdoor
             document.getElementById('input-canchas-out').value = canchasOutdoorGlobal; 
@@ -1202,6 +1224,7 @@
             document.getElementById('input-sena-out').value = senaOutdoorGlobal;
             document.getElementById('input-nombres-out').value = nombresOutdoorGlobal.join(", ");
             document.getElementById('input-duracion-out').value = duracionOutdoorGlobal;
+            document.getElementById('input-foto-out').value = fotoOutdoorGlobal;
 
             // Tenis
             document.getElementById('input-canchas-tenis').value = canchasTenisGlobal; 
@@ -1210,6 +1233,7 @@
             document.getElementById('input-sena-tenis').value = senaTenisGlobal;
             document.getElementById('input-nombres-tenis').value = nombresTenisGlobal.join(", ");
             document.getElementById('input-duracion-tenis').value = duracionTenisGlobal;
+            document.getElementById('input-foto-tenis').value = fotoTenisGlobal;
 
             document.getElementById('modal-config').style.display = 'flex'; 
         }
@@ -1232,6 +1256,7 @@
             let txtIn = document.getElementById('input-nombres-in').value.trim();
             nombresIndoorGlobal = txtIn ? txtIn.split(',').map(s => s.trim()) : [];
             duracionIndoorGlobal = parseInt(document.getElementById('input-duracion-in').value) || 90;
+            fotoIndoorGlobal = document.getElementById('input-foto-in').value.trim();
 
             // Guardado Outdoor
             canchasOutdoorGlobal = parseInt(document.getElementById('input-canchas-out').value) || 0; 
@@ -1241,6 +1266,7 @@
             let txtOut = document.getElementById('input-nombres-out').value.trim();
             nombresOutdoorGlobal = txtOut ? txtOut.split(',').map(s => s.trim()) : [];
             duracionOutdoorGlobal = parseInt(document.getElementById('input-duracion-out').value) || 90;
+            fotoOutdoorGlobal = document.getElementById('input-foto-out').value.trim();
 
             // Guardado Tenis
             canchasTenisGlobal = parseInt(document.getElementById('input-canchas-tenis').value) || 0; 
@@ -1250,6 +1276,7 @@
             let txtTenis = document.getElementById('input-nombres-tenis').value.trim();
             nombresTenisGlobal = txtTenis ? txtTenis.split(',').map(s => s.trim()) : [];
             duracionTenisGlobal = parseInt(document.getElementById('input-duracion-tenis').value) || 90;
+            fotoTenisGlobal = document.getElementById('input-foto-tenis').value.trim();
 
             // Concatenamos todos los nombres para inyectarlos en la grilla visual de las canchas
             nombresCanchasGlobal = [...nombresIndoorGlobal, ...nombresOutdoorGlobal, ...nombresTenisGlobal];
