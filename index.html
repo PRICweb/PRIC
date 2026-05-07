@@ -9,20 +9,72 @@
         /* --- ESTILOS GENERALES --- */
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background-color: #171d24; color: #ffffff; 
+            background-color: #1a1e24; 
+            color: #ffffff; 
             margin: 0; padding: 20px; 
             display: flex; flex-direction: column; align-items: center;
         }
+        
         .vista-club {
-            background-color: #1e252d; width: 100%; max-width: 900px;
-            border-radius: 12px; padding: 20px; box-sizing: border-box; margin-bottom: 30px;
+            background-color: transparent; 
+            width: 100%; max-width: 900px;
+            padding: 0; box-sizing: border-box; margin-bottom: 30px;
         }
+        
         .scroll-interno::-webkit-scrollbar { width: 6px; }
         .scroll-interno::-webkit-scrollbar-thumb { background: #44505d; border-radius: 4px; }
         .text-neutral-main { color: #ffffff; }
         .text-neutral-sub { color: #9ca3af; }
         .text-neutral-bold { color: #d1d5db; font-weight: bold; }
         
+        /* --- ESTILO TARJETAS AZULES --- */
+        .blue-card {
+            background: linear-gradient(145deg, #4b84f3 0%, #3567d6 100%);
+            border: 1px solid #6b9dfa;
+            border-radius: 12px;
+            color: #ffffff;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+        }
+        
+        /* --- GRID DE BOTONES --- */
+        .grid-acciones {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            width: 100%;
+            margin-bottom: 25px;
+        }
+        .action-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 25px 10px;
+            cursor: pointer;
+            transition: transform 0.2s, filter 0.2s;
+            font-weight: bold;
+            font-size: 1.1em;
+            text-align: center;
+        }
+        .action-btn:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.05);
+        }
+        .action-icon {
+            font-size: 2.2em;
+            margin-bottom: 12px;
+        }
+
+        /* --- BOTONES TRANSLÚCIDOS PARA LA TARJETA AZUL --- */
+        .btn-translucido {
+            background-color: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #ffffff;
+        }
+        .btn-translucido:hover {
+            background-color: rgba(255, 255, 255, 0.25);
+        }
+
         /* --- FORMULARIOS Y TABLAS --- */
         .input-form {
             padding: 10px; border-radius: 6px; border: 1px solid #44505d; background-color: #171d24; 
@@ -34,25 +86,23 @@
 
         /* --- BOTONES AGRUPADOS --- */
         .btn-modal { padding: 12px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; color: white; font-size: 1em; transition: 0.2s; width: 100%; box-sizing: border-box;}
+        
         .btn-guardar, .btn-fijar, .btn-cobrar-clase { background-color: #10b981; } 
         .btn-guardar:hover, .btn-fijar:hover, .btn-cobrar-clase:hover { background-color: #059669; }
-        .btn-gasto, .btn-cerrar, .btn-stock, .btn-balance { background-color: #4b5563; color: white; } 
-        .btn-gasto:hover, .btn-cerrar:hover, .btn-stock:hover, .btn-balance:hover { background-color: #374151; }
+        
+        .btn-cerrar, .btn-stock { background-color: #4b5563; color: white; } 
+        .btn-cerrar:hover, .btn-stock:hover { background-color: #374151; }
+        
+        /* Gastos y Balances en Azul */
+        .btn-gasto, .btn-balance { background-color: #3b82f6; color: white; } 
+        .btn-gasto:hover, .btn-balance:hover { background-color: #2563eb; }
+
         .btn-eliminar { background-color: #ef4444; } .btn-eliminar:hover { background-color: #dc2626; }
         .btn-whatsapp { background-color: #25d366; color: #171d24; } .btn-whatsapp:hover { background-color: #1ebd57; }
         .btn-excepcion { background-color: #f59e0b; color: #171d24;} .btn-excepcion:hover { background-color: #d97706; }
         
         /* --- CALENDARIO Y GRILLA --- */
-        .calendario-strip { display: flex; overflow-x: auto; gap: 10px; padding-bottom: 12px; margin-bottom: 15px; border-bottom: 1px solid #2c3540; }
-        .calendario-strip::-webkit-scrollbar { height: 6px; }
-        .calendario-strip::-webkit-scrollbar-thumb { background: #44505d; border-radius: 4px; }
-        .dia-item { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 65px; padding: 12px 8px; background-color: #242c36; border-radius: 10px; cursor: pointer; border: 1px solid transparent; transition: 0.2s; }
-        .dia-item:hover { background-color: #2c3540; }
-        .dia-item.activo { background-color: #3b82f6; border-color: #3b82f6; color: white; transform: scale(1.05); }
-        .dia-nombre { font-size: 0.8em; color: #9ca3af; text-transform: uppercase; font-weight: bold;}
-        .dia-item.activo .dia-nombre { color: #e5e7eb; }
-        .dia-numero { font-size: 1.4em; font-weight: bold; margin-top: 4px; }
-        .contenedor-grilla { display: flex; overflow-x: auto; background: #1e252d; border: 1px solid #2c3540; border-radius: 8px; margin-top: 15px; user-select: none; position: relative; }
+        .contenedor-grilla { display: flex; overflow-x: auto; background: #1e252d; border: 1px solid #2c3540; border-radius: 12px; margin-top: 15px; user-select: none; position: relative; }
         .contenedor-grilla::-webkit-scrollbar { height: 8px; }
         .contenedor-grilla::-webkit-scrollbar-thumb { background: #44505d; border-radius: 4px; }
         .celda-vacia-hover { transition: background-color 0.1s; }
@@ -67,7 +117,7 @@
         
         /* --- PANTALLAS COMPLETAS (Módulos de Arriba) --- */
         #modal-profesores, #modal-finanzas, #modal-metricas, #modal-config {
-            background-color: #171d24; 
+            background-color: #1a1e24; 
             padding: 0; align-items: flex-start; overflow-y: auto;
         }
         #modal-profesores .modal-content, #modal-finanzas .modal-content, #modal-metricas .modal-content, #modal-config .modal-content {
@@ -84,8 +134,8 @@
         /* --- RESPONSIVE (MÓVIL) --- */
         @media (max-width: 600px) {
             body { padding: 10px; }
-            .vista-club { padding: 15px; }
             #controles-fecha-club { flex-direction: column; gap: 15px; }
+            .header-panel-botones { justify-content: space-around !important; }
         }
     </style>
 </head>
@@ -93,21 +143,19 @@
 
     <div id="app-content" style="display: flex; width: 100%; flex-direction: column; align-items: center;">
         
-        <!-- VISTA DEL CLUB -->
         <div id="pantalla-club" class="vista-club" style="display: block;">
             
-            <!-- ENCABEZADO TIPO DASHBOARD (Sin recuadros, en una línea) -->
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; width: 100%;">
                 <h2 style="margin: 0; font-size: 1.6em; color: white;">👋 Hola, <span id="lbl-nombre-club" style="color: #3b82f6; text-transform: capitalize;">Admin</span></h2>
-                <div class="header-panel-botones" style="display: flex; gap: 15px; align-items: center;">
-                    <button onclick="window.abrirModalProfesores()" style="background: none; border: none; font-size: 1.6em; cursor: pointer; transition: transform 0.2s; padding: 0;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Gestión de Profesores">🧑‍🏫</button>
-                    <button onclick="window.abrirModalFinanzas()" style="background: none; border: none; font-size: 1.6em; cursor: pointer; transition: transform 0.2s; padding: 0;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Finanzas e Inventario">💰</button>
-                    <button onclick="window.abrirModalMetricas()" style="background: none; border: none; font-size: 1.6em; cursor: pointer; transition: transform 0.2s; padding: 0;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Métricas">📊</button>
-                    <button onclick="window.abrirModalConfig()" style="background: none; border: none; font-size: 1.6em; cursor: pointer; transition: transform 0.2s; padding: 0;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Configuración del Club">⚙️</button>
+                
+                <div class="header-panel-botones" style="display: flex; gap: 20px; align-items: center; justify-content: center; width: 100%; border: none; background: transparent; padding: 10px 0;">
+                    <button onclick="window.abrirModalProfesores()" style="background: none; border: none; font-size: 1.8em; cursor: pointer; color: #d1d5db; transition: 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Gestión de Profesores">🧑‍🏫</button>
+                    <button onclick="window.abrirModalFinanzas()" style="background: none; border: none; font-size: 1.8em; cursor: pointer; color: #d1d5db; transition: 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Finanzas e Inventario">💰</button>
+                    <button onclick="window.abrirModalMetricas()" style="background: none; border: none; font-size: 1.8em; cursor: pointer; color: #d1d5db; transition: 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Métricas">📊</button>
+                    <button onclick="window.abrirModalConfig()" style="background: none; border: none; font-size: 1.8em; cursor: pointer; color: #d1d5db; transition: 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Configuración del Club">⚙️</button>
                 </div>
             </div>
 
-            <!-- CONTROLES DE FECHA -->
             <div id="controles-fecha-club" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: #242c36; padding: 10px 15px; border-radius: 8px; border: 1px solid #2c3540;">
                 <div style="display: flex; align-items: center; gap: 15px; justify-content: center; flex: 1;">
                     <button style="background: transparent; border: none; font-size: 1.8em; color: #9ca3af; cursor: pointer; padding: 0 10px;" onclick="window.cambiarDiaClub(-1)">&#10094;</button>
@@ -126,7 +174,6 @@
             <div id="lista-reservas-club"></div>
         </div>
 
-        <!-- MODAL PROFESORES -->
         <div id="modal-profesores" class="modal-overlay">
             <div class="modal-content scroll-interno">
                 <h3 style="margin: 0; border-bottom: 1px solid #44505d; padding-bottom: 10px;">🧑‍🏫 Profesores del Club</h3>
@@ -155,7 +202,6 @@
             </div>
         </div>
 
-        <!-- MODAL METRICAS -->
         <div id="modal-metricas" class="modal-overlay">
             <div class="modal-content scroll-interno">
                 <h3 style="margin: 0; border-bottom: 1px solid #44505d; padding-bottom: 10px;">📊 Métricas e Informes</h3>
@@ -197,7 +243,6 @@
             </div>
         </div>
 
-        <!-- MODAL AGENDAR RESERVA ADMIN -->
         <div id="modal-reserva-admin" class="modal-overlay" style="z-index: 1050;">
             <div class="modal-content">
                 <h3 style="margin: 0; margin-bottom: 5px;">Agendar Evento</h3>
@@ -247,13 +292,11 @@
             </div>
         </div>
 
-        <!-- MODAL FINANZAS -->
         <div id="modal-finanzas" class="modal-overlay">
             <div class="modal-content scroll-interno"> 
                 <h3 style="margin: 0; margin-bottom: 15px; border-bottom: 1px solid #44505d; padding-bottom: 10px;">💰 Finanzas e Inventario</h3>
                 <div style="text-align: left;">
                     
-                    <!-- 1. Inventario y Stock -->
                     <div class="seccion-acordeon">
                         <div class="header-acordeon" onclick="window.toggleAcordeon('ac-inv')">
                             <span>📦 Inventario y Stock</span> <span id="flecha-ac-inv">🔽</span>
@@ -273,7 +316,6 @@
                                 <input type="number" id="inv-costo" class="input-form" placeholder="Costo Unit. $" style="flex: 1; min-width: 80px;" min="0">
                                 <input type="number" id="inv-precio" class="input-form" placeholder="Precio Venta $" style="flex: 1; min-width: 80px;" min="0">
                             </div>
-                            <!-- Botón en azul para añadir inventario -->
                             <button class="btn-modal btn-gasto" onclick="window.agregarInventario()" style="margin-bottom: 20px;">Añadir al Inventario</button>
                             
                             <div class="scroll-interno" style="max-height: 200px; overflow-y: auto; border: 1px solid #2c3540; border-radius: 6px; padding: 5px; background: #171d24;">
@@ -285,14 +327,12 @@
                         </div>
                     </div>
 
-                    <!-- 2. Movimientos Unificados -->
                     <div class="seccion-acordeon">
                         <div class="header-acordeon" onclick="window.toggleAcordeon('ac-movimientos')">
                             <span>🔀 Movimientos</span> <span id="flecha-ac-movimientos">🔽</span>
                         </div>
                         <div id="ac-movimientos" class="contenido-acordeon">
                             
-                            <!-- Sub Opción 1: Stock y Venta -->
                             <div style="border: 1px solid #2c3540; padding: 10px; border-radius: 8px; margin-bottom: 15px;">
                                 <label style="font-size: 0.85em; color: #3b82f6; font-weight: bold;">1. Operaciones de Stock Rápido:</label>
                                 <div style="display: flex; gap: 8px; margin-top: 5px; margin-bottom: 5px;">
@@ -303,22 +343,20 @@
                                     <input type="number" id="mov-monto" class="input-form" placeholder="Monto Total $" style="flex: 1; min-width: 80px;" min="0">
                                 </div>
                                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                                    <button class="btn-modal btn-gasto" style="background-color: #ef4444; flex: 1; min-width: 120px;" onclick="window.agregarStockGasto()">+ Stock (Gasto)</button>
+                                    <button class="btn-modal btn-gasto" style="background-color: #3b82f6; flex: 1; min-width: 120px;" onclick="window.agregarStockGasto()">+ Stock (Gasto)</button>
                                     <button class="btn-modal btn-guardar" style="flex: 1; min-width: 120px;" onclick="window.venderProductoMostradorMov()">- Vender (Ingreso)</button>
                                 </div>
                             </div>
 
-                            <!-- Sub Opción 2: Gastos -->
                             <div style="border: 1px solid #2c3540; padding: 10px; border-radius: 8px; margin-bottom: 15px;">
                                 <label style="font-size: 0.85em; color: #ef4444; font-weight: bold;">2. Cargar Gasto Manual:</label>
                                 <div style="display: flex; gap: 8px; margin-bottom: 10px; margin-top: 5px; flex-wrap: wrap;">
                                     <input type="text" id="gasto-titulo" class="input-form" placeholder="Título (Ej: Luz, Alquiler)" style="flex: 1; min-width: 120px;">
                                     <input type="number" id="gasto-importe" class="input-form" placeholder="Importe Gastado $" style="flex: 1; min-width: 120px;">
                                 </div>
-                                <button class="btn-modal btn-gasto" style="background-color: #ef4444;" onclick="window.agregarGasto()">Registrar Gasto</button>
+                                <button class="btn-modal btn-gasto" style="background-color: #3b82f6;" onclick="window.agregarGasto()">Registrar Gasto</button>
                             </div>
 
-                            <!-- Sub Opción 3: Ganancias -->
                             <div style="border: 1px solid #2c3540; padding: 10px; border-radius: 8px;">
                                 <label style="font-size: 0.85em; color: #10b981; font-weight: bold;">3. Cargar Ingreso Manual Libre:</label>
                                 <div style="display: flex; gap: 8px; margin-top: 5px;">
@@ -334,7 +372,6 @@
                         </div>
                     </div>
 
-                    <!-- 3. Exportar Excel -->
                     <div class="seccion-acordeon">
                         <div class="header-acordeon" onclick="window.toggleAcordeon('ac-balances')">
                             <span>📊 Exportar Balance</span> <span id="flecha-ac-balances">🔽</span>
@@ -355,7 +392,6 @@
                         </div>
                     </div>
 
-                    <!-- 4. Historial (Solo historial general) -->
                     <div class="seccion-acordeon">
                         <div class="header-acordeon" onclick="window.toggleAcordeon('ac-historial')">
                             <span>📜 Historial de Transacciones</span> <span id="flecha-ac-historial">🔽</span>
@@ -377,7 +413,6 @@
             </div>
         </div>
         
-        <!-- MODALES EXTRAS DE FINANZAS (Editar precio / Reponer stock) -->
         <div id="modal-editar-precio" class="modal-overlay" style="z-index: 1100;">
             <div class="modal-content" style="max-width: 300px;">
                 <h3 style="margin: 0; color: #ffffff;">Editar Precio</h3>
@@ -408,7 +443,6 @@
                     </div>
                     <p style="font-size: 0.75em; color: #9ca3af; margin: 0;">El costo total se registrará como Gasto Externo.</p>
                 </div>
-                <!-- Botón azul para reponer gasto -->
                 <button class="btn-modal btn-gasto" style="margin-top: 15px;" onclick="window.confirmarReposicionStock()">Reponer y Registrar Gasto</button>
                 <button class="btn-modal btn-cerrar" onclick="window.cerrarModalReposicion()">Cancelar</button>
             </div>
@@ -437,7 +471,6 @@
             </div>
         </div>
 
-        <!-- MODAL GESTION DE TURNO -->
         <div id="modal-acciones" class="modal-overlay">
             <div class="modal-content scroll-interno" style="max-width: 480px;">
                 <h3 style="margin: 0; border-bottom: 1px solid #44505d; padding-bottom: 10px; color: #ffffff;" id="titulo-modal-acciones">Gestión de Turno</h3>
@@ -471,6 +504,10 @@
                     <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.2em; color: #ffffff; margin-bottom: 15px; border-top: 1px solid #44505d; padding-top: 10px;">
                         <span>A COBRAR:</span> <span id="res-precio-total">$0</span>
                     </div>
+                    
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 0.9em; color: #9ca3af;" id="div-res-sena">
+                        <span id="lbl-res-sena">Seña sugerida (0%):</span> <span id="res-precio-sena" class="text-neutral-main">$0</span>
+                    </div>
 
                     <label style="font-size: 0.85em; color: #d1d5db;">Monto abonado por el cliente:</label>
                     <div style="display: flex; gap: 10px; margin-top: 5px;">
@@ -499,13 +536,11 @@
             </div>
         </div>
 
-        <!-- MODAL CONFIGURACION PANTALLA COMPLETA -->
         <div id="modal-config" class="modal-overlay">
             <div class="modal-content">
                 <h3 style="margin: 0; margin-bottom: 15px; border-bottom: 1px solid #44505d; padding-bottom: 10px;">⚙️ Configuración del Club</h3>
                 <div class="scroll-interno" style="text-align: left; display: flex; flex-direction: column; gap: 15px; max-height: 70vh; overflow-y: auto; padding-right: 5px;">
                     
-                    <!-- Acordeón: INFORMACIÓN -->
                     <div class="seccion-acordeon" style="margin-bottom: 0;">
                         <div class="header-acordeon" onclick="window.toggleAcordeon('ac-config-info')">
                             <span>Información</span> <span id="flecha-ac-config-info">🔽</span>
@@ -542,7 +577,6 @@
                         </div>
                     </div>
                     
-                    <!-- Acordeón: PÁDEL INDOOR -->
                     <div class="seccion-acordeon" style="margin-bottom: 0;">
                         <div class="header-acordeon" onclick="window.toggleAcordeon('ac-config-indoor')">
                             <span>Pádel Indoor</span> <span id="flecha-ac-config-indoor">🔽</span>
@@ -550,11 +584,11 @@
                         <div id="ac-config-indoor" class="contenido-acordeon">
                             <div style="display: flex; gap: 10px; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap;">
                                 <div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: #d1d5db;">Cant. Canchas:</label><input type="number" id="input-canchas-in" min="0" class="input-form" style="margin-top: 4px;"></div>
-                                <div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: #d1d5db;">Precio Turno ($):</label><input type="number" id="input-precio-in" step="500" class="input-form" style="margin-top: 4px;"></div>
+                                <div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: #d1d5db;">Precio x30 min ($):</label><input type="number" id="input-precio-in" step="100" class="input-form" style="margin-top: 4px;"></div>
                             </div>
                             <div style="display: flex; gap: 10px; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap;">
-                                <div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: #d1d5db;">Precio Profes ($):</label><input type="number" id="input-profe-in" step="500" class="input-form" placeholder="Ej: 8000" style="margin-top: 4px;"></div>
-                                <div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: #d1d5db;">Monto Seña ($):</label><input type="number" id="input-sena-in" step="500" class="input-form" placeholder="Ej: 3000" style="margin-top: 4px;"></div>
+                                <div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: #d1d5db;">Precio Profes x30 min ($):</label><input type="number" id="input-profe-in" step="100" class="input-form" placeholder="Ej: 3000" style="margin-top: 4px;"></div>
+                                <div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: #d1d5db;">Monto Seña (%):</label><input type="number" id="input-sena-in" step="1" max="100" min="0" class="input-form" placeholder="Ej: 20" style="margin-top: 4px;"></div>
                             </div>
                             <div style="margin-bottom: 12px;">
                                 <label style="font-size: 0.85em; color: #d1d5db;">Números/Nombres personalizados (separados por coma):</label>
@@ -572,7 +606,6 @@
                         </div>
                     </div>
 
-                    <!-- Acordeón: PÁDEL OUTDOOR -->
                     <div class="seccion-acordeon" style="margin-bottom: 0;">
                         <div class="header-acordeon" onclick="window.toggleAcordeon('ac-config-outdoor')">
                             <span>Pádel Outdoor</span> <span id="flecha-ac-config-outdoor">🔽</span>
@@ -580,11 +613,11 @@
                         <div id="ac-config-outdoor" class="contenido-acordeon">
                             <div style="display: flex; gap: 10px; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap;">
                                 <div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: #d1d5db;">Cant. Canchas:</label><input type="number" id="input-canchas-out" min="0" class="input-form" style="margin-top: 4px;"></div>
-                                <div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: #d1d5db;">Precio Turno ($):</label><input type="number" id="input-precio-out" step="500" class="input-form" style="margin-top: 4px;"></div>
+                                <div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: #d1d5db;">Precio x30 min ($):</label><input type="number" id="input-precio-out" step="100" class="input-form" style="margin-top: 4px;"></div>
                             </div>
                             <div style="display: flex; gap: 10px; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap;">
-                                <div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: #d1d5db;">Precio Profes ($):</label><input type="number" id="input-profe-out" step="500" class="input-form" placeholder="Ej: 8000" style="margin-top: 4px;"></div>
-                                <div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: #d1d5db;">Monto Seña ($):</label><input type="number" id="input-sena-out" step="500" class="input-form" placeholder="Ej: 3000" style="margin-top: 4px;"></div>
+                                <div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: #d1d5db;">Precio Profes x30 min ($):</label><input type="number" id="input-profe-out" step="100" class="input-form" placeholder="Ej: 3000" style="margin-top: 4px;"></div>
+                                <div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: #d1d5db;">Monto Seña (%):</label><input type="number" id="input-sena-out" step="1" max="100" min="0" class="input-form" placeholder="Ej: 20" style="margin-top: 4px;"></div>
                             </div>
                             <div style="margin-bottom: 12px;">
                                 <label style="font-size: 0.85em; color: #d1d5db;">Números/Nombres personalizados (separados por coma):</label>
@@ -602,7 +635,6 @@
                         </div>
                     </div>
 
-                    <!-- Acordeón: TENIS -->
                     <div class="seccion-acordeon">
                         <div class="header-acordeon" onclick="window.toggleAcordeon('ac-config-tenis')">
                             <span>Tenis</span> <span id="flecha-ac-config-tenis">🔽</span>
@@ -610,11 +642,11 @@
                         <div id="ac-config-tenis" class="contenido-acordeon">
                             <div style="display: flex; gap: 10px; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap;">
                                 <div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: #d1d5db;">Cant. Canchas:</label><input type="number" id="input-canchas-tenis" min="0" class="input-form" style="margin-top: 4px;"></div>
-                                <div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: #d1d5db;">Precio Turno ($):</label><input type="number" id="input-precio-tenis" step="500" class="input-form" style="margin-top: 4px;"></div>
+                                <div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: #d1d5db;">Precio x30 min ($):</label><input type="number" id="input-precio-tenis" step="100" class="input-form" style="margin-top: 4px;"></div>
                             </div>
                             <div style="display: flex; gap: 10px; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap;">
-                                <div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: #d1d5db;">Precio Profes ($):</label><input type="number" id="input-profe-tenis" step="500" class="input-form" placeholder="Ej: 8000" style="margin-top: 4px;"></div>
-                                <div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: #d1d5db;">Monto Seña ($):</label><input type="number" id="input-sena-tenis" step="500" class="input-form" placeholder="Ej: 3000" style="margin-top: 4px;"></div>
+                                <div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: #d1d5db;">Precio Profes x30 min ($):</label><input type="number" id="input-profe-tenis" step="100" class="input-form" placeholder="Ej: 3000" style="margin-top: 4px;"></div>
+                                <div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: #d1d5db;">Monto Seña (%):</label><input type="number" id="input-sena-tenis" step="1" max="100" min="0" class="input-form" placeholder="Ej: 20" style="margin-top: 4px;"></div>
                             </div>
                             <div style="margin-bottom: 12px;">
                                 <label style="font-size: 0.85em; color: #d1d5db;">Números/Nombres personalizados (separados por coma):</label>
@@ -638,7 +670,6 @@
             </div>
         </div>
         
-    <!-- --- LÓGICA JAVASCRIPT --- -->
     <script>
         // VARIABLES GLOBALES (Modo Local / Sin Firebase)
         window.formatearDinero = function(numero) { return Number(numero).toLocaleString('es-AR'); };
@@ -653,14 +684,14 @@
 
         let primerTurno = "08:00"; let ultimoTurno = "21:30"; let duracionGlobal = 90; 
         let canchasIndoorGlobal = 1; let canchasOutdoorGlobal = 0; let canchasTenisGlobal = 0;
-        let precioIndoorGlobal = "15000"; let precioOutdoorGlobal = "12000"; let precioTenisGlobal = "10000";
+        let precioIndoorGlobal = "5000"; let precioOutdoorGlobal = "4000"; let precioTenisGlobal = "3500";
         let diasAbiertosGlobal = [0,1,2,3,4,5,6]; let telefonoClubGlobal = ""; let ubicacionClubGlobal = "";
         let nombresCanchasGlobal = [];
 
         // --- NUEVAS VARIABLES GLOBALES ---
-        let profeIndoorGlobal = "0"; let senaIndoorGlobal = "0"; let nombresIndoorGlobal = []; let duracionIndoorGlobal = 90; 
-        let profeOutdoorGlobal = "0"; let senaOutdoorGlobal = "0"; let nombresOutdoorGlobal = []; let duracionOutdoorGlobal = 90; 
-        let profeTenisGlobal = "0"; let senaTenisGlobal = "0"; let nombresTenisGlobal = []; let duracionTenisGlobal = 90; 
+        let profeIndoorGlobal = "0"; let senaIndoorGlobal = "20"; let nombresIndoorGlobal = []; let duracionIndoorGlobal = 90; 
+        let profeOutdoorGlobal = "0"; let senaOutdoorGlobal = "20"; let nombresOutdoorGlobal = []; let duracionOutdoorGlobal = 90; 
+        let profeTenisGlobal = "0"; let senaTenisGlobal = "20"; let nombresTenisGlobal = []; let duracionTenisGlobal = 90; 
         let fotoClubGlobal = "";
 
         // DATOS EN MEMORIA
@@ -842,7 +873,7 @@
                         let iconEvento = res.tipoEvento === "Especial" ? "⭐ " : (res.esClase ? "🧑‍🏫 " : "");
                         let textoSecundario = res.esClase ? `<br><span style="font-size:0.85em; opacity:0.8;">Profe: ${res.profe}</span>` : '';
                         
-                        let factorPrecio = dur / duracionGlobal;
+                        let factorPrecio = dur / 30; // Modificado: multiplicador por bloques de 30 min
                         let pCancha = c <= canchasIndoorGlobal ? parseInt(precioIndoorGlobal) : (c <= maxPadel ? parseInt(precioOutdoorGlobal) : parseInt(precioTenisGlobal));
                         pCancha = pCancha * factorPrecio; 
                         let totalConsumos = (res.consumos || []).reduce((acc, curr) => acc + parseFloat(curr.precio), 0) - (parseFloat(res.descuento) || 0);
@@ -940,22 +971,32 @@
             document.getElementById('btn-whatsapp').style.display = (res.telefono && res.telefono.trim() !== "") ? 'block' : 'none';
             document.getElementById('btn-excepcion').style.display = res.fijo ? 'block' : 'none';
             
-           let factorPrecio = (res.duracion || duracionGlobal) / duracionGlobal;
+            let factorPrecio = (res.duracion || duracionGlobal) / 30; // Multiplicador por bloques de 30 min
             let cNum = parseInt(res.cancha || "1"); let maxP = canchasIndoorGlobal + canchasOutdoorGlobal;
             let pCancha = 0;
+            let senaPorcentaje = 0;
             
-            // Evaluamos si es clase para aplicar la tarifa de profesor
             if (res.esClase) {
                 pCancha = cNum <= canchasIndoorGlobal ? parseInt(profeIndoorGlobal) : (cNum <= maxP ? parseInt(profeOutdoorGlobal) : parseInt(profeTenisGlobal));
             } else {
                 pCancha = cNum <= canchasIndoorGlobal ? parseInt(precioIndoorGlobal) : (cNum <= maxP ? parseInt(precioOutdoorGlobal) : parseInt(precioTenisGlobal));
             }
             
+            senaPorcentaje = cNum <= canchasIndoorGlobal ? parseInt(senaIndoorGlobal) : (cNum <= maxP ? parseInt(senaOutdoorGlobal) : parseInt(senaTenisGlobal));
+            
             pCancha = pCancha * factorPrecio; 
             let totalConsumos = (res.consumos || []).reduce((acc, curr) => acc + (parseFloat(curr.precio) || 0), 0);
             let desc = parseFloat(res.descuento) || 0; let totalGeneral = pCancha + totalConsumos - desc; if(totalGeneral < 0) totalGeneral = 0;
             
-            document.getElementById('res-precio-cancha').innerText = `$${window.formatearDinero(pCancha)}`; document.getElementById('res-precio-consumos').innerText = `$${window.formatearDinero(totalConsumos)}`; document.getElementById('res-precio-total').innerText = `$${window.formatearDinero(totalGeneral)}`;
+            let montoSenaCalculado = (totalGeneral * (senaPorcentaje || 0)) / 100;
+            
+            document.getElementById('res-precio-cancha').innerText = `$${window.formatearDinero(pCancha)}`; 
+            document.getElementById('res-precio-consumos').innerText = `$${window.formatearDinero(totalConsumos)}`; 
+            document.getElementById('res-precio-total').innerText = `$${window.formatearDinero(totalGeneral)}`;
+            
+            // Actualizar etiqueta de seña
+            document.getElementById('lbl-res-sena').innerText = `Seña sugerida (${senaPorcentaje || 0}%):`;
+            document.getElementById('res-precio-sena').innerText = `$${window.formatearDinero(montoSenaCalculado)}`;
             
             let sel = document.getElementById('select-consumo-turno'); sel.innerHTML = '<option value="" disabled selected>Elegir producto...</option>';
             inventarioGlobal.forEach(p => { if((parseInt(p.stock) || 0) > 0) sel.innerHTML += `<option value="${p.id}">${p.nombre} - $${window.formatearDinero(p.precio)}</option>`; });
@@ -1010,7 +1051,7 @@
             } else {
                 pCancha = cNum <= canchasIndoorGlobal ? parseInt(precioIndoorGlobal) : (cNum <= maxP ? parseInt(precioOutdoorGlobal) : parseInt(precioTenisGlobal));
             }
-            pCancha = pCancha * ((res.duracion || duracionGlobal) / duracionGlobal);
+            pCancha = pCancha * ((res.duracion || duracionGlobal) / 30);
             let tGen = pCancha + (res.consumos || []).reduce((acc, c) => acc + parseFloat(c.precio), 0) - (parseFloat(document.getElementById('pago-descuento').value) || 0);
             if(tGen < 0) tGen = 0; let faltante = tGen - ((parseFloat(document.getElementById('pago-efectivo').value) || 0) + (parseFloat(document.getElementById('pago-transferencia').value) || 0));
             let txt = document.getElementById('txt-faltante'); document.getElementById('res-precio-total').innerText = `$${window.formatearDinero(tGen)}`;
@@ -1067,7 +1108,12 @@
         window.accionWhatsApp = function() {
             if(reservaSeleccionadaId) {
                 const r = reservasGlobales.find(x => x.id === reservaSeleccionadaId);
-                if(r && r.telefono) { window.open(`https://wa.me/${r.telefono.replace(/\D/g,'')}?text=Hola`, '_blank'); }
+                if(r && r.telefono) {
+                    let cNum = parseInt(r.cancha || "1"); let maxP = canchasIndoorGlobal + canchasOutdoorGlobal;
+                    let pCancha = (cNum <= canchasIndoorGlobal ? parseInt(precioIndoorGlobal) : (cNum <= maxP ? parseInt(precioOutdoorGlobal) : parseInt(precioTenisGlobal))) * ((r.duracion || duracionGlobal) / 30);
+                    let precioFinal = pCancha - (parseFloat(r.descuento) || 0);
+                    window.open(`https://wa.me/${r.telefono.replace(/\D/g,'')}?text=${encodeURIComponent(`Hola ${r.jugador}, confirmamos tu turno a las ${r.hora} hs. A abonar: $${window.formatearDinero(precioFinal)}. Te esperamos!`)}`, '_blank'); 
+                }
             }
         }
 
@@ -1106,7 +1152,7 @@
 
                 let cNum = parseInt(c.cancha || "1"); let maxP = canchasIndoorGlobal + canchasOutdoorGlobal;
                 let pBase = cNum <= canchasIndoorGlobal ? parseInt(profeIndoorGlobal) : (cNum <= maxP ? parseInt(profeOutdoorGlobal) : parseInt(profeTenisGlobal));
-                let pCancha = (pBase || 0) * ((c.duracion||duracionGlobal)/duracionGlobal);
+                let pCancha = (pBase || 0) * ((c.duracion||duracionGlobal)/30);
                 let tGen = pCancha + (c.consumos||[]).reduce((acc, x) => acc + parseFloat(x.precio), 0) - (parseFloat(c.descuento)||0);
                 let ab = (parseFloat(c.pagoEfectivo)||0) + (parseFloat(c.pagoTransferencia)||0);
                 
@@ -1220,7 +1266,6 @@
             let finLim = new Date();
 
             if (!desdeVal || !hastaVal) {
-                // Si no elige fechas, agarramos el filtro antiguo o por defecto (todo)
                 lim = new Date(2000, 0, 1);
             } else {
                 lim = new Date(desdeVal + 'T00:00:00');
