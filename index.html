@@ -1465,6 +1465,27 @@
             const etiquetas = cestas.map(c => c.label); const ctx = document.getElementById('graficoMetricas').getContext('2d');
             if (metricasChart) { metricasChart.destroy(); }
             metricasChart = new Chart(ctx, { type: 'bar', data: { labels: etiquetas, datasets: [ { label: labelBarras, data: datosBarras, backgroundColor: categoria === 'gastos' ? '#ef4444' : '#3b82f6', borderRadius: 4, order: 2 }, { label: labelLinea, data: datosLinea, type: 'line', borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', borderWidth: 3, fill: true, tension: 0.3, order: 1 } ] }, options: { responsive: true, maintainAspectRatio: false, color: '#d1d5db', plugins: { legend: { labels: { color: '#d1d5db', font: { family: "'Segoe UI', sans-serif" } } }, tooltip: { mode: 'index', intersect: false, callbacks: { label: function(context) { let label = context.dataset.label || ''; let value = context.parsed.y; if (label) { label += ': '; } if (esDinero && context.datasetIndex === 0) { label += '$' + value.toLocaleString('es-AR'); } else { label += value; } return label; } } } }, scales: { y: { beginAtZero: true, grid: { color: '#2c3540' }, ticks: { color: '#9ca3af', callback: function(value) { return esDinero ? '$' + value.toLocaleString('es-AR') : value; } } }, x: { grid: { display: false }, ticks: { color: '#9ca3af' } } } } });
+            
+            // --- NUEVO: GENERAR TABLA DE DATOS ---
+            const tbMetricas = document.getElementById('tabla-datos-metricas');
+            document.getElementById('th-linea').innerText = labelLinea;
+            document.getElementById('th-barras').innerText = labelBarras;
+            
+            if(tbMetricas) {
+                tbMetricas.innerHTML = '';
+                for(let i=0; i<etiquetas.length; i++) {
+                    let valBarra = esDinero ? '$' + window.formatearDinero(datosBarras[i]) : window.formatearDinero(datosBarras[i]);
+                    let valLinea = window.formatearDinero(datosLinea[i]);
+                    
+                    tbMetricas.innerHTML += `
+                        <tr style="border-bottom: 1px solid #2c3540;">
+                            <td style="padding: 8px;">${etiquetas[i]}</td>
+                            <td style="text-align: center; color: #10b981; font-weight: bold;">${valLinea}</td>
+                            <td style="text-align: right; color: #3b82f6; font-weight: bold;">${valBarra}</td>
+                        </tr>
+                    `;
+                }
+            }
         }
     </script>
 </body>
