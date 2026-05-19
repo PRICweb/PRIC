@@ -1669,6 +1669,349 @@
                 }
             }
         }
-    </script>
+// --- ESTADO Y VARIABLES GLOBALES DE TORNEOS ---
+        let torneos = JSON.parse(localStorage.getItem('profTorneos')) || [];
+        let torneoActivoId = null;
+
+        // --- FUNCIONES UI DE UTILIDAD ---
+        function switchView(viewId) {
+            // Ocultamos la pantalla principal del club explícitamente si existe
+            const pantallaClub = document.getElementById('pantalla-club');
+            if (pantallaClub) pantallaClub.style.display = 'none';
+            
+            // Ocultamos todas las vistas secundarias
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            
+            // Si nos piden volver a la pantalla principal
+            if (viewId === 'pantalla-club') {
+                if (pantallaClub) pantallaClub.style.display = 'block';
+                return;
+            }
+            
+            // Mostramos la vista solicitada
+            const targetView = document.getElementById(viewId);
+            if (targetView) targetView.classList.add('active');
+            
+            if(viewId === 'view-torneos') renderizarListaTorneos();
+        }
+        
+        function abrirModal(modalId) { document.getElementById(modalId).style.display = 'flex'; }
+        function cerrarModal(modalId) { document.getElementById(modalId).style.display = 'none'; }
+
+        // --- LÓGICA DE CREACIÓN Y LISTADO ---
+        function toggleRelampago() {
+            const val = document.getElementById('tornFormato').value;
+            document.getElementById('containerGamesSet').style.display = val === 'Relámpago' ? 'block' : 'none';
+        }
+
+        function guardarNuevoTorneo() {
+            const isRelampago = document.getElementById('tornFormato').value === 'Relámpago';
+            const nuevo = {
+                id: Date.now(), 
+                estado: 'inscripcion', // Estados: inscripcion | grupos | llaves | finalizado
+                formato: document.getElementById('tornFormato').value,
+                gamesPorSet: isRelampago ? parseInt(document.getElementById('tornGamesPorSet').value) : 6,
+                categoria: document.getElementById('tornCategoria').value,
+                fecha: document.getElementById('tornFecha').value,
+                horaInicio: document.getElementById('tornHoraInicio').value,
+                horaFin: document.getElementById('tornHoraFin').value,
+                canchas: parseInt(document.getElementById('tornCanchas').value),
+                precio: document.getElementById('tornPrecio').value,
+                minParejas: parseInt(document.getElementById('tornMinParejas').value) || 4,
+                maxParejas: document.getElementById('tornNoLimit').checked ? null : parseInt(document.getElementById('tornMaxParejas').value),
+                tamanoGrupo: parseInt(document.getElementById('tornTamGrupo').value),
+                premio: document.getElementById('tornPremio').value,
+                parejas: [], 
+                grupos: [], 
+                llaves: []
+            };
+            
+            torneos.unshift(nuevo); 
+            localStorage.setItem('profTorneos', JSON.stringify(torneos));
+            cerrarModal('modal-crear-torneo'); 
+            renderizarListaTorneos();
+        }
+
+        function renderizarListaTorneos() {
+            const c = document.getElementById('listaTorneosContainer'); 
+            c.innerHTML = '';
+            if(torneos.length === 0) return c.innerHTML = '<p style="color:var(--text-muted); text-align:center;">No hay torneos creados.</p>';
+            
+            const b = { 
+                'inscripcion': '<span class="badge badge-inscripcion">Inscripción</span>', 
+                'grupos': '<span class="badge badge-grupos">Fase Grupos</span>', 
+                'llaves': '<span class="badge badge-llaves">Llaves Finales</span>', 
+                'finalizado': '<span class="badge badge-finalizado">Finalizado</span>' 
+            };
+            
+            torneos.forEach(t => {
+                let txtCupo = t.maxParejas ? `${t.parejas.length}/${t.maxParejas}` : `${t.parejas.length} (Mín. ${t.minParejas})`;
+                c.innerHTML += `
+                <div class="torneo-card" onclick="verTorneo(${t.id})">
+                    <div class="torneo-header">
+                        <h3>Torneo ${t.categoria} - ${t.formato}</h3>
+                        ${b[t.estado]}
+                    </div>
+                    <div style="font-size: 0.9rem; color: var(--text-muted); display:flex; gap: 15px;">
+                        <span>📅 ${t.fecha || 'Sin fecha'}</span>
+                        <span>👥 Parejas: ${txtCupo}</span>
+                        <span>🏆 Premio: ${t.premio || '-'}</span>
+                    </div>
+                </div>`;
+            });
+        }
+
+        // --- LÓGICA DE DETALLE Y GESTIÓN DE PAREJAS ---
+        function verTorneo(id) {
+            torneoActivoId = id; 
+            const t = torneos.find(x => x.id === id);
+            document.getElementById('torneoDetalleTitulo').innerText = `Torneo ${t.categoria} (${t.formato})`;
+            renderizarDetalleTorneo(); 
+            switchView('view-torneo-detalle');
+        }
+
+        function eliminarTorneo(id) {
+            if(!confirm('¿Estás seguro de que quieres eliminar definitivamente este torneo?')) return;
+            torneos = torneos.filter(t => t.id !== id);
+            localStorage.setItem('profTorneos', JSON.stringify(torneos));
+            switchView('view-torneos');
+        }
+
+        function agregarPareja() {
+            const j1 = document.getElementById('pJugador1').value;
+            const j2 = document.getElementById('pJugador2').value;
+            if(!j1 || !j2) return alert('Ingresa ambos jugadores');
+            
+            const t = torneos.find(x => x.id === torneoActivoId);
+            t.parejas.push({ id: Date.now(), j1, j2 });
+            localStorage.setItem('profTorneos', JSON.stringify(torneos));
+            document.getElementById('pJugador1').value = ''; 
+            document.getElementById('pJugador2').value = '';
+            renderizarDetalleTorneo();
+        }
+
+        function quitarPareja(index) {
+            const t = torneos.find(x => x.id === torneoActivoId); 
+            t.parejas.splice(index, 1);
+            localStorage.setItem('profTorneos', JSON.stringify(torneos)); 
+            renderizarDetalleTorneo();
+        }
+
+        // --- LÓGICA DE FASE DE GRUPOS ---
+        function iniciarFaseGrupos() {
+            const t = torneos.find(x => x.id === torneoActivoId);
+            t.estado = 'grupos';
+            let numGrupos = Math.ceil(t.parejas.length / t.tamanoGrupo);
+            
+            for(let i=0; i<numGrupos; i++) {
+                t.grupos.push({ nombre: String.fromCharCode(65+i), parejas: [], partidos: [] });
+            }
+            
+            t.parejas.forEach((p, i) => t.grupos[i % numGrupos].parejas.push(p));
+            
+            t.grupos.forEach(g => {
+                for(let i=0; i<g.parejas.length; i++) {
+                    for(let j=i+1; j<g.parejas.length; j++) {
+                        g.partidos.push({ pA: g.parejas[i], pB: g.parejas[j] });
+                    }
+                }
+            });
+            
+            localStorage.setItem('profTorneos', JSON.stringify(torneos)); 
+            renderizarDetalleTorneo();
+        }
+
+        function guardarResGrupo(gIdx, pIdx, prop, val) {
+            const t = torneos.find(x => x.id === torneoActivoId);
+            t.grupos[gIdx].partidos[pIdx][prop] = val;
+            localStorage.setItem('profTorneos', JSON.stringify(torneos));
+        }
+
+        // --- LÓGICA DE LLAVES (ELIMINATORIAS) ---
+        function generarLlaves() {
+            if(!confirm('¿Pasar a eliminatorias? Asegurate de cargar todos los resultados de la fase de grupos.')) return;
+            const t = torneos.find(x => x.id === torneoActivoId);
+            t.estado = 'llaves'; 
+            t.llaves = [];
+            
+            let todosLosJugadores = [];
+
+            // Calcular stats (Ganados y Diferencia de Games)
+            t.grupos.forEach((g, gIdx) => {
+                let stats = g.parejas.map(p => ({ p: p, partidosGanados: 0, jFavor: 0, jContra: 0, grupo: g.nombre }));
+                
+                g.partidos.forEach(m => {
+                    let sA = stats.find(s => s.p.id === m.pA.id);
+                    let sB = stats.find(s => s.p.id === m.pB.id);
+                    let setsA = 0, setsB = 0;
+                    
+                    for(let i=1; i<=3; i++) {
+                        let vA = parseInt(m[`s${i}A`]), vB = parseInt(m[`s${i}B`]);
+                        if(!isNaN(vA) && !isNaN(vB)) {
+                            sA.jFavor += vA; sA.jContra += vB;
+                            sB.jFavor += vB; sB.jContra += vA;
+                            if(vA > vB) setsA++; else if(vB > vA) setsB++;
+                        }
+                    }
+                    if(setsA > setsB) sA.partidosGanados++; else if(setsB > setsA) sB.partidosGanados++;
+                });
+
+                stats.forEach(s => s.dif = s.jFavor - s.jContra);
+                stats.sort((a,b) => b.partidosGanados !== a.partidosGanados ? b.partidosGanados - a.partidosGanados : b.dif - a.dif);
+                stats.forEach((s, i) => s.posicionGrupo = i + 1);
+                todosLosJugadores.push(...stats);
+            });
+
+            // Ordenamiento Global
+            todosLosJugadores.sort((a, b) => {
+                if (a.posicionGrupo !== b.posicionGrupo) return a.posicionGrupo - b.posicionGrupo;
+                if (b.partidosGanados !== a.partidosGanados) return b.partidosGanados - a.partidosGanados;
+                return b.dif - a.dif;
+            });
+
+            // Generar Bracket perfecto (Potencias de 2)
+            let targetPotencia = Math.pow(2, Math.floor(Math.log2(t.parejas.length)));
+            if (targetPotencia < 2) targetPotencia = 2;
+
+            let clasificadosStats = todosLosJugadores.slice(0, targetPotencia);
+            let emparejados = [];
+
+            // Seeding: Tratar de no emparejar gente del mismo grupo en 1ra ronda
+            while(clasificadosStats.length > 0) {
+                let sA = clasificadosStats.shift();
+                let idxB = clasificadosStats.length - 1; 
+                for(let i = clasificadosStats.length - 1; i >= Math.floor(clasificadosStats.length / 2); i--) {
+                    if(clasificadosStats[i].grupo !== sA.grupo) {
+                        idxB = i;
+                        break;
+                    }
+                }
+                let sB = clasificadosStats.splice(idxB, 1)[0];
+                emparejados.push({ pA: sA.p, pB: sB ? sB.p : null });
+            }
+
+            // Ordenamiento de bracket estilo ATP
+            let orderedPartidos = [];
+            if(emparejados.length === 2) { 
+                orderedPartidos = [emparejados[0], emparejados[1]];
+            } else if (emparejados.length === 4) { 
+                orderedPartidos = [emparejados[0], emparejados[3], emparejados[2], emparejados[1]];
+            } else if (emparejados.length === 8) { 
+                orderedPartidos = [emparejados[0], emparejados[7], emparejados[4], emparejados[3], emparejados[2], emparejados[5], emparejados[6], emparejados[1]];
+            } else {
+                orderedPartidos = emparejados; 
+            }
+
+            function getNombreRonda(n) { 
+                if(n===2) return 'Final'; if(n===4) return 'Semifinales'; 
+                if(n===8) return 'Cuartos de Final'; if(n===16) return 'Octavos de Final'; 
+                return `1/${n/2} de Final`; 
+            }
+
+            // Construir estructura de rondas
+            let tempTarget = targetPotencia;
+            while(tempTarget >= 2) {
+                let partidos = [];
+                for(let i=0; i<tempTarget/2; i++) partidos.push({pA: null, pB: null, ganador: null});
+                t.llaves.push({ nombre: getNombreRonda(tempTarget), partidos });
+                tempTarget /= 2;
+            }
+
+            // Asignar primera ronda
+            for(let i=0; i<orderedPartidos.length; i++) {
+                t.llaves[0].partidos[i].pA = orderedPartidos[i].pA;
+                t.llaves[0].partidos[i].pB = orderedPartidos[i].pB;
+            }
+
+            localStorage.setItem('profTorneos', JSON.stringify(torneos)); 
+            renderizarDetalleTorneo();
+        }
+
+        function avanzarLogicaInterna(t, rIdx, mIdx, ganadorVal) {
+            let m = t.llaves[rIdx].partidos[mIdx];
+            m.ganador = ganadorVal;
+            let parejaGanadora = ganadorVal === 'A' ? m.pA : m.pB;
+            if(rIdx + 1 < t.llaves.length) {
+                let nextMIdx = Math.floor(mIdx / 2);
+                let esA = mIdx % 2 === 0;
+                if(esA) t.llaves[rIdx+1].partidos[nextMIdx].pA = parejaGanadora;
+                else t.llaves[rIdx+1].partidos[nextMIdx].pB = parejaGanadora;
+            }
+        }
+
+        function avanzarGanador(rIdx, mIdx, val) {
+            const t = torneos.find(x => x.id === torneoActivoId);
+            avanzarLogicaInterna(t, rIdx, mIdx, val);
+            localStorage.setItem('profTorneos', JSON.stringify(torneos)); 
+            renderizarDetalleTorneo();
+        }
+
+        function finalizarTorneo() {
+            if(!confirm('¿Estás seguro de finalizar el torneo?')) return;
+            const t = torneos.find(x => x.id === torneoActivoId); 
+            t.estado = 'finalizado';
+            localStorage.setItem('profTorneos', JSON.stringify(torneos)); 
+            renderizarDetalleTorneo(); 
+            renderizarListaTorneos();
+        }
+
+        // --- RENDERIZADO DEL DETALLE ---
+        function renderizarDetalleTorneo() {
+            const t = torneos.find(x => x.id === torneoActivoId);
+            const cont = document.getElementById('torneoDetalleContenido'); 
+            cont.innerHTML = '';
+
+            let topBar = `
+                <div class="torneo-info-bar">
+                    <div><span>Fecha</span><strong>${t.fecha || '-'}</strong></div>
+                    <div><span>Horario</span><strong>${t.horaInicio||'-'} a ${t.horaFin||'-'}</strong></div>
+                    <div><span>Canchas</span><strong>${t.canchas || '-'}</strong></div>
+                    <div><span>Inscripción</span><strong>$${t.precio || '-'}</strong></div>
+                    <div><span>Formato</span><strong>${t.formato} ${t.formato==='Relámpago' ? `(${t.gamesPorSet} g)` : ''}</strong></div>
+                </div>
+            `;
+            
+            cont.innerHTML += topBar;
+
+            if(t.estado === 'inscripcion') {
+                let puedeIniciar = t.parejas.length >= t.minParejas;
+                let limiteAlcanzado = t.maxParejas !== null && t.parejas.length >= t.maxParejas;
+                
+                cont.innerHTML += `
+                    <div style="margin-top: 15px;">
+                        <h4 style="color: var(--blue-accent);">Gestión de Inscripciones</h4>
+                        <p style="color: var(--text-muted); font-size: 0.9em;">Parejas inscriptas: ${t.parejas.length} (Mínimo requerido: ${t.minParejas})</p>
+                        
+                        <div style="display:flex; gap:10px; margin-bottom: 15px;">
+                            <input type="text" id="pJugador1" class="input-form" placeholder="Nombre Jugador 1" ${limiteAlcanzado ? 'disabled' : ''}>
+                            <input type="text" id="pJugador2" class="input-form" placeholder="Nombre Jugador 2" ${limiteAlcanzado ? 'disabled' : ''}>
+                            <button class="btn-modal btn-guardar" style="width: auto; padding: 8px 15px;" onclick="agregarPareja()" ${limiteAlcanzado ? 'disabled' : ''}>Añadir Pareja</button>
+                        </div>
+                        
+                        <ul style="list-style: none; padding: 0;">
+                            ${t.parejas.map((p, i) => `
+                                <li style="display:flex; justify-content:space-between; padding: 8px; border-bottom: 1px solid var(--border-color);">
+                                    <span>${p.j1} / ${p.j2}</span>
+                                    <button onclick="quitarPareja(${i})" style="background:none; border:none; color: var(--danger); cursor:pointer;">❌</button>
+                                </li>
+                            `).join('')}
+                        </ul>
+                        
+                        <div style="margin-top: 20px; display: flex; gap: 10px;">
+                            <button class="btn-modal btn-guardar" style="background-color: var(--warning); width: auto;" onclick="iniciarFaseGrupos()" ${!puedeIniciar ? 'disabled' : ''}>Iniciar Fase de Grupos</button>
+                            <button class="btn-modal btn-cerrar" style="background-color: var(--danger); width: auto;" onclick="eliminarTorneo(${t.id})">Eliminar Torneo</button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                cont.innerHTML += `
+                    <div style="margin-top: 20px; text-align:center;">
+                        <p style="color: var(--text-muted);">El torneo ya avanzó de la fase de inscripción. Agregá aquí la visualización de grupos o llaves según necesites.</p>
+                        <button class="btn-modal btn-cerrar" style="background-color: var(--danger); width: auto; margin-top: 15px;" onclick="eliminarTorneo(${t.id})">Eliminar Torneo de prueba</button>
+                    </div>
+                `;
+            }
+        }    
+        </script>
 </body>
 </html>
