@@ -757,8 +757,116 @@
                 <button class="btn-modal btn-cerrar" style="margin-top: 0;" onclick="window.cerrarModalConfig()">Volver al Panel</button>
             </div>
         </div>
-        
-    <script>
+    <!-- --- MÓDULO DE TORNEOS --- -->
+        <div id="view-torneos" class="view">
+            <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0; font-size: 1.6em; color: white;">🏆 Torneos</h2>
+                <div class="header-actions">
+                    <button class="btn-modal btn-cerrar" style="margin:0; width:auto; padding: 8px 15px;" onclick="switchView('pantalla-club')">Volver al Club</button>
+                </div>
+            </header>
+            
+            <button class="btn-modal btn-gasto" style="margin-bottom: 20px; width: auto; padding: 10px 20px;" onclick="abrirModal('modal-crear-torneo')">+ Crear Nuevo Torneo</button>
+            
+            <div id="listaTorneosContainer"></div>
+        </div>
+
+        <div id="view-torneo-detalle" class="view">
+            <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0; font-size: 1.6em; color: white;" id="torneoDetalleTitulo">Torneo</h2>
+                <div class="header-actions">
+                    <button class="btn-modal btn-cerrar" style="margin:0; width:auto; padding: 8px 15px;" onclick="switchView('view-torneos')">Atrás</button>
+                </div>
+            </header>
+            
+            <div id="torneoDetalleContenido" style="background-color: var(--bg-panel); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color);">
+            </div>
+        </div>
+
+        <div class="modal-overlay" id="modal-crear-torneo" style="z-index: 1200;">
+            <div class="modal-content scroll-interno" style="max-width: 600px;">
+                <h3 style="margin-top:0; border-bottom: 1px solid #44505d; padding-bottom: 10px;">🏆 Crear Torneo</h3>
+                
+                <div style="display: flex; flex-direction: column; gap: 15px; text-align: left; margin-top: 10px;">
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 140px;">
+                            <label style="font-size: 0.85em; color: #d1d5db;">Formato (Sets)</label>
+                            <select id="tornFormato" class="input-form" onchange="toggleRelampago()" style="margin-top: 4px;">
+                                <option value="Clásico">Clásico (Mejor de 3 sets)</option>
+                                <option value="Relámpago">Relámpago (1 set)</option>
+                            </select>
+                        </div>
+                        <div style="flex: 1; min-width: 140px; display:none;" id="containerGamesSet">
+                            <label style="font-size: 0.85em; color: #d1d5db;">Games por Set</label>
+                            <select id="tornGamesPorSet" class="input-form" style="margin-top: 4px;">
+                                <option value="6">6 Games</option>
+                                <option value="9">9 Games</option>
+                            </select>
+                        </div>
+                        <div style="flex: 1; min-width: 140px;">
+                            <label style="font-size: 0.85em; color: #d1d5db;">Categoría</label>
+                            <select id="tornCategoria" class="input-form" style="margin-top: 4px;">
+                                <option>8va</option><option>7ma</option><option>6ta</option><option>5ta</option><option>4ta</option><option>3ra</option><option>2da</option><option>1ra</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 140px;">
+                            <label style="font-size: 0.85em; color: #d1d5db;">Fecha(s)</label>
+                            <input type="text" id="tornFecha" class="input-form" placeholder="Ej: 15/05 al 16/05" style="margin-top: 4px;">
+                        </div>
+                        <div style="flex: 1; min-width: 140px;">
+                            <label style="font-size: 0.85em; color: #d1d5db;">Horario</label>
+                            <div style="display:flex; gap:5px; margin-top: 4px;">
+                                <input type="time" id="tornHoraInicio" class="input-form">
+                                <input type="time" id="tornHoraFin" class="input-form">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 140px;">
+                            <label style="font-size: 0.85em; color: #d1d5db;">Mínimo de Parejas</label>
+                            <input type="number" id="tornMinParejas" class="input-form" value="4" min="2" style="margin-top: 4px;">
+                        </div>
+                        <div style="flex: 1; min-width: 140px;">
+                            <label style="font-size: 0.85em; color: #d1d5db;">Límite Inscripciones</label>
+                            <div style="display:flex; align-items:center; gap: 10px; margin-top: 4px;">
+                                <input type="checkbox" id="tornNoLimit" checked onchange="document.getElementById('tornMaxParejas').disabled = this.checked; if(this.checked) document.getElementById('tornMaxParejas').value='';" style="width:auto;">
+                                <small style="color: #9ca3af;">Sin límite</small>
+                            </div>
+                            <input type="number" id="tornMaxParejas" class="input-form" disabled placeholder="Máx..." style="margin-top: 5px;">
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 140px;">
+                            <label style="font-size: 0.85em; color: #d1d5db;">Tamaño de Grupos</label>
+                            <select id="tornTamGrupo" class="input-form" style="margin-top: 4px;">
+                                <option value="3">3 parejas / grupo</option>
+                                <option value="4" selected>4 parejas / grupo</option>
+                                <option value="5">5 parejas / grupo</option>
+                            </select>
+                        </div>
+                        <div style="flex: 1; min-width: 140px;">
+                            <label style="font-size: 0.85em; color: #d1d5db;">Canchas a Usar</label>
+                            <input type="number" id="tornCanchas" class="input-form" value="2" min="1" style="margin-top: 4px;">
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: #d1d5db;">Precio Inscripción ($)</label><input type="number" id="tornPrecio" class="input-form" placeholder="Ej: 5000" style="margin-top: 4px;"></div>
+                        <div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: #d1d5db;">Premio</label><input type="text" id="tornPremio" class="input-form" placeholder="Ej: Paleta + Bolso" style="margin-top: 4px;"></div>
+                    </div>
+                </div>
+
+                <button class="btn-modal btn-guardar" style="margin-top: 20px;" onclick="guardarNuevoTorneo()">Guardar Torneo</button>
+                <button class="btn-modal btn-cerrar" style="margin-top: 10px;" onclick="cerrarModal('modal-crear-torneo')">Cancelar</button>
+            </div>
+        </div>    
+    
+        <script>
         // VARIABLES GLOBALES (Modo Local / Sin Firebase)
         window.formatearDinero = function(numero) { return Number(numero).toLocaleString('es-AR'); };
 
