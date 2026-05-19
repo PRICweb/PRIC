@@ -2009,6 +2009,30 @@ function cerrarModalTorneo(modalId) { document.getElementById(modalId).style.dis
                         <button class="btn-modal btn-cerrar" style="background-color: var(--danger); width: auto; margin-top: 15px;" onclick="eliminarTorneo(${t.id})">Eliminar Torneo de prueba</button>
                     </div>
                 `;
+                // Carga las opciones de fecha (max 14 días) y horarios según configuración
+function cargarOpcionesTorneo() {
+    const selFecha = document.getElementById('tornFecha');
+    const selHora = document.getElementById('tornHoraInicio');
+    
+    // Cargar fechas (próximos 14 días)
+    selFecha.innerHTML = '';
+    fechasValidas.slice(0, 15).forEach(f => {
+        selFecha.innerHTML += `<option value="${f}">${f}</option>`;
+    });
+    
+    // Cargar horas (cada 30 min, respetando configuración)
+    selHora.innerHTML = '';
+    let minInicio = window.aMinutos(primerTurno);
+    let minFin = window.aMinutos(ultimoTurno);
+    for(let m = minInicio; m <= minFin; m += 30) {
+        let h = Math.floor(m / 60).toString().padStart(2, '0');
+        let min = (m % 60).toString().padStart(2, '0');
+        let time = `${h}:${min}`;
+        selHora.innerHTML += `<option value="${time}">${time} hs</option>`;
+    }
+}
+
+
             }
         }    
         </script>
