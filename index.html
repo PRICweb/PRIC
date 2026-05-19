@@ -182,34 +182,22 @@
 </head>
 <body>
 
-    <div id="app-content" style="display: flex; width: 100%; flex-direction: column; align-items: center;">
+   <div id="app-content" style="display: flex; width: 100%; flex-direction: column; align-items: center;">
         
-        <div id="view-dashboard" class="vista-club active">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; width: 100%;">
-                <h2 style="margin: 0; font-size: 1.6em; color: white;">👋 Hola, <span id="lbl-nombre-club" style="color: var(--blue-accent); text-transform: capitalize;">Admin</span></h2>
-                <div class="header-panel-botones" style="display: flex; gap: 20px; align-items: center; justify-content: center; border: none; background: transparent; padding: 10px 0;">
+        <div id="pantalla-club" class="vista-club active">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; width: 100%;">
+                
+                <div style="display: flex; gap: 20px; align-items: center;">
                     <button onclick="switchView('view-torneos')" style="background: none; border: none; font-size: 1.8em; cursor: pointer; color: var(--text-bold); transition: 0.2s; padding: 0;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Torneos">🏆</button>
                     <button onclick="window.abrirModalProfesores()" style="background: none; border: none; font-size: 1.8em; cursor: pointer; color: var(--text-bold); transition: 0.2s; padding: 0;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Gestión de Profesores">🧑‍🏫</button>
                     <button onclick="window.abrirModalFinanzas()" style="background: none; border: none; font-size: 1.8em; cursor: pointer; color: var(--text-bold); transition: 0.2s; padding: 0;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Finanzas e Inventario">💰</button>
                     <button onclick="window.abrirModalMetricas()" style="background: none; border: none; font-size: 1.8em; cursor: pointer; color: var(--text-bold); transition: 0.2s; padding: 0;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Métricas">📊</button>
                     <button onclick="window.abrirModalConfig()" style="background: none; border: none; font-size: 1.8em; cursor: pointer; color: var(--text-bold); transition: 0.2s; padding: 0;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Configuración del Club">⚙️</button>
                 </div>
+
+                <h2 style="margin: 0; font-size: 1.4em; color: white; text-align: right;">👋 Hola, <span id="lbl-nombre-club" style="color: var(--blue-accent); text-transform: capitalize;">Admin</span></h2>
             </div>
 
-            <h4 style="text-align: center; color: var(--text-muted); margin: 10px 0 15px 0; font-weight: normal;">¿Qué querés hacer?</h4>
-            <div class="grid-acciones">
-                <div class="blue-card action-btn" onclick="switchView('view-torneos')">
-                    <div class="action-icon">🏆</div>
-                    <div>Torneos</div>
-                </div>
-                <div class="blue-card action-btn" onclick="alert('Funcionalidad de Academia Próximamente');">
-                    <div class="action-icon">🎓</div>
-                    <div>Academia</div>
-                </div>
-            </div>
-
-            <h4 style="text-align: left; color: var(--text-muted); margin: 30px 0 10px 0; font-weight: normal; width: 100%;">GRILLA DE RESERVAS</h4>
-            
             <div id="controles-fecha-club" class="blue-card" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 15px 20px; flex-wrap: wrap; gap: 15px;">
                 <div style="display: flex; align-items: center; gap: 15px; justify-content: center; flex: 1;">
                     <button style="background: transparent; border: none; font-size: 1.8em; color: #ffffff; cursor: pointer; padding: 0 10px;" onclick="window.cambiarDiaClub(-1)">&#10094;</button>
@@ -227,7 +215,7 @@
             
             <div id="lista-reservas-club"></div>
         </div>
-
+       
         <div id="view-torneos" class="vista-club">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; width: 100%;">
                 <h2 style="margin: 0; font-size: 1.6em; color: white;">🏆 Torneos</h2>
