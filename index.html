@@ -1728,7 +1728,7 @@ function cerrarModalTorneo(modalId) { document.getElementById(modalId).style.dis
             
             torneos.unshift(nuevo); 
             localStorage.setItem('profTorneos', JSON.stringify(torneos));
-            cerrarModal('modal-crear-torneo'); 
+            cerrarModalTorneo('modal-crear-torneo'); 
             renderizarListaTorneos();
         }
 
