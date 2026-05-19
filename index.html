@@ -6,20 +6,36 @@
     <title>Portal Privado - Administrador de Club</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
+        /* --- VARIABLES GLOBALES PARA TORNEOS --- */
+        :root {
+            --bg-main: #171d24; 
+            --bg-panel: #1e252d; 
+            --border-color: #2c3540;
+            --text-main: #ffffff;
+            --text-muted: #9ca3af;
+            --blue-accent: #3b82f6; 
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+        }
+
         /* --- ESTILOS GENERALES --- */
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background-color: #1a1e24; 
-            color: #ffffff; 
+            background-color: var(--bg-main); 
+            color: var(--text-main); 
             margin: 0; padding: 20px; 
             display: flex; flex-direction: column; align-items: center;
         }
         
+        /* Contenedores de Vistas (Pantallas principales) */
         .vista-club {
             background-color: transparent; 
             width: 100%; max-width: 900px;
             padding: 0; box-sizing: border-box; margin-bottom: 30px;
+            display: none; /* Ocultas por defecto para el sistema switchView */
         }
+        .vista-club.active { display: block; }
         
         .scroll-interno::-webkit-scrollbar { width: 6px; }
         .scroll-interno::-webkit-scrollbar-thumb { background: #44505d; border-radius: 4px; }
@@ -27,7 +43,7 @@
         .text-neutral-sub { color: #9ca3af; }
         .text-neutral-bold { color: #d1d5db; font-weight: bold; }
         
-        /* --- ESTILO TARJETAS AZULES --- */
+        /* --- ESTILO TARJETAS AZULES (Home/Dashboard) --- */
         .blue-card {
             background: linear-gradient(145deg, #4b84f3 0%, #3567d6 100%);
             border: 1px solid #6b9dfa;
@@ -71,65 +87,119 @@
             border: 1px solid rgba(255, 255, 255, 0.3);
             color: #ffffff;
         }
-        .btn-translucido:hover {
-            background-color: rgba(255, 255, 255, 0.25);
-        }
+        .btn-translucido:hover { background-color: rgba(255, 255, 255, 0.25); }
 
         /* --- FORMULARIOS Y TABLAS --- */
         .input-form {
-            padding: 10px; border-radius: 6px; border: 1px solid #44505d; background-color: #171d24; 
+            padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background-color: var(--bg-main); 
             color: white; color-scheme: dark; font-family: inherit; width: 100%; box-sizing: border-box;
         }
         table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
-        th { padding: 8px; text-align: left; border-bottom: 2px solid #44505d; color: #9ca3af; }
-        td { padding: 8px; border-bottom: 1px solid #2c3540; }
+        th { padding: 8px; text-align: left; border-bottom: 2px solid var(--border-color); color: var(--text-muted); }
+        td { padding: 8px; border-bottom: 1px solid var(--border-color); }
 
-        /* --- BOTONES AGRUPADOS --- */
-        .btn-modal { padding: 12px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; color: white; font-size: 1em; transition: 0.2s; width: 100%; box-sizing: border-box;}
+        /* --- BOTONES GENERALES --- */
+        .btn-modal, .btn-primary, .btn-secondary { padding: 12px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; color: white; font-size: 1em; transition: 0.2s; width: 100%; box-sizing: border-box;}
         
-        .btn-guardar, .btn-fijar, .btn-cobrar-clase { background-color: #10b981; } 
-        .btn-guardar:hover, .btn-fijar:hover, .btn-cobrar-clase:hover { background-color: #059669; }
+        .btn-guardar, .btn-fijar, .btn-cobrar-clase, .btn-primary { background-color: var(--success); } 
+        .btn-guardar:hover, .btn-fijar:hover, .btn-cobrar-clase:hover, .btn-primary:hover { background-color: #059669; }
         
-        .btn-cerrar, .btn-stock { background-color: #4b5563; color: white; } 
-        .btn-cerrar:hover, .btn-stock:hover { background-color: #374151; }
+        .btn-cerrar, .btn-stock, .btn-secondary { background-color: #4b5563; color: white; } 
+        .btn-cerrar:hover, .btn-stock:hover, .btn-secondary:hover { background-color: #374151; }
         
-        /* Gastos y Balances en Azul */
-        .btn-gasto, .btn-balance { background-color: #3b82f6; color: white; } 
+        .btn-gasto, .btn-balance { background-color: var(--blue-accent); color: white; } 
         .btn-gasto:hover, .btn-balance:hover { background-color: #2563eb; }
 
-        .btn-eliminar { background-color: #ef4444; } .btn-eliminar:hover { background-color: #dc2626; }
+        .btn-eliminar { background-color: var(--danger); } .btn-eliminar:hover { background-color: #dc2626; }
         .btn-whatsapp { background-color: #25d366; color: #171d24; } .btn-whatsapp:hover { background-color: #1ebd57; }
-        .btn-excepcion { background-color: #f59e0b; color: #171d24;} .btn-excepcion:hover { background-color: #d97706; }
+        .btn-excepcion { background-color: var(--warning); color: #171d24;} .btn-excepcion:hover { background-color: #d97706; }
         
         /* --- CALENDARIO Y GRILLA --- */
-        .contenedor-grilla { display: flex; overflow-x: auto; background: #1e252d; border: 1px solid #2c3540; border-radius: 12px; margin-top: 15px; user-select: none; position: relative; }
+        .contenedor-grilla { display: flex; overflow-x: auto; background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 12px; margin-top: 15px; user-select: none; position: relative; }
         .contenedor-grilla::-webkit-scrollbar { height: 8px; }
         .contenedor-grilla::-webkit-scrollbar-thumb { background: #44505d; border-radius: 4px; }
         .celda-vacia-hover { transition: background-color 0.1s; }
         .celda-vacia-hover:hover { background-color: rgba(59, 130, 246, 0.15); }
-        #linea-tiempo-actual { position: absolute; left: 55px; right: 0; height: 2px; background-color: #3b82f6; z-index: 20; display: none; pointer-events: none; }
-        #linea-tiempo-actual::before { content: ''; position: absolute; left: -4px; top: -4px; width: 10px; height: 10px; border-radius: 50%; background-color: #3b82f6; }
+        #linea-tiempo-actual { position: absolute; left: 55px; right: 0; height: 2px; background-color: var(--blue-accent); z-index: 20; display: none; pointer-events: none; }
+        #linea-tiempo-actual::before { content: ''; position: absolute; left: -4px; top: -4px; width: 10px; height: 10px; border-radius: 50%; background-color: var(--blue-accent); }
 
         /* --- MODALES TRADICIONALES --- */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; z-index: 1000; overflow-y: auto; padding: 20px 0; }
-        .modal-content { background: #1e252d; padding: 25px; border-radius: 12px; width: 90%; max-width: 360px; display: flex; flex-direction: column; gap: 12px; border: 1px solid #44505d; text-align: center; margin: auto; }
-        #modal-acciones .modal-content { max-width: 580px; }
+        .modal-content { background: var(--bg-panel); padding: 25px; border-radius: 12px; width: 90%; max-width: 360px; display: flex; flex-direction: column; gap: 12px; border: 1px solid var(--border-color); text-align: center; margin: auto; position: relative; }
+        .close-modal { position: absolute; top: 10px; right: 15px; background: none; border: none; color: var(--text-muted); font-size: 1.5em; cursor: pointer; }
+        .close-modal:hover { color: white; }
+        
+        #modal-acciones .modal-content, #modal-crear-torneo .modal-content { max-width: 580px; }
         
         /* --- PANTALLAS COMPLETAS (Módulos de Arriba) --- */
-        #modal-profesores, #modal-finanzas, #modal-metricas, #modal-config {
-            background-color: #1a1e24; 
-            padding: 0; align-items: flex-start; overflow-y: auto;
-        }
+        #modal-profesores, #modal-finanzas, #modal-metricas, #modal-config { background-color: var(--bg-main); padding: 0; align-items: flex-start; overflow-y: auto; }
         #modal-profesores .modal-content, #modal-finanzas .modal-content, #modal-metricas .modal-content, #modal-config .modal-content {
-            width: 100%; max-width: 900px; min-height: 100vh; max-height: none; border-radius: 0; border: none; background-color: #1e252d; margin: 0 auto; box-sizing: border-box;
+            width: 100%; max-width: 900px; min-height: 100vh; max-height: none; border-radius: 0; border: none; background-color: var(--bg-panel); margin: 0 auto; box-sizing: border-box;
         }
 
         /* --- ACORDEONES --- */
-        .seccion-acordeon { border: 1px solid #2c3540; border-radius: 8px; margin-bottom: 15px; overflow: hidden; background: #171d24;}
-        .header-acordeon { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; background: #242c36; cursor: pointer; font-weight: bold; font-size: 1.05em; user-select: none; color: #d1d5db; }
+        .seccion-acordeon { border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 15px; overflow: hidden; background: var(--bg-main);}
+        .header-acordeon { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; background: #242c36; cursor: pointer; font-weight: bold; font-size: 1.05em; user-select: none; color: var(--text-bold); }
         .header-acordeon:hover { background: #2c3540; }
         .contenido-acordeon { padding: 15px; display: none; }
-        .contenido-acordeon.abierto { display: block; border-top: 1px solid #2c3540;}
+        .contenido-acordeon.abierto { display: block; border-top: 1px solid var(--border-color);}
+
+        /* --- COMPONENTES DE TORNEOS --- */
+        .torneo-card { 
+            background-color: var(--bg-panel); padding: 15px; border-radius: 8px; 
+            border: 1px solid var(--border-color); margin-bottom: 15px; cursor: pointer; 
+            transition: transform 0.2s; 
+        }
+        .torneo-card:hover { transform: translateY(-2px); border-color: var(--blue-accent); }
+        .torneo-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 10px; }
+        .torneo-header h3 { margin: 0; color: var(--blue-accent); }
+        
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
+        .badge-inscripcion { background-color: rgba(59, 130, 246, 0.2); color: var(--blue-accent); }
+        .badge-grupos { background-color: rgba(245, 158, 11, 0.2); color: var(--warning); }
+        .badge-llaves { background-color: rgba(16, 185, 129, 0.2); color: var(--success); }
+        .badge-finalizado { background-color: rgba(239, 68, 68, 0.2); color: var(--danger); }
+
+        .torneo-info-bar { display: flex; flex-wrap: wrap; gap: 15px; background-color: var(--bg-main); padding: 12px; border-radius: 6px; border: 1px solid var(--border-color); margin-bottom: 20px; font-size: 0.85rem; }
+        .torneo-info-bar div { display: flex; flex-direction: column; }
+        .torneo-info-bar div span { color: var(--text-muted); font-size: 0.75rem; margin-bottom: 2px;}
+        .torneo-info-bar div strong { color: white; }
+
+        .grupo-card { background-color: var(--bg-main); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; margin-bottom: 15px; }
+        .grupo-card h4 { margin: 0 0 10px 0; color: var(--warning); border-bottom: 1px solid var(--border-color); padding-bottom: 5px; }
+        .partido-row { display: flex; align-items: center; justify-content: space-between; background-color: var(--bg-panel); padding: 10px; border-radius: 6px; margin-bottom: 8px; font-size: 0.85rem; flex-wrap: wrap; gap:10px;}
+        .partido-equipos { display: flex; flex: 1; justify-content: space-between; align-items: center; min-width: 150px; }
+        .partido-sets { display: flex; gap: 8px; }
+
+        .set-input-group { text-align: center; display: flex; flex-direction: column; align-items: center; }
+        .set-input-group small { display: block; color: var(--text-muted); font-size: 0.7rem; margin-bottom: 2px; }
+        .set-input-group select { width: 46px; padding: 4px; font-size: 0.85rem; background-color: var(--bg-main); border: 1px solid var(--border-color); border-radius: 4px; color: white; text-align: center; }
+
+        .bracket-container { 
+            display: flex; justify-content: center; align-items: stretch; overflow-x: auto; 
+            padding: 30px 10px; gap: 50px; background-color: var(--bg-main); border-radius: 8px; 
+            border: 1px solid var(--border-color); margin-top: 15px; min-height: 400px;
+        }
+        .bracket-column { display: flex; flex-direction: column; justify-content: space-around; position: relative; min-width: 220px; }
+        .bracket-match { 
+            background-color: var(--bg-main); border: 1px solid var(--border-color); border-radius: 6px; 
+            padding: 10px; text-align: center; position: relative; z-index: 2; margin: 15px 0; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        .bracket-column:not(:last-child) .bracket-match::after { content: ''; position: absolute; right: -25px; top: 50%; width: 25px; height: 2px; background-color: var(--border-color); z-index: 1;}
+        .bracket-column:not(:first-child) .bracket-match::before { content: ''; position: absolute; left: -25px; top: 50%; width: 25px; height: 2px; background-color: var(--border-color); z-index: 1;}
+
+        .bracket-match-team { font-size: 0.85rem; font-weight: bold; padding: 8px 5px; border-bottom: 1px solid var(--border-color); }
+        .bracket-match-team:last-of-type { border-bottom: none; }
+        .bracket-match select { 
+            margin-top: 10px; font-size: 0.8rem; padding: 6px; background-color: var(--bg-panel); 
+            color: white; border: 1px solid var(--border-color); border-radius: 4px; width: 100%;
+        }
+
+        .form-row { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; text-align: left; }
+        .form-group { flex: 1; min-width: 150px; display: flex; flex-direction: column; }
+        .form-group label { font-size: 0.85em; color: var(--text-muted); margin-bottom: 4px; }
+        .form-group select, .form-group input { padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background-color: var(--bg-main); color: white; width: 100%; box-sizing: border-box;}
 
         /* --- RESPONSIVE (MÓVIL) --- */
         @media (max-width: 600px) {
@@ -143,29 +213,41 @@
 
     <div id="app-content" style="display: flex; width: 100%; flex-direction: column; align-items: center;">
         
-        <div id="pantalla-club" class="vista-club" style="display: block;">
-            
+        <div id="view-dashboard" class="vista-club active">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; width: 100%;">
-                <h2 style="margin: 0; font-size: 1.6em; color: white;">👋 Hola, <span id="lbl-nombre-club" style="color: #3b82f6; text-transform: capitalize;">Admin</span></h2>
-                
-                <div class="header-panel-botones" style="display: flex; gap: 20px; align-items: center; justify-content: center; width: 100%; border: none; background: transparent; padding: 10px 0;">
-                    <button onclick="window.abrirModalProfesores()" style="background: none; border: none; font-size: 1.8em; cursor: pointer; color: #d1d5db; transition: 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Gestión de Profesores">🧑‍🏫</button>
-                    <button onclick="window.abrirModalFinanzas()" style="background: none; border: none; font-size: 1.8em; cursor: pointer; color: #d1d5db; transition: 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Finanzas e Inventario">💰</button>
-                    <button onclick="window.abrirModalMetricas()" style="background: none; border: none; font-size: 1.8em; cursor: pointer; color: #d1d5db; transition: 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Métricas">📊</button>
-                    <button onclick="window.abrirModalConfig()" style="background: none; border: none; font-size: 1.8em; cursor: pointer; color: #d1d5db; transition: 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Configuración del Club">⚙️</button>
+                <h2 style="margin: 0; font-size: 1.6em; color: white;">👋 Hola, <span id="lbl-nombre-club" style="color: var(--blue-accent); text-transform: capitalize;">Admin</span></h2>
+                <div class="header-panel-botones" style="display: flex; gap: 20px; align-items: center; justify-content: center; border: none; background: transparent; padding: 10px 0;">
+                    <button onclick="window.abrirModalProfesores()" style="background: none; border: none; font-size: 1.8em; cursor: pointer; color: var(--text-bold); transition: 0.2s; padding: 0;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Gestión de Profesores">🧑‍🏫</button>
+                    <button onclick="window.abrirModalFinanzas()" style="background: none; border: none; font-size: 1.8em; cursor: pointer; color: var(--text-bold); transition: 0.2s; padding: 0;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Finanzas e Inventario">💰</button>
+                    <button onclick="window.abrirModalMetricas()" style="background: none; border: none; font-size: 1.8em; cursor: pointer; color: var(--text-bold); transition: 0.2s; padding: 0;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Métricas">📊</button>
+                    <button onclick="window.abrirModalConfig()" style="background: none; border: none; font-size: 1.8em; cursor: pointer; color: var(--text-bold); transition: 0.2s; padding: 0;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Configuración del Club">⚙️</button>
                 </div>
             </div>
 
-            <div id="controles-fecha-club" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: #242c36; padding: 10px 15px; border-radius: 8px; border: 1px solid #2c3540;">
+            <h4 style="text-align: center; color: var(--text-muted); margin: 10px 0 15px 0; font-weight: normal;">¿Qué querés hacer?</h4>
+            <div class="grid-acciones">
+                <div class="blue-card action-btn" onclick="switchView('view-torneos')">
+                    <div class="action-icon">🏆</div>
+                    <div>Torneos</div>
+                </div>
+                <div class="blue-card action-btn" onclick="alert('Funcionalidad de Academia Próximamente');">
+                    <div class="action-icon">🎓</div>
+                    <div>Academia</div>
+                </div>
+            </div>
+
+            <h4 style="text-align: left; color: var(--text-muted); margin: 30px 0 10px 0; font-weight: normal; width: 100%;">GRILLA DE RESERVAS</h4>
+            
+            <div id="controles-fecha-club" class="blue-card" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 15px 20px; flex-wrap: wrap; gap: 15px;">
                 <div style="display: flex; align-items: center; gap: 15px; justify-content: center; flex: 1;">
-                    <button style="background: transparent; border: none; font-size: 1.8em; color: #9ca3af; cursor: pointer; padding: 0 10px;" onclick="window.cambiarDiaClub(-1)">&#10094;</button>
-                    <span id="lbl-fecha-club" style="font-size: 1.2em; font-weight: bold; color: #ffffff; min-width: 100px; text-align: center; text-transform: uppercase;">HOY</span>
-                    <button style="background: transparent; border: none; font-size: 1.8em; color: #9ca3af; cursor: pointer; padding: 0 10px;" onclick="window.cambiarDiaClub(1)">&#10095;</button>
+                    <button style="background: transparent; border: none; font-size: 1.8em; color: #ffffff; cursor: pointer; padding: 0 10px;" onclick="window.cambiarDiaClub(-1)">&#10094;</button>
+                    <span id="lbl-fecha-club" style="font-size: 1.2em; font-weight: bold; color: #ffffff; min-width: 110px; text-align: center; text-transform: uppercase;">HOY</span>
+                    <button style="background: transparent; border: none; font-size: 1.8em; color: #ffffff; cursor: pointer; padding: 0 10px;" onclick="window.cambiarDiaClub(1)">&#10095;</button>
                 </div>
                 <div style="display: flex; gap: 10px; justify-content: center; flex: 1; flex-wrap: wrap;">
-                    <button class="btn-modal btn-guardar" style="width: auto; padding: 8px 15px; font-size: 0.85em; background-color: #3b82f6; margin: 0;" onclick="window.irAHoyClub()">Hoy</button>
+                    <button class="btn-modal btn-translucido" style="width: auto; padding: 8px 15px; font-size: 0.85em; margin: 0;" onclick="window.irAHoyClub()">Hoy</button>
                     <div style="position: relative; display: flex; align-items: center;">
-                        <button class="btn-modal btn-gasto" style="width: auto; padding: 8px 15px; font-size: 0.85em; margin: 0;" onclick="try{ document.getElementById('picker-fecha-club').showPicker(); } catch(e) { document.getElementById('picker-fecha-club').focus(); }">📅 Calendario</button>
+                        <button class="btn-modal btn-translucido" style="width: auto; padding: 8px 15px; font-size: 0.85em; margin: 0;" onclick="try{ document.getElementById('picker-fecha-club').showPicker(); } catch(e) { document.getElementById('picker-fecha-club').focus(); }">📅 Calendario</button>
                         <input type="date" id="picker-fecha-club" style="position: absolute; width: 1px; height: 1px; border: none; padding: 0; margin: 0; opacity: 0; bottom: 0; right: 0; pointer-events: none;" onchange="if(this.value) window.seleccionarFecha(this.value)">
                     </div>
                 </div>
@@ -174,14 +256,115 @@
             <div id="lista-reservas-club"></div>
         </div>
 
+        <div id="view-torneos" class="vista-club">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; width: 100%;">
+                <h2 style="margin: 0; font-size: 1.6em; color: white;">🏆 Torneos</h2>
+                <button class="btn-secondary" style="margin:0; width:auto; padding: 8px 15px;" onclick="switchView('view-dashboard')">Volver al Inicio</button>
+            </div>
+            
+            <button class="btn-primary" style="margin-bottom: 20px;" onclick="abrirModal('modal-crear-torneo')">+ Crear Nuevo Torneo</button>
+            <div id="listaTorneosContainer"></div>
+        </div>
+
+        <div id="view-torneo-detalle" class="vista-club">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; width: 100%;">
+                <h2 style="margin: 0; font-size: 1.4em; color: var(--blue-accent);" id="torneoDetalleTitulo">Torneo</h2>
+                <button class="btn-secondary" style="margin:0; width:auto; padding: 8px 15px;" onclick="switchView('view-torneos')">Volver a Torneos</button>
+            </div>
+            
+            <div id="torneoDetalleContenido" style="background-color: var(--bg-panel); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color);">
+                </div>
+        </div>
+
+        <div class="modal-overlay" id="modal-crear-torneo">
+            <div class="modal-content" style="max-width: 600px;">
+                <button class="close-modal" onclick="cerrarModal('modal-crear-torneo')">×</button>
+                <h2 style="margin-top:0; color:var(--blue-accent);">🏆 Crear Torneo</h2>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Formato (Sets)</label>
+                        <select id="tornFormato" onchange="toggleRelampago()">
+                            <option value="Clásico">Clásico (Mejor de 3 sets)</option>
+                            <option value="Relámpago">Relámpago (1 set)</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="containerGamesSet" style="display:none;">
+                        <label>Games por Set</label>
+                        <select id="tornGamesPorSet">
+                            <option value="6">6 Games</option>
+                            <option value="9">9 Games</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Categoría</label>
+                        <select id="tornCategoria">
+                            <option>8va</option><option>7ma</option><option>6ta</option><option>5ta</option><option>4ta</option><option>3ra</option><option>2da</option><option>1ra</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Fecha(s)</label>
+                        <input type="text" id="tornFecha" placeholder="Ej: 15/05 al 16/05">
+                    </div>
+                    <div class="form-group">
+                        <label>Horario</label>
+                        <div style="display:flex; gap:5px;">
+                            <input type="time" id="tornHoraInicio">
+                            <input type="time" id="tornHoraFin">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Mínimo de Parejas</label>
+                        <input type="number" id="tornMinParejas" value="4" min="2">
+                    </div>
+                    <div class="form-group">
+                        <label>Límite Inscripciones</label>
+                        <div style="display:flex; align-items:center; gap: 10px;">
+                            <input type="checkbox" id="tornNoLimit" checked onchange="document.getElementById('tornMaxParejas').disabled = this.checked; if(this.checked) document.getElementById('tornMaxParejas').value='';" style="width:auto;">
+                            <small>Sin límite</small>
+                        </div>
+                        <input type="number" id="tornMaxParejas" disabled placeholder="Máx..." style="margin-top: 5px;">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Tamaño de Grupos</label>
+                        <select id="tornTamGrupo">
+                            <option value="3">3 parejas / grupo</option>
+                            <option value="4" selected>4 parejas / grupo</option>
+                            <option value="5">5 parejas / grupo</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Canchas a Usar</label>
+                        <input type="number" id="tornCanchas" value="2" min="1">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group"><label>Precio Inscripción ($)</label><input type="number" id="tornPrecio" placeholder="Ej: 5000"></div>
+                    <div class="form-group"><label>Premio</label><input type="text" id="tornPremio" placeholder="Ej: Paleta + Bolso"></div>
+                </div>
+
+                <button class="btn-primary" style="margin-top:10px;" onclick="guardarNuevoTorneo()">Guardar Torneo</button>
+            </div>
+        </div>
+
         <div id="modal-profesores" class="modal-overlay">
             <div class="modal-content scroll-interno">
-                <h3 style="margin: 0; border-bottom: 1px solid #44505d; padding-bottom: 10px;">🧑‍🏫 Profesores del Club</h3>
+                <h3 style="margin: 0; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; color: var(--blue-accent);">🧑‍🏫 Profesores del Club</h3>
                 <div style="display: flex; gap: 10px; margin-top: 10px; margin-bottom: 10px; flex-wrap: wrap;">
                     <input type="text" id="input-nuevo-profe" class="input-form" placeholder="Nombre del Profesor" style="flex: 1; min-width: 200px;">
                     <button class="btn-modal btn-guardar" style="width: auto; padding: 10px 15px;" onclick="window.agregarProfe()">Añadir</button>
                 </div>
-                <div class="scroll-interno" style="max-height: 200px; overflow-y: auto; background: #242c36; border-radius: 8px; border: 1px solid #2c3540; padding: 5px; margin-bottom: 15px;">
+                <div class="scroll-interno" style="max-height: 200px; overflow-y: auto; background: var(--bg-main); border-radius: 8px; border: 1px solid var(--border-color); padding: 5px; margin-bottom: 15px;">
                     <table style="width: 100%;"><tbody id="lista-profesores"></tbody></table>
                 </div>
                 <div class="seccion-acordeon" style="text-align: left;">
@@ -189,8 +372,8 @@
                         <span>🎾 Cobro de Clases Pendientes</span> <span id="flecha-ac-clases">🔽</span>
                     </div>
                     <div id="ac-clases" class="contenido-acordeon">
-                        <p style="font-size: 0.85em; color: #9ca3af; margin-top: 0;">Aquí aparecen las clases pendientes de cobro.</p>
-                        <div class="scroll-interno" style="max-height: 250px; overflow-y: auto; border: 1px solid #2c3540; border-radius: 6px; padding: 5px; background: #171d24;">
+                        <p style="font-size: 0.85em; color: var(--text-muted); margin-top: 0;">Aquí aparecen las clases pendientes de cobro.</p>
+                        <div class="scroll-interno" style="max-height: 250px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 6px; padding: 5px; background: var(--bg-main);">
                             <table>
                                 <thead><tr><th>Clase</th><th style="text-align: right;">A Cobrar</th><th style="text-align: center;">Acción</th></tr></thead>
                                 <tbody id="tabla-clases-pendientes"></tbody>
@@ -204,10 +387,10 @@
 
         <div id="modal-metricas" class="modal-overlay">
             <div class="modal-content scroll-interno">
-                <h3 style="margin: 0; border-bottom: 1px solid #44505d; padding-bottom: 10px;">📊 Métricas e Informes</h3>
+                <h3 style="margin: 0; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; color: var(--blue-accent);">📊 Métricas e Informes</h3>
                 <div style="display: flex; gap: 10px; margin-top: 10px; margin-bottom: 15px; flex-wrap: wrap;">
                     <div style="flex: 1; min-width: 200px; text-align: left;">
-                        <label style="font-size: 0.85em; color: #d1d5db;">Período de Tiempo:</label>
+                        <label style="font-size: 0.85em; color: var(--text-bold);">Período de Tiempo:</label>
                         <select id="select-periodo-metricas" class="input-form" style="margin-top: 4px;" onchange="window.actualizarGraficos()">
                             <option value="1y">1 Año (Mes a Mes)</option>
                             <option value="6m" selected>6 Meses (Mes a Mes)</option>
@@ -217,7 +400,7 @@
                         </select>
                     </div>
                     <div style="flex: 1; min-width: 200px; text-align: left;">
-                        <label style="font-size: 0.85em; color: #d1d5db;">Categoría a Analizar:</label>
+                        <label style="font-size: 0.85em; color: var(--text-bold);">Categoría a Analizar:</label>
                         <select id="select-categoria-metricas" class="input-form" style="margin-top: 4px;" onchange="window.actualizarGraficos()">
                             <optgroup label="Canchas y Turnos">
                                 <option value="indoor">Turnos P. Indoor</option>
@@ -236,11 +419,12 @@
                         </select>
                     </div>
                 </div>
-                <div style="background: #242c36; padding: 15px; border-radius: 8px; border: 1px solid #2c3540; height: 350px; display: flex; align-items: center; justify-content: center; margin-bottom: 15px;">
+                
+                <div style="background: var(--bg-main); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); height: 350px; display: flex; align-items: center; justify-content: center; margin-bottom: 15px;">
                     <canvas id="graficoMetricas" style="width: 100%; height: 100%;"></canvas>
                 </div>
 
-                <div class="scroll-interno" style="max-height: 200px; overflow-y: auto; background: #242c36; border-radius: 8px; border: 1px solid #2c3540; padding: 5px;">
+                <div class="scroll-interno" style="max-height: 200px; overflow-y: auto; background: var(--bg-main); border-radius: 8px; border: 1px solid var(--border-color); padding: 5px;">
                     <table style="width: 100%;">
                         <thead>
                             <tr>
@@ -260,14 +444,14 @@
 
         <div id="modal-reserva-admin" class="modal-overlay" style="z-index: 1050;">
             <div class="modal-content">
-                <h3 style="margin: 0; margin-bottom: 5px;">Agendar Evento</h3>
-                <p style="margin: 0; color: #9ca3af; margin-bottom: 15px;">Fecha: <strong id="admin-fecha-display" style="color:white;"></strong><br>Horario: <strong id="admin-hora-display" style="color:white;"></strong><br>Cancha: <strong id="admin-cancha-display" style="color:white;"></strong></p>
+                <h3 style="margin: 0; margin-bottom: 5px; color: var(--blue-accent);">Agendar Evento</h3>
+                <p style="margin: 0; color: var(--text-muted); margin-bottom: 15px;">Fecha: <strong id="admin-fecha-display" style="color:white;"></strong><br>Horario: <strong id="admin-hora-display" style="color:white;"></strong><br>Cancha: <strong id="admin-cancha-display" style="color:white;"></strong></p>
                 <input type="hidden" id="admin-cancha-id">
 
                 <div style="text-align: left; display: flex; flex-direction: column; gap: 12px;">
                     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                         <div style="flex: 1; min-width: 120px;">
-                            <label style="font-size: 0.9em; color: #d1d5db; font-weight: bold;">Tipo de Evento:</label>
+                            <label style="font-size: 0.9em; color: var(--text-bold); font-weight: bold;">Tipo de Evento:</label>
                             <select id="admin-tipo-evento" class="input-form" style="margin-top: 5px;" onchange="window.cambioTipoEvento()">
                                 <option value="Normal">Reserva Normal</option>
                                 <option value="Clases">Clase / Profe</option>
@@ -275,7 +459,7 @@
                             </select>
                         </div>
                         <div style="flex: 1; min-width: 120px;">
-                            <label style="font-size: 0.9em; color: #d1d5db; font-weight: bold;">Duración:</label>
+                            <label style="font-size: 0.9em; color: var(--text-bold); font-weight: bold;">Duración:</label>
                             <select id="admin-duracion" class="input-form" style="margin-top: 5px;">
                                 <option value="30">30 Minutos</option>
                                 <option value="60">60 Min (1h)</option>
@@ -287,17 +471,17 @@
                         </div>
                     </div>
 
-                    <div id="admin-div-profe" style="display:none; background: #242c36; padding: 10px; border-radius: 6px; border: 1px solid #44505d;">
-                        <label style="font-size: 0.9em; color: #d1d5db; font-weight: bold;">Elegir Profesor:</label>
+                    <div id="admin-div-profe" style="display:none; background: var(--bg-main); padding: 10px; border-radius: 6px; border: 1px solid var(--border-color);">
+                        <label style="font-size: 0.9em; color: var(--text-bold); font-weight: bold;">Elegir Profesor:</label>
                         <select id="admin-select-profe" class="input-form" style="margin-top: 5px;"></select>
                     </div>
 
                     <div>
-                        <label style="font-size: 0.9em; color: #d1d5db; font-weight: bold;">Nombre del Cliente / Título:</label>
+                        <label style="font-size: 0.9em; color: var(--text-bold); font-weight: bold;">Nombre del Cliente / Título:</label>
                         <input type="text" id="admin-input-jugador" class="input-form" placeholder="Ej: Franco" style="margin-top: 5px;">
                     </div>
                     <div>
-                        <label style="font-size: 0.9em; color: #d1d5db; font-weight: bold;">Teléfono (Opcional):</label>
+                        <label style="font-size: 0.9em; color: var(--text-bold); font-weight: bold;">Teléfono (Opcional):</label>
                         <input type="tel" id="admin-input-telefono" class="input-form" placeholder="Ej: 3511234567" style="margin-top: 5px;">
                     </div>
                 </div>
@@ -309,7 +493,7 @@
 
         <div id="modal-finanzas" class="modal-overlay">
             <div class="modal-content scroll-interno"> 
-                <h3 style="margin: 0; margin-bottom: 15px; border-bottom: 1px solid #44505d; padding-bottom: 10px;">💰 Finanzas e Inventario</h3>
+                <h3 style="margin: 0; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; color: var(--blue-accent);">💰 Finanzas e Inventario</h3>
                 <div style="text-align: left;">
                     
                     <div class="seccion-acordeon">
@@ -333,7 +517,7 @@
                             </div>
                             <button class="btn-modal btn-gasto" onclick="window.agregarInventario()" style="margin-bottom: 20px;">Añadir al Inventario</button>
                             
-                            <div class="scroll-interno" style="max-height: 200px; overflow-y: auto; border: 1px solid #2c3540; border-radius: 6px; padding: 5px; background: #171d24;">
+                            <div class="scroll-interno" style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 6px; padding: 5px; background: var(--bg-main);">
                                 <table>
                                     <thead><tr><th>Producto</th><th style="text-align: center;">Stock</th><th style="text-align: right;">Precio</th><th style="text-align: center;">Acciones</th></tr></thead>
                                     <tbody id="tabla-inventario"></tbody>
@@ -348,8 +532,8 @@
                         </div>
                         <div id="ac-movimientos" class="contenido-acordeon">
                             
-                            <div style="border: 1px solid #2c3540; padding: 10px; border-radius: 8px; margin-bottom: 15px;">
-                                <label style="font-size: 0.85em; color: #3b82f6; font-weight: bold;">1. Operaciones de Stock Rápido:</label>
+                            <div style="border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; margin-bottom: 15px;">
+                                <label style="font-size: 0.85em; color: var(--blue-accent); font-weight: bold;">1. Operaciones de Stock Rápido:</label>
                                 <div style="display: flex; gap: 8px; margin-top: 5px; margin-bottom: 5px;">
                                     <select id="mov-select-prod" class="input-form" style="flex: 2;"></select>
                                 </div>
@@ -358,22 +542,22 @@
                                     <input type="number" id="mov-monto" class="input-form" placeholder="Monto Total $" style="flex: 1; min-width: 80px;" min="0">
                                 </div>
                                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                                    <button class="btn-modal btn-gasto" style="background-color: #3b82f6; flex: 1; min-width: 120px;" onclick="window.agregarStockGasto()">+ Stock (Gasto)</button>
+                                    <button class="btn-modal btn-eliminar" style="flex: 1; min-width: 120px;" onclick="window.agregarStockGasto()">+ Stock (Gasto)</button>
                                     <button class="btn-modal btn-guardar" style="flex: 1; min-width: 120px;" onclick="window.venderProductoMostradorMov()">- Vender (Ingreso)</button>
                                 </div>
                             </div>
 
-                            <div style="border: 1px solid #2c3540; padding: 10px; border-radius: 8px; margin-bottom: 15px;">
-                                <label style="font-size: 0.85em; color: #ef4444; font-weight: bold;">2. Cargar Gasto Manual:</label>
+                            <div style="border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; margin-bottom: 15px;">
+                                <label style="font-size: 0.85em; color: var(--danger); font-weight: bold;">2. Cargar Gasto Manual:</label>
                                 <div style="display: flex; gap: 8px; margin-bottom: 10px; margin-top: 5px; flex-wrap: wrap;">
                                     <input type="text" id="gasto-titulo" class="input-form" placeholder="Título (Ej: Luz, Alquiler)" style="flex: 1; min-width: 120px;">
                                     <input type="number" id="gasto-importe" class="input-form" placeholder="Importe Gastado $" style="flex: 1; min-width: 120px;">
                                 </div>
-                                <button class="btn-modal btn-gasto" style="background-color: #3b82f6;" onclick="window.agregarGasto()">Registrar Gasto</button>
+                                <button class="btn-modal btn-eliminar" onclick="window.agregarGasto()">Registrar Gasto</button>
                             </div>
 
-                            <div style="border: 1px solid #2c3540; padding: 10px; border-radius: 8px;">
-                                <label style="font-size: 0.85em; color: #10b981; font-weight: bold;">3. Cargar Ingreso Manual Libre:</label>
+                            <div style="border: 1px solid var(--border-color); padding: 10px; border-radius: 8px;">
+                                <label style="font-size: 0.85em; color: var(--success); font-weight: bold;">3. Cargar Ingreso Manual Libre:</label>
                                 <div style="display: flex; gap: 8px; margin-top: 5px;">
                                     <input type="text" id="ingreso-titulo" class="input-form" placeholder="Detalle..." style="flex: 2;">
                                 </div>
@@ -392,14 +576,14 @@
                             <span>📊 Exportar Balance</span> <span id="flecha-ac-balances">🔽</span>
                         </div>
                         <div id="ac-balances" class="contenido-acordeon">
-                            <p style="font-size: 0.85em; color: #9ca3af; margin-top: 0;">Selecciona el rango de fechas para descargar el reporte en formato Excel (CSV).</p>
+                            <p style="font-size: 0.85em; color: var(--text-muted); margin-top: 0;">Selecciona el rango de fechas para descargar el reporte en formato Excel (CSV).</p>
                             <div style="display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap;">
                                 <div style="flex: 1; min-width: 130px; text-align: left;">
-                                    <label style="font-size: 0.8em; color: #d1d5db;">Desde:</label>
+                                    <label style="font-size: 0.8em; color: var(--text-bold);">Desde:</label>
                                     <input type="date" id="exportar-desde" class="input-form" style="margin-top: 4px;">
                                 </div>
                                 <div style="flex: 1; min-width: 130px; text-align: left;">
-                                    <label style="font-size: 0.8em; color: #d1d5db;">Hasta:</label>
+                                    <label style="font-size: 0.8em; color: var(--text-bold);">Hasta:</label>
                                     <input type="date" id="exportar-hasta" class="input-form" style="margin-top: 4px;">
                                 </div>
                             </div>
@@ -412,7 +596,7 @@
                             <span>📜 Historial de Transacciones</span> <span id="flecha-ac-historial">🔽</span>
                         </div>
                         <div id="ac-historial" class="contenido-acordeon">
-                            <div class="scroll-interno" style="max-height: 250px; overflow-y: auto; border: 1px solid #2c3540; border-radius: 6px; padding: 5px; background: #171d24;">
+                            <div class="scroll-interno" style="max-height: 250px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 6px; padding: 5px; background: var(--bg-main);">
                                 <table>
                                     <thead>
                                         <tr><th>Fecha</th><th>Detalle</th><th style="text-align: right;">Monto</th></tr>
@@ -431,13 +615,13 @@
         <div id="modal-editar-precio" class="modal-overlay" style="z-index: 1100;">
             <div class="modal-content" style="max-width: 300px;">
                 <h3 style="margin: 0; color: #ffffff;">Editar Precio</h3>
-                <p id="lbl-editar-prod" style="color: #9ca3af; margin: 5px 0 15px 0; font-weight: bold;"></p>
+                <p id="lbl-editar-prod" style="color: var(--text-muted); margin: 5px 0 15px 0; font-weight: bold;"></p>
                 <input type="hidden" id="editar-id-prod">
                 <div style="text-align: left;">
-                    <label style="font-size: 0.85em; color: #d1d5db;">Nuevo Precio de Venta ($):</label>
+                    <label style="font-size: 0.85em; color: var(--text-bold);">Nuevo Precio de Venta ($):</label>
                     <input type="number" id="editar-precio-nuevo" class="input-form" min="0" placeholder="Ej: 1500" style="margin-top: 4px;">
                 </div>
-                <button class="btn-modal btn-guardar" style="margin-top: 15px; background-color:#3b82f6;" onclick="window.confirmarEditarPrecio()">Guardar Precio</button>
+                <button class="btn-modal btn-gasto" style="margin-top: 15px;" onclick="window.confirmarEditarPrecio()">Guardar Precio</button>
                 <button class="btn-modal btn-cerrar" onclick="window.cerrarModalEditarPrecio()">Cancelar</button>
             </div>
         </div>
@@ -445,20 +629,20 @@
         <div id="modal-reponer-stock" class="modal-overlay" style="z-index: 1100;">
             <div class="modal-content" style="max-width: 300px;">
                 <h3 style="margin: 0; color: #ffffff;">Reponer Stock</h3>
-                <p id="lbl-reponer-prod" style="color: #9ca3af; margin: 5px 0 15px 0; font-weight: bold;"></p>
+                <p id="lbl-reponer-prod" style="color: var(--text-muted); margin: 5px 0 15px 0; font-weight: bold;"></p>
                 <input type="hidden" id="reponer-id-prod">
                 <div style="text-align: left; display: flex; flex-direction: column; gap: 10px;">
                     <div>
-                        <label style="font-size: 0.85em; color: #d1d5db;">Cantidad Comprada:</label>
+                        <label style="font-size: 0.85em; color: var(--text-bold);">Cantidad Comprada:</label>
                         <input type="number" id="reponer-cantidad" class="input-form" min="1" style="margin-top: 4px;">
                     </div>
                     <div>
-                        <label style="font-size: 0.85em; color: #d1d5db;">Costo Unitario ($):</label>
+                        <label style="font-size: 0.85em; color: var(--text-bold);">Costo Unitario ($):</label>
                         <input type="number" id="reponer-costo" class="input-form" min="0" style="margin-top: 4px;">
                     </div>
-                    <p style="font-size: 0.75em; color: #9ca3af; margin: 0;">El costo total se registrará como Gasto Externo.</p>
+                    <p style="font-size: 0.75em; color: var(--text-muted); margin: 0;">El costo total se registrará como Gasto Externo.</p>
                 </div>
-                <button class="btn-modal btn-gasto" style="margin-top: 15px;" onclick="window.confirmarReposicionStock()">Reponer y Registrar Gasto</button>
+                <button class="btn-modal btn-eliminar" style="margin-top: 15px;" onclick="window.confirmarReposicionStock()">Reponer y Registrar Gasto</button>
                 <button class="btn-modal btn-cerrar" onclick="window.cerrarModalReposicion()">Cancelar</button>
             </div>
         </div>
@@ -466,18 +650,18 @@
         <div id="modal-cobrar-clase" class="modal-overlay" style="z-index: 1100;">
             <div class="modal-content" style="max-width: 300px;">
                 <h3 style="margin: 0; color: #ffffff;">Cobrar Clase</h3>
-                <p id="lbl-cobrar-clase" style="color: #9ca3af; margin: 5px 0 15px 0; font-weight: bold; font-size: 0.9em;"></p>
+                <p id="lbl-cobrar-clase" style="color: var(--text-muted); margin: 5px 0 15px 0; font-weight: bold; font-size: 0.9em;"></p>
                 <input type="hidden" id="cobrar-clase-id">
                 <div style="text-align: left; display: flex; flex-direction: column; gap: 10px;">
-                    <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.1em; color: #ffffff; border-bottom: 1px solid #44505d; padding-bottom: 5px;">
+                    <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.1em; color: #ffffff; border-bottom: 1px solid var(--border-color); padding-bottom: 5px;">
                         <span>A COBRAR:</span> <span id="cobrar-clase-total">$0</span>
                     </div>
                     <div>
-                        <label style="font-size: 0.85em; color: #d1d5db;">En Efectivo ($):</label>
+                        <label style="font-size: 0.85em; color: var(--text-bold);">En Efectivo ($):</label>
                         <input type="number" id="clase-pago-efectivo" class="input-form" placeholder="0" style="margin-top: 4px;">
                     </div>
                     <div>
-                        <label style="font-size: 0.85em; color: #d1d5db;">En Transferencia ($):</label>
+                        <label style="font-size: 0.85em; color: var(--text-bold);">En Transferencia ($):</label>
                         <input type="number" id="clase-pago-transferencia" class="input-form" placeholder="0" style="margin-top: 4px;">
                     </div>
                 </div>
@@ -487,8 +671,9 @@
         </div>
 
         <div id="modal-acciones" class="modal-overlay">
-            <div class="modal-content scroll-interno" style="max-width: 480px;">
-                <h3 style="margin: 0; border-bottom: 1px solid #44505d; padding-bottom: 10px; color: #ffffff;" id="titulo-modal-acciones">Gestión de Turno</h3>
+            <div class="modal-content scroll-interno">
+                <button class="close-modal" onclick="window.cerrarModalAcciones()">×</button>
+                <h3 style="margin: 0; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; color: #ffffff;" id="titulo-modal-acciones">Gestión de Turno</h3>
                 
                 <div class="seccion-acordeon" style="margin-top: 10px;">
                     <div class="header-acordeon" onclick="window.toggleAcordeon('ac-consumos-turno')" style="font-size: 0.95em; padding: 10px;">
@@ -503,57 +688,56 @@
                     </div>
                 </div>
 
-                <div style="background: #242c36; padding: 15px; border-radius: 8px; border: 1px solid #2c3540; text-align: left; margin-bottom: 10px;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9em; color: #9ca3af;">
-                        <span>Precio Cancha (Proporcional):</span> <span id="res-precio-cancha" class="text-neutral-main">$0</span>
+                <div style="background: var(--bg-main); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); text-align: left; margin-bottom: 10px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9em; color: var(--text-muted);">
+                        <span>Precio Cancha:</span> <span id="res-precio-cancha" class="text-neutral-main">$0</span>
                     </div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9em; color: #9ca3af;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9em; color: var(--text-muted);">
                         <span>Total Consumos:</span> <span id="res-precio-consumos" class="text-neutral-main">$0</span>
                     </div>
                     
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 0.9em; color: #9ca3af; align-items: center;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 0.9em; color: var(--text-muted); align-items: center;">
                         <span>Descuento / Ajuste ($):</span> 
                         <input type="number" id="pago-descuento" class="input-form" style="width: 100px; padding: 6px; text-align: right;" placeholder="0" oninput="window.calcularFaltante()">
                     </div>
 
-                    <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.2em; color: #ffffff; margin-bottom: 15px; border-top: 1px solid #44505d; padding-top: 10px;">
+                    <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.2em; color: #ffffff; margin-bottom: 15px; border-top: 1px solid var(--border-color); padding-top: 10px;">
                         <span>A COBRAR:</span> <span id="res-precio-total">$0</span>
                     </div>
                     
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 0.9em; color: #9ca3af;" id="div-res-sena">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 0.9em; color: var(--warning);" id="div-res-sena">
                         <span id="lbl-res-sena">Seña sugerida (0%):</span> <span id="res-precio-sena" class="text-neutral-main">$0</span>
                     </div>
 
-                    <label style="font-size: 0.85em; color: #d1d5db;">Monto abonado por el cliente:</label>
+                    <label style="font-size: 0.85em; color: var(--text-bold);">Monto abonado por el cliente:</label>
                     <div style="display: flex; gap: 10px; margin-top: 5px;">
                         <div style="flex: 1;">
-                            <small style="color: #9ca3af;">En Efectivo ($)</small>
+                            <small style="color: var(--text-muted);">En Efectivo ($)</small>
                             <input type="number" id="pago-efectivo" class="input-form" placeholder="0" oninput="window.calcularFaltante()">
                         </div>
                         <div style="flex: 1;">
-                            <small style="color: #9ca3af;">En Transferencia ($)</small>
+                            <small style="color: var(--text-muted);">En Transferencia ($)</small>
                             <input type="number" id="pago-transferencia" class="input-form" placeholder="0" oninput="window.calcularFaltante()">
                         </div>
                     </div>
-                    <div style="text-align: right; margin-top: 8px; font-size: 0.95em; font-weight: bold; color: #d1d5db;" id="txt-faltante">Falta cobrar: $0</div>
+                    <div style="text-align: right; margin-top: 8px; font-size: 0.95em; font-weight: bold; color: var(--text-bold);" id="txt-faltante">Falta cobrar: $0</div>
 
                     <button class="btn-modal btn-guardar" style="margin-top: 15px;" onclick="window.cobrarTurno()">Guardar Pagos</button>
                 </div>
 
-                <div style="display: flex; flex-wrap: wrap; gap: 8px; border-top: 1px solid #44505d; padding-top: 15px;">
+                <div style="display: flex; flex-wrap: wrap; gap: 8px; border-top: 1px solid var(--border-color); padding-top: 15px;">
                     <button class="btn-modal btn-whatsapp" id="btn-whatsapp" onclick="window.accionWhatsApp()" style="flex: 1; min-width: 45%; font-size: 0.85em; color:#171d24;">💬 WhatsApp</button>
                     <button class="btn-modal btn-fijo" id="btn-toggle-fijo" onclick="window.hacerTurnoFijo()" style="flex: 1; min-width: 45%; font-size: 0.85em;">📌 Fijar Turno</button>
                     <button class="btn-modal btn-guardar" id="btn-confirmar-asistencia" onclick="window.toggleConfirmarTurno()" style="flex: 1; min-width: 45%; font-size: 0.85em;">✅ Confirmar Turno</button>
-                    <button class="btn-modal btn-gasto" id="btn-excepcion" onclick="window.accionCancelarExcepcion()" style="flex: 1; min-width: 45%; font-size: 0.85em; display:none;">🚫 Cancelar Hoy</button>
-                    <button class="btn-modal btn-cerrar" onclick="window.accionEliminar()" style="flex: 1; min-width: 45%; font-size: 0.85em; margin-top: 0;">🗑️ Borrar Evento</button>
+                    <button class="btn-modal btn-excepcion" id="btn-excepcion" onclick="window.accionCancelarExcepcion()" style="flex: 1; min-width: 45%; font-size: 0.85em; display:none;">🚫 Cancelar Hoy</button>
+                    <button class="btn-modal btn-eliminar" onclick="window.accionEliminar()" style="flex: 1; min-width: 45%; font-size: 0.85em; margin-top: 0;">🗑️ Borrar Evento</button>
                 </div>
-                <button class="btn-modal btn-cerrar" style="margin-top: 10px;" onclick="window.cerrarModalAcciones()">Cerrar Gestión</button>
             </div>
         </div>
 
         <div id="modal-config" class="modal-overlay">
             <div class="modal-content">
-                <h3 style="margin: 0; margin-bottom: 15px; border-bottom: 1px solid #44505d; padding-bottom: 10px;">⚙️ Configuración del Club</h3>
+                <h3 style="margin: 0; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; color: var(--blue-accent);">⚙️ Configuración del Club</h3>
                 <div class="scroll-interno" style="text-align: left; display: flex; flex-direction: column; gap: 15px; max-height: 70vh; overflow-y: auto; padding-right: 5px;">
                     
                     <div class="seccion-acordeon" style="margin-bottom: 0;">
@@ -562,12 +746,12 @@
                         </div>
                         <div id="ac-config-info" class="contenido-acordeon">
                             <div style="display: flex; gap: 10px; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap;">
-                                <div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: #d1d5db;">Primer Turno:</label><input type="time" id="input-primer-turno" class="input-form" style="margin-top: 4px;"></div>
-                                <div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: #d1d5db;">Último Turno:</label><input type="time" id="input-ultimo-turno" class="input-form" style="margin-top: 4px;"></div>
+                                <div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: var(--text-bold);">Primer Turno:</label><input type="time" id="input-primer-turno" class="input-form" style="margin-top: 4px;"></div>
+                                <div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: var(--text-bold);">Último Turno:</label><input type="time" id="input-ultimo-turno" class="input-form" style="margin-top: 4px;"></div>
                             </div>
                             <div style="margin-bottom: 12px;">
-                                <label style="font-size: 0.85em; color: #d1d5db;">Días que abre el club:</label>
-                                <div class="checkbox-dias" style="display: flex; gap: 8px; margin-top: 5px; flex-wrap: wrap; color: #d1d5db; font-size: 0.9em;">
+                                <label style="font-size: 0.85em; color: var(--text-bold);">Días que abre el club:</label>
+                                <div class="checkbox-dias" style="display: flex; gap: 8px; margin-top: 5px; flex-wrap: wrap; color: var(--text-bold); font-size: 0.9em;">
                                     <label><input type="checkbox" id="dia-1"> Lu</label>
                                     <label><input type="checkbox" id="dia-2"> Ma</label>
                                     <label><input type="checkbox" id="dia-3"> Mi</label>
@@ -578,15 +762,15 @@
                                 </div>
                             </div>
                             <div style="margin-bottom: 12px;">
-                                <label style="font-size: 0.85em; color: #d1d5db;">Teléfono de WhatsApp (ej: 549...):</label>
+                                <label style="font-size: 0.85em; color: var(--text-bold);">Teléfono de WhatsApp (ej: 549...):</label>
                                 <input type="tel" id="input-telefono-club" class="input-form" placeholder="Ej: 5493511234567" style="margin-top: 4px;">
                             </div>
                             <div style="margin-bottom: 12px;">
-                                <label style="font-size: 0.85em; color: #d1d5db;">Ubicación / Dirección:</label>
+                                <label style="font-size: 0.85em; color: var(--text-bold);">Ubicación / Dirección:</label>
                                 <input type="text" id="input-ubicacion-club" class="input-form" placeholder="Ej: Av. Siempreviva 123" style="margin-top: 4px;">
                             </div>
                             <div>
-                                <label style="font-size: 0.85em; color: #d1d5db;">Foto del Club (URL):</label>
+                                <label style="font-size: 0.85em; color: var(--text-bold);">Foto del Club (URL):</label>
                                 <input type="text" id="input-foto-club" class="input-form" placeholder="Ej: https://misitio.com/foto-club.jpg" style="margin-top: 4px;">
                             </div>
                         </div>
@@ -598,20 +782,20 @@
                         </div>
                         <div id="ac-config-indoor" class="contenido-acordeon">
                             <div style="display: flex; gap: 10px; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap;">
-                                <div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: #d1d5db;">Cant. Canchas:</label><input type="number" id="input-canchas-in" min="0" class="input-form" style="margin-top: 4px;"></div>
-                                <div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: #d1d5db;">Precio x30 min ($):</label><input type="number" id="input-precio-in" step="100" class="input-form" style="margin-top: 4px;"></div>
+                                <div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: var(--text-bold);">Cant. Canchas:</label><input type="number" id="input-canchas-in" min="0" class="input-form" style="margin-top: 4px;"></div>
+                                <div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: var(--text-bold);">Precio x30 min ($):</label><input type="number" id="input-precio-in" step="100" class="input-form" style="margin-top: 4px;"></div>
                             </div>
                             <div style="display: flex; gap: 10px; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap;">
-                                <div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: #d1d5db;">Precio Profes x30 min ($):</label><input type="number" id="input-profe-in" step="100" class="input-form" placeholder="Ej: 3000" style="margin-top: 4px;"></div>
-                                <div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: #d1d5db;">Monto Seña (%):</label><input type="number" id="input-sena-in" step="1" max="100" min="0" class="input-form" placeholder="Ej: 20" style="margin-top: 4px;"></div>
+                                <div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: var(--text-bold);">Precio Profes x30 min ($):</label><input type="number" id="input-profe-in" step="100" class="input-form" placeholder="Ej: 3000" style="margin-top: 4px;"></div>
+                                <div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: var(--text-bold);">Monto Seña (%):</label><input type="number" id="input-sena-in" step="1" max="100" min="0" class="input-form" placeholder="Ej: 20" style="margin-top: 4px;"></div>
                             </div>
                             <div style="margin-bottom: 12px;">
-                                <label style="font-size: 0.85em; color: #d1d5db;">Números/Nombres personalizados (separados por coma):</label>
+                                <label style="font-size: 0.85em; color: var(--text-bold);">Números/Nombres personalizados (separados por coma):</label>
                                 <input type="text" id="input-nombres-in" class="input-form" placeholder="Ej: 1, 2, Central" style="margin-top: 4px;">
-                                <small style="color: #9ca3af; font-size: 0.75em;">Deja vacío para usar el orden normal.</small>
+                                <small style="color: var(--text-muted); font-size: 0.75em;">Deja vacío para usar el orden normal.</small>
                             </div>
                             <div>
-                                <label style="font-size: 0.85em; color: #d1d5db;">Duración Standard:</label>
+                                <label style="font-size: 0.85em; color: var(--text-bold);">Duración Standard:</label>
                                 <select id="input-duracion-in" class="input-form" style="margin-top: 4px;">
                                     <option value="60">60 Minutos (1h)</option>
                                     <option value="90" selected>90 Minutos (1.5h)</option>
@@ -627,20 +811,20 @@
                         </div>
                         <div id="ac-config-outdoor" class="contenido-acordeon">
                             <div style="display: flex; gap: 10px; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap;">
-                                <div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: #d1d5db;">Cant. Canchas:</label><input type="number" id="input-canchas-out" min="0" class="input-form" style="margin-top: 4px;"></div>
-                                <div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: #d1d5db;">Precio x30 min ($):</label><input type="number" id="input-precio-out" step="100" class="input-form" style="margin-top: 4px;"></div>
+                                <div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: var(--text-bold);">Cant. Canchas:</label><input type="number" id="input-canchas-out" min="0" class="input-form" style="margin-top: 4px;"></div>
+                                <div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: var(--text-bold);">Precio x30 min ($):</label><input type="number" id="input-precio-out" step="100" class="input-form" style="margin-top: 4px;"></div>
                             </div>
                             <div style="display: flex; gap: 10px; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap;">
-                                <div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: #d1d5db;">Precio Profes x30 min ($):</label><input type="number" id="input-profe-out" step="100" class="input-form" placeholder="Ej: 3000" style="margin-top: 4px;"></div>
-                                <div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: #d1d5db;">Monto Seña (%):</label><input type="number" id="input-sena-out" step="1" max="100" min="0" class="input-form" placeholder="Ej: 20" style="margin-top: 4px;"></div>
+                                <div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: var(--text-bold);">Precio Profes x30 min ($):</label><input type="number" id="input-profe-out" step="100" class="input-form" placeholder="Ej: 3000" style="margin-top: 4px;"></div>
+                                <div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: var(--text-bold);">Monto Seña (%):</label><input type="number" id="input-sena-out" step="1" max="100" min="0" class="input-form" placeholder="Ej: 20" style="margin-top: 4px;"></div>
                             </div>
                             <div style="margin-bottom: 12px;">
-                                <label style="font-size: 0.85em; color: #d1d5db;">Números/Nombres personalizados (separados por coma):</label>
+                                <label style="font-size: 0.85em; color: var(--text-bold);">Números/Nombres personalizados (separados por coma):</label>
                                 <input type="text" id="input-nombres-out" class="input-form" placeholder="Ej: 1, 2, Central" style="margin-top: 4px;">
-                                <small style="color: #9ca3af; font-size: 0.75em;">Deja vacío para usar el orden normal.</small>
+                                <small style="color: var(--text-muted); font-size: 0.75em;">Deja vacío para usar el orden normal.</small>
                             </div>
                             <div>
-                                <label style="font-size: 0.85em; color: #d1d5db;">Duración Standard:</label>
+                                <label style="font-size: 0.85em; color: var(--text-bold);">Duración Standard:</label>
                                 <select id="input-duracion-out" class="input-form" style="margin-top: 4px;">
                                     <option value="60">60 Minutos (1h)</option>
                                     <option value="90" selected>90 Minutos (1.5h)</option>
@@ -656,20 +840,20 @@
                         </div>
                         <div id="ac-config-tenis" class="contenido-acordeon">
                             <div style="display: flex; gap: 10px; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap;">
-                                <div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: #d1d5db;">Cant. Canchas:</label><input type="number" id="input-canchas-tenis" min="0" class="input-form" style="margin-top: 4px;"></div>
-                                <div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: #d1d5db;">Precio x30 min ($):</label><input type="number" id="input-precio-tenis" step="100" class="input-form" style="margin-top: 4px;"></div>
+                                <div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: var(--text-bold);">Cant. Canchas:</label><input type="number" id="input-canchas-tenis" min="0" class="input-form" style="margin-top: 4px;"></div>
+                                <div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: var(--text-bold);">Precio x30 min ($):</label><input type="number" id="input-precio-tenis" step="100" class="input-form" style="margin-top: 4px;"></div>
                             </div>
                             <div style="display: flex; gap: 10px; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap;">
-                                <div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: #d1d5db;">Precio Profes x30 min ($):</label><input type="number" id="input-profe-tenis" step="100" class="input-form" placeholder="Ej: 3000" style="margin-top: 4px;"></div>
-                                <div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: #d1d5db;">Monto Seña (%):</label><input type="number" id="input-sena-tenis" step="1" max="100" min="0" class="input-form" placeholder="Ej: 20" style="margin-top: 4px;"></div>
+                                <div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: var(--text-bold);">Precio Profes x30 min ($):</label><input type="number" id="input-profe-tenis" step="100" class="input-form" placeholder="Ej: 3000" style="margin-top: 4px;"></div>
+                                <div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: var(--text-bold);">Monto Seña (%):</label><input type="number" id="input-sena-tenis" step="1" max="100" min="0" class="input-form" placeholder="Ej: 20" style="margin-top: 4px;"></div>
                             </div>
                             <div style="margin-bottom: 12px;">
-                                <label style="font-size: 0.85em; color: #d1d5db;">Números/Nombres personalizados (separados por coma):</label>
+                                <label style="font-size: 0.85em; color: var(--text-bold);">Números/Nombres personalizados (separados por coma):</label>
                                 <input type="text" id="input-nombres-tenis" class="input-form" placeholder="Ej: 1, 2, Central" style="margin-top: 4px;">
-                                <small style="color: #9ca3af; font-size: 0.75em;">Deja vacío para usar el orden normal.</small>
+                                <small style="color: var(--text-muted); font-size: 0.75em;">Deja vacío para usar el orden normal.</small>
                             </div>
                             <div>
-                                <label style="font-size: 0.85em; color: #d1d5db;">Duración Standard:</label>
+                                <label style="font-size: 0.85em; color: var(--text-bold);">Duración Standard:</label>
                                 <select id="input-duracion-tenis" class="input-form" style="margin-top: 4px;">
                                     <option value="60">60 Minutos (1h)</option>
                                     <option value="90" selected>90 Minutos (1.5h)</option>
@@ -685,6 +869,8 @@
             </div>
         </div>
         
+    </div>
+
     <script>
         // VARIABLES GLOBALES (Modo Local / Sin Firebase)
         window.formatearDinero = function(numero) { return Number(numero).toLocaleString('es-AR'); };
@@ -713,6 +899,10 @@
         let reservasGlobales = []; let inventarioGlobal = []; let gastosGlobal = []; 
         let ingresosGlobal = []; let profesoresGlobal = [];
         
+        // VARIABLES TORNEOS
+        let torneos = JSON.parse(localStorage.getItem('profTorneos')) || [];
+        let torneoActivoId = null;
+        
         let reservaSeleccionadaId = null; let reservaEnProcesoHora = null; let metricasChart = null;
 
         // INICIALIZACIÓN MOCK
@@ -721,6 +911,17 @@
             renderizarCalendarios();
             renderizarPantallas();
         };
+        
+        // --- NAVEGACIÓN ---
+        function switchView(viewId) {
+            document.querySelectorAll('.vista-club').forEach(v => v.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+            if(viewId === 'view-torneos') renderizarListaTorneos();
+            if(viewId === 'pantalla-club') actualizarLineaDeTiempo();
+        }
+        function abrirModal(modalId) { document.getElementById(modalId).style.display = 'flex'; }
+        function cerrarModal(modalId) { document.getElementById(modalId).style.display = 'none'; }
+
 
         // --- FUNCIONES AUXILIARES ---
         window.aMinutos = function(horaStr) { 
@@ -748,11 +949,6 @@
         }
 
         // --- MANEJO DE UI GENERAL ---
-        window.cambiarVista = function(vista) {
-            document.getElementById('pantalla-club').style.display = vista === 'club' ? 'block' : 'none';
-            if(vista === 'club') actualizarLineaDeTiempo();
-        }
-
         window.toggleAcordeon = function(id) {
             const contenido = document.getElementById(id); const flecha = document.getElementById('flecha-' + id);
             if (contenido.classList.contains('abierto')) { contenido.classList.remove('abierto'); flecha.innerText = '🔽'; } 
@@ -826,12 +1022,12 @@
                 let minActual = window.aMinutos(primerTurno); let minFin = window.aMinutos(ultimoTurno) + duracionGlobal; 
                 if (minFin <= minActual) minFin += 1440; 
                 let htmlGrilla = `<div class="contenedor-grilla">`; const celdaH = 40; 
-                htmlGrilla += `<div id="linea-tiempo-actual"></div><div style="width: 55px; flex-shrink: 0; border-right: 1px solid #2c3540; background: #1e252d;"><div style="height: 50px; border-bottom: 1px solid #2c3540; background: #242c36;"></div>`; 
+                htmlGrilla += `<div id="linea-tiempo-actual"></div><div style="width: 55px; flex-shrink: 0; border-right: 1px solid #2c3540; background: var(--bg-panel);"><div style="height: 50px; border-bottom: 1px solid #2c3540; background: var(--bg-main);"></div>`; 
                 for (let m = minActual; m < minFin; m += 30) {
                     let esHoraEnPunto = (m % 60 === 0); let hLabel = Math.floor(m / 60) % 24;
                     let borderStyle = esHoraEnPunto ? 'border-bottom: 1px dashed rgba(255,255,255,0.05);' : 'border-bottom: 1px solid #2c3540;';
                     let texto = esHoraEnPunto ? `${hLabel.toString().padStart(2, '0')}:00` : ``;
-                    htmlGrilla += `<div style="height: ${celdaH}px; ${borderStyle} text-align: center; color: #9ca3af; font-size: 0.8em; padding-top: 3px; box-sizing: border-box;">${texto}</div>`;
+                    htmlGrilla += `<div style="height: ${celdaH}px; ${borderStyle} text-align: center; color: var(--text-muted); font-size: 0.8em; padding-top: 3px; box-sizing: border-box;">${texto}</div>`;
                 }
                 htmlGrilla += `</div>`;
 
@@ -844,7 +1040,7 @@
                     else if(c <= maxPadel) { tipoLabel = "Pádel Outdoor"; colorTipo = "#9ca3af"; } 
                     else { tipoLabel = "Tenis"; colorTipo = "#f59e0b"; }
                     let numeroPersonalizado = nombresCanchasGlobal[c - 1] || c; 
-                    htmlGrilla += `<div style="height: 50px; border-bottom: 1px solid #2c3540; text-align: center; background: #242c36; font-size: 0.9em; display:flex; flex-direction:column; justify-content:center;"><span style="font-weight: bold;" class="text-neutral-main">Cancha ${numeroPersonalizado}</span><span style="font-size: 0.8em; color:${colorTipo};">${tipoLabel}</span></div>`;
+                    htmlGrilla += `<div style="height: 50px; border-bottom: 1px solid #2c3540; text-align: center; background: var(--bg-main); font-size: 0.9em; display:flex; flex-direction:column; justify-content:center;"><span style="font-weight: bold;" class="text-neutral-main">Cancha ${numeroPersonalizado}</span><span style="font-size: 0.8em; color:${colorTipo};">${tipoLabel}</span></div>`;
                     
                     let reservasCancha = reservasAMostrar.filter(r => (r.cancha || "1") == c);
                     let bloquesOcupadosCancha = new Set();
@@ -888,7 +1084,7 @@
                         let iconEvento = res.tipoEvento === "Especial" ? "⭐ " : (res.esClase ? "🧑‍🏫 " : "");
                         let textoSecundario = res.esClase ? `<br><span style="font-size:0.85em; opacity:0.8;">Profe: ${res.profe}</span>` : '';
                         
-                        let factorPrecio = dur / 30; // Modificado: multiplicador por bloques de 30 min
+                        let factorPrecio = dur / 30; // Multiplicador por bloques de 30 min
                         let pCancha = c <= canchasIndoorGlobal ? parseInt(precioIndoorGlobal) : (c <= maxPadel ? parseInt(precioOutdoorGlobal) : parseInt(precioTenisGlobal));
                         pCancha = pCancha * factorPrecio; 
                         let totalConsumos = (res.consumos || []).reduce((acc, curr) => acc + parseFloat(curr.precio), 0) - (parseFloat(res.descuento) || 0);
@@ -986,11 +1182,12 @@
             document.getElementById('btn-whatsapp').style.display = (res.telefono && res.telefono.trim() !== "") ? 'block' : 'none';
             document.getElementById('btn-excepcion').style.display = res.fijo ? 'block' : 'none';
             
-            let factorPrecio = (res.duracion || duracionGlobal) / 30; // Multiplicador por bloques de 30 min
+            let factorPrecio = (res.duracion || duracionGlobal) / 30; 
             let cNum = parseInt(res.cancha || "1"); let maxP = canchasIndoorGlobal + canchasOutdoorGlobal;
             let pCancha = 0;
             let senaPorcentaje = 0;
             
+            // Evaluamos si es clase para aplicar la tarifa de profesor
             if (res.esClase) {
                 pCancha = cNum <= canchasIndoorGlobal ? parseInt(profeIndoorGlobal) : (cNum <= maxP ? parseInt(profeOutdoorGlobal) : parseInt(profeTenisGlobal));
             } else {
@@ -1019,16 +1216,16 @@
             let ul = document.getElementById('lista-consumos-turno'); ul.innerHTML = '';
             
             if(!res.consumos || res.consumos.length === 0) { 
-                ul.innerHTML = '<li style="color: #9ca3af; font-style: italic;">Sin consumos adicionales.</li>'; 
+                ul.innerHTML = '<li style="color: var(--text-muted); font-style: italic;">Sin consumos adicionales.</li>'; 
             } else {
                 res.consumos.forEach((c, index) => { 
-                    ul.innerHTML += `<li style="display: flex; justify-content: space-between; border-bottom: 1px solid #2c3540; padding: 5px 0;"><span class="text-neutral-main">${c.nombre}</span><span><span class="text-neutral-bold" style="margin-right: 10px;">$${window.formatearDinero(c.precio)}</span><button onclick="window.eliminarConsumoTurno(${index}, '${c.prodId}')" style="background:none;border:none;cursor:pointer;">❌</button></span></li>`; 
+                    ul.innerHTML += `<li style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding: 5px 0;"><span class="text-neutral-main">${c.nombre}</span><span><span class="text-neutral-bold" style="margin-right: 10px;">$${window.formatearDinero(c.precio)}</span><button onclick="window.eliminarConsumoTurno(${index}, '${c.prodId}')" style="background:none;border:none;cursor:pointer;">❌</button></span></li>`; 
                 });
             }
 
             const btnConf = document.getElementById('btn-confirmar-asistencia');
             if (res.asistencia) { btnConf.innerHTML = "❌ Quitar Confirmación"; btnConf.style.backgroundColor = "#4b5563"; } 
-            else { btnConf.innerHTML = "✅ Confirmar Turno"; btnConf.style.backgroundColor = "#10b981"; }
+            else { btnConf.innerHTML = "✅ Confirmar Turno"; btnConf.style.backgroundColor = "var(--success)"; }
             
             window.calcularFaltante(); 
         }
@@ -1070,7 +1267,7 @@
             let tGen = pCancha + (res.consumos || []).reduce((acc, c) => acc + parseFloat(c.precio), 0) - (parseFloat(document.getElementById('pago-descuento').value) || 0);
             if(tGen < 0) tGen = 0; let faltante = tGen - ((parseFloat(document.getElementById('pago-efectivo').value) || 0) + (parseFloat(document.getElementById('pago-transferencia').value) || 0));
             let txt = document.getElementById('txt-faltante'); document.getElementById('res-precio-total').innerText = `$${window.formatearDinero(tGen)}`;
-            if(faltante <= 0 && tGen > 0) { txt.innerText = `Pagado ✅`; txt.style.color = "#d1d5db"; } else { txt.innerText = `Falta cobrar: $${window.formatearDinero(faltante)}`; txt.style.color = "#ef4444"; }
+            if(faltante <= 0 && tGen > 0) { txt.innerText = `Pagado ✅`; txt.style.color = "#d1d5db"; } else { txt.innerText = `Falta cobrar: $${window.formatearDinero(faltante)}`; txt.style.color = "var(--danger)"; }
         }
 
         window.cobrarTurno = function() {
@@ -1151,7 +1348,7 @@
             const tb = document.getElementById('lista-profesores'); const sel = document.getElementById('admin-select-profe');
             if(tb) tb.innerHTML = ''; if(sel) sel.innerHTML = '<option value="" disabled selected>Selecciona un profe...</option>';
             profesoresGlobal.sort((a,b) => a.nombre.localeCompare(b.nombre)).forEach(p => {
-                if(tb) tb.innerHTML += `<tr style="border-bottom: 1px solid #44505d;"><td style="padding: 10px;">${p.nombre}</td><td style="text-align: right;"><button onclick="window.eliminarProfe('${p.id}')" style="background:none;border:none;cursor:pointer;">🗑️</button></td></tr>`;
+                if(tb) tb.innerHTML += `<tr style="border-bottom: 1px solid var(--border-color);"><td style="padding: 10px;">${p.nombre}</td><td style="text-align: right;"><button onclick="window.eliminarProfe('${p.id}')" style="background:none;border:none;cursor:pointer;">🗑️</button></td></tr>`;
                 if(sel) sel.innerHTML += `<option value="${p.nombre}">${p.nombre}</option>`;
             });
         };
@@ -1172,9 +1369,9 @@
                 let ab = (parseFloat(c.pagoEfectivo)||0) + (parseFloat(c.pagoTransferencia)||0);
                 
                 if(tGen > 0 && ab < tGen) { 
-                    tb.innerHTML += `<tr style="border-bottom: 1px solid #2c3540;">
-                        <td style="padding: 8px 0;">${c.profe}<br><small style="color:#9ca3af;">${c.jugador} (${c.fecha})</small></td>
-                        <td style="color:#ef4444; text-align: center; vertical-align: middle; font-weight: bold;">$${window.formatearDinero(tGen-ab)}</td>
+                    tb.innerHTML += `<tr style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 8px 0;">${c.profe}<br><small style="color:var(--text-muted);">${c.jugador} (${c.fecha})</small></td>
+                        <td style="color:var(--danger); text-align: center; vertical-align: middle; font-weight: bold;">$${window.formatearDinero(tGen-ab)}</td>
                         <td style="text-align: right; vertical-align: middle;"><button class="btn-modal btn-cobrar-clase" style="width: auto; padding: 6px 12px; font-size: 0.85em;" onclick="window.abrirModalCobrarClase('${c.id}', '${c.profe}', '${c.jugador}', ${tGen-ab})">Cobrar</button></td>
                     </tr>`; 
                 }
@@ -1257,7 +1454,7 @@
         window.renderizarInventario = function() {
             const tb = document.getElementById('tabla-inventario'); if(!tb) return; tb.innerHTML = '';
             inventarioGlobal.sort((a,b)=>a.nombre.localeCompare(b.nombre)).forEach(p => { 
-                tb.innerHTML += `<tr><td>${p.nombre}<br><small>${p.categoria}</small></td><td style="color:${p.stock<=0?'#ef4444':'#d1d5db'}; text-align: center;">${p.stock}</td><td style="text-align: right;">$${window.formatearDinero(p.precio)}</td>
+                tb.innerHTML += `<tr><td>${p.nombre}<br><small>${p.categoria}</small></td><td style="color:${p.stock<=0?'var(--danger)':'var(--text-bold)'}; text-align: center;">${p.stock}</td><td style="text-align: right;">$${window.formatearDinero(p.precio)}</td>
                 <td>
                     <div style="display: flex; gap: 15px; justify-content: center; align-items: center;">
                         <span onclick="window.abrirModalReposicion('${p.id}', '${p.nombre}', ${p.costo||0})" style="cursor:pointer; font-size:1.2em;" title="Reponer Stock">➕</span>
@@ -1329,7 +1526,14 @@
             document.body.removeChild(link);
         };
 
-        window.renderizarHistorial = function() { const tb = document.getElementById('tabla-historial'); if(!tb) return; tb.innerHTML = ''; let h = []; gastosGlobal.forEach(g => { h.push({f: new Date(g.fechaRegistro), t: g.titulo, m: g.importe||0, tp: 'g'}); }); ingresosGlobal.forEach(i => { h.push({f: new Date(i.fechaRegistro), t: i.titulo, m: (i.efectivo||0)+(i.transferencia||0), tp: 'i'}); }); reservasGlobales.forEach(r => { let tot=(r.pagoEfectivo||0)+(r.pagoTransferencia||0); if(tot>0) h.push({f: new Date(r.fechaRegistro), t: `Turno: ${r.jugador}`, m: tot, tp: 'i'}); }); h.sort((a,b)=>b.f.getTime()-a.f.getTime()).forEach(i => { tb.innerHTML += `<tr><td>${i.f.getDate()}/${i.f.getMonth()+1}</td><td>${i.t}</td><td style="color:${i.tp==='i'?'#10b981':'#ef4444'}; text-align: right;">${i.tp==='i'?'+':'-'} $${window.formatearDinero(i.m)}</td></tr>`; }); }
+        window.renderizarHistorial = function() { 
+            const tb = document.getElementById('tabla-historial'); if(!tb) return; tb.innerHTML = ''; 
+            let h = []; 
+            gastosGlobal.forEach(g => { h.push({f: new Date(g.fechaRegistro), t: g.titulo, m: g.importe||0, tp: 'g'}); }); 
+            ingresosGlobal.forEach(i => { h.push({f: new Date(i.fechaRegistro), t: i.titulo, m: (i.efectivo||0)+(i.transferencia||0), tp: 'i'}); }); 
+            reservasGlobales.forEach(r => { let tot=(r.pagoEfectivo||0)+(r.pagoTransferencia||0); if(tot>0) h.push({f: new Date(r.fechaRegistro), t: `Turno: ${r.jugador}`, m: tot, tp: 'i'}); }); 
+            h.sort((a,b)=>b.f.getTime()-a.f.getTime()).forEach(i => { tb.innerHTML += `<tr><td>${i.f.getDate()}/${i.f.getMonth()+1}</td><td>${i.t}</td><td style="color:${i.tp==='i'?'var(--success)':'var(--danger)'}; text-align: right;">${i.tp==='i'?'+':'-'} $${window.formatearDinero(i.m)}</td></tr>`; }); 
+        }
 
         // --- CONFIGURACIÓN ADMIN ---
         window.abrirModalConfig = function() { 
@@ -1466,7 +1670,6 @@
             if (metricasChart) { metricasChart.destroy(); }
             metricasChart = new Chart(ctx, { type: 'bar', data: { labels: etiquetas, datasets: [ { label: labelBarras, data: datosBarras, backgroundColor: categoria === 'gastos' ? '#ef4444' : '#3b82f6', borderRadius: 4, order: 2 }, { label: labelLinea, data: datosLinea, type: 'line', borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', borderWidth: 3, fill: true, tension: 0.3, order: 1 } ] }, options: { responsive: true, maintainAspectRatio: false, color: '#d1d5db', plugins: { legend: { labels: { color: '#d1d5db', font: { family: "'Segoe UI', sans-serif" } } }, tooltip: { mode: 'index', intersect: false, callbacks: { label: function(context) { let label = context.dataset.label || ''; let value = context.parsed.y; if (label) { label += ': '; } if (esDinero && context.datasetIndex === 0) { label += '$' + value.toLocaleString('es-AR'); } else { label += value; } return label; } } } }, scales: { y: { beginAtZero: true, grid: { color: '#2c3540' }, ticks: { color: '#9ca3af', callback: function(value) { return esDinero ? '$' + value.toLocaleString('es-AR') : value; } } }, x: { grid: { display: false }, ticks: { color: '#9ca3af' } } } } });
             
-            // --- NUEVO: GENERAR TABLA DE DATOS ---
             const tbMetricas = document.getElementById('tabla-datos-metricas');
             document.getElementById('th-linea').innerText = labelLinea;
             document.getElementById('th-barras').innerText = labelBarras;
@@ -1478,10 +1681,10 @@
                     let valLinea = window.formatearDinero(datosLinea[i]);
                     
                     tbMetricas.innerHTML += `
-                        <tr style="border-bottom: 1px solid #2c3540;">
+                        <tr style="border-bottom: 1px solid var(--border-color);">
                             <td style="padding: 8px;">${etiquetas[i]}</td>
-                            <td style="text-align: center; color: #10b981; font-weight: bold;">${valLinea}</td>
-                            <td style="text-align: right; color: #3b82f6; font-weight: bold;">${valBarra}</td>
+                            <td style="text-align: center; color: var(--success); font-weight: bold;">${valLinea}</td>
+                            <td style="text-align: right; color: var(--blue-accent); font-weight: bold;">${valBarra}</td>
                         </tr>
                     `;
                 }
