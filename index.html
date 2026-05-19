@@ -1704,32 +1704,42 @@ function cerrarModalTorneo(modalId) { document.getElementById(modalId).style.dis
         }
 
         function guardarNuevoTorneo() {
-            const isRelampago = document.getElementById('tornFormato').value === 'Relámpago';
-            const nuevo = {
-                id: Date.now(), 
-                estado: 'inscripcion', // Estados: inscripcion | grupos | llaves | finalizado
-                formato: document.getElementById('tornFormato').value,
-                gamesPorSet: isRelampago ? parseInt(document.getElementById('tornGamesPorSet').value) : 6,
-                categoria: document.getElementById('tornCategoria').value,
-                fecha: document.getElementById('tornFecha').value,
-                horaInicio: document.getElementById('tornHoraInicio').value,
-                horaFin: document.getElementById('tornHoraFin').value,
-                canchas: parseInt(document.getElementById('tornCanchas').value),
-                precio: document.getElementById('tornPrecio').value,
-                minParejas: parseInt(document.getElementById('tornMinParejas').value) || 4,
-                maxParejas: document.getElementById('tornNoLimit').checked ? null : parseInt(document.getElementById('tornMaxParejas').value),
-                tamanoGrupo: parseInt(document.getElementById('tornTamGrupo').value),
-                premio: document.getElementById('tornPremio').value,
-                parejas: [], 
-                grupos: [], 
-                llaves: []
-            };
-            
-            torneos.unshift(nuevo); 
-            localStorage.setItem('profTorneos', JSON.stringify(torneos));
-            cerrarModalTorneo('modal-crear-torneo'); 
-            renderizarListaTorneos();
-        }
+    const fechaSel = document.getElementById('tornFecha').value;
+    const horaSel = document.getElementById('tornHoraInicio').value;
+    
+    const nuevo = {
+        id: Date.now(), 
+        estado: 'inscripcion',
+        formato: document.getElementById('tornFormato').value,
+        categoria: document.getElementById('tornCategoria').value,
+        fecha: fechaSel,
+        horaInicio: horaSel,
+        // ... (resto de tus campos existentes)
+        parejas: [], grupos: [], llaves: []
+    };
+    
+    torneos.unshift(nuevo); 
+    localStorage.setItem('profTorneos', JSON.stringify(torneos));
+    
+    // --- ESTA ES LA PARTE NUEVA PARA QUE SE VEA EN EL TURNERO ---
+    reservasGlobales.push({ 
+        id: "TORNEO-" + nuevo.id, 
+        fecha: fechaSel, 
+        hora: horaSel, 
+        cancha: "1", // Por defecto se coloca en cancha 1
+        jugador: `Torneo: ${nuevo.categoria}`, 
+        telefono: "", 
+        duracion: 420, // Duración fija de 2 horas para el evento en el turnero
+        fechaRegistro: new Date(), 
+        asistencia: false, 
+        fijo: false, 
+        esClase: false 
+    });
+    
+    cerrarModalTorneo('modal-crear-torneo'); 
+    renderizarListaTorneos();
+    renderizarPantallas(); // Recarga el turnero para que aparezca el torneo
+}
 
         function renderizarListaTorneos() {
             const c = document.getElementById('listaTorneosContainer'); 
