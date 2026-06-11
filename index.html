@@ -1487,6 +1487,403 @@
                 }
             }
         }
+    
+
+        /* =========================================================
+           CAPA COMÚN TURNO + CIRCUITO + FIREBASE
+           Misma interfaz de funciones que el código de jugadores.
+           Persistencia real en Firestore.
+        ========================================================= */
+        (function(){
+            const firebaseConfig = {
+                apiKey: "AIzaSyDqWKo3ZtPChbtf38osMiKwQpCRNvsN7ak",
+                authDomain: "pric-60f50.firebaseapp.com",
+                projectId: "pric-60f50",
+                storageBucket: "pric-60f50.firebasestorage.app",
+                messagingSenderId: "475470852361",
+                appId: "1:475470852361:web:8acfa8b1e2963426ef23d8",
+                measurementId: "G-ZXLT15L9JR"
+            };
+
+            const params = new URLSearchParams(window.location.search);
+            const CLUB_ID = params.get("club") || params.get("clubId") || "Club Central";
+            const CLUB_DOC_ID = normalizarIdFirestore(CLUB_ID);
+            const FIREBASE_VERSION = "10.12.5";
+
+            let firebaseAPI = null;
+            let firebaseInicializado = false;
+            let reservasSnapshotIds = new Set();
+            let ignorarRenderSnapshot = false;
+
+            const renderizarPantallasOriginal = window.renderizarPantallas;
+            const guardarConfiguracionOriginal = window.guardarConfiguracion;
+
+            function normalizarIdFirestore(valor) {
+                return String(valor || "Club Central").trim().replace(/[\/#[\]?]/g, "_") || "Club Central";
+            }
+
+            function logFirebaseError(contexto, error) {
+                console.error(`Firebase ${contexto}:`, error);
+                alert(`No se pudo conectar con Firebase (${contexto}). Revisa las reglas de Firestore y que estés usando el proyecto correcto.`);
+            }
+
+            async function inicializarFirebase() {
+                try {
+                    const [appMod, firestoreMod, analyticsMod] = await Promise.all([
+                        import(`https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}/firebase-app.js`),
+                        import(`https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}/firebase-firestore.js`),
+                        import(`https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}/firebase-analytics.js`).catch(() => null)
+                    ]);
+
+                    const app = appMod.initializeApp(firebaseConfig);
+                    const db = firestoreMod.getFirestore(app);
+
+                    try {
+                        if (analyticsMod && typeof analyticsMod.getAnalytics === "function") analyticsMod.getAnalytics(app);
+                    } catch(e) {
+                        console.warn("Analytics no disponible en este entorno:", e);
+                    }
+
+                    firebaseAPI = { app, db, ...firestoreMod };
+                    firebaseInicializado = true;
+                    iniciarEscuchasFirebase();
+                } catch (error) {
+                    logFirebaseError("inicialización", error);
+                }
+            }
+
+            function refClub() {
+                return firebaseAPI.doc(firebaseAPI.db, "clubs", CLUB_DOC_ID);
+            }
+
+            function refReservas() {
+                return firebaseAPI.collection(firebaseAPI.db, "clubs", CLUB_DOC_ID, "reservas");
+            }
+
+            function aplicarConfiguracionClub(config = {}) {
+                if (!config || typeof config !== "object") return;
+                primerTurno = config.primerTurno ?? primerTurno;
+                ultimoTurno = config.ultimoTurno ?? ultimoTurno;
+                duracionGlobal = Number(config.duracionDefault ?? config.duracionGlobal ?? duracionGlobal);
+                diasAbiertosGlobal = Array.isArray(config.diasAbiertos) ? config.diasAbiertos : diasAbiertosGlobal;
+                canchasIndoorGlobal = Number(config.canchasIndoor ?? canchasIndoorGlobal);
+                canchasOutdoorGlobal = Number(config.canchasOutdoor ?? canchasOutdoorGlobal);
+                canchasTenisGlobal = Number(config.canchasTenis ?? canchasTenisGlobal);
+                precioIndoorGlobal = String(config.precioIndoor ?? precioIndoorGlobal);
+                precioOutdoorGlobal = String(config.precioOutdoor ?? precioOutdoorGlobal);
+                precioTenisGlobal = String(config.precioTenis ?? precioTenisGlobal);
+                telefonoClubGlobal = config.telefono ?? telefonoClubGlobal;
+                ubicacionClubGlobal = config.ubicacion ?? ubicacionClubGlobal;
+                nombresIndoorGlobal = Array.isArray(config.nombresIndoor) ? config.nombresIndoor : nombresIndoorGlobal;
+                nombresOutdoorGlobal = Array.isArray(config.nombresOutdoor) ? config.nombresOutdoor : nombresOutdoorGlobal;
+                nombresTenisGlobal = Array.isArray(config.nombresTenis) ? config.nombresTenis : nombresTenisGlobal;
+            }
+
+            function iniciarEscuchasFirebase() {
+                if (!firebaseAPI) return;
+
+                firebaseAPI.onSnapshot(refClub(), (snap) => {
+                    if (snap.exists()) aplicarConfiguracionClub(snap.data());
+                    else window.guardarConfiguracionCompartida();
+                    if (typeof renderizarPantallasOriginal === "function") renderizarPantallasOriginal();
+                }, (error) => logFirebaseError("lectura de configuración", error));
+
+                firebaseAPI.onSnapshot(
+                    firebaseAPI.query(refReservas(), firebaseAPI.orderBy("fecha", "asc"), firebaseAPI.orderBy("hora", "asc")),
+                    (snapshot) => {
+                        if (ignorarRenderSnapshot) return;
+                        reservasGlobales = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data(), clubId: CLUB_ID }));
+                        reservasSnapshotIds = new Set(reservasGlobales.map(r => String(r.id)));
+                        if (typeof renderizarPantallasOriginal === "function") renderizarPantallasOriginal();
+                        if (typeof renderizarClasesPendientes === "function") renderizarClasesPendientes();
+                    },
+                    (error) => logFirebaseError("lectura de reservas", error)
+                );
+            }
+
+            async function guardarReservaEnFirebase(reserva) {
+                if (!firebaseAPI || !reserva?.id) return;
+                const ref = firebaseAPI.doc(firebaseAPI.db, "clubs", CLUB_DOC_ID, "reservas", String(reserva.id));
+                await firebaseAPI.setDoc(ref, {
+                    ...reserva,
+                    clubId: CLUB_ID,
+                    actualizadoEn: firebaseAPI.serverTimestamp()
+                }, { merge: true });
+            }
+
+            async function sincronizarReservasConFirebase() {
+                if (!firebaseAPI) return;
+                try {
+                    ignorarRenderSnapshot = true;
+                    const idsActuales = new Set(reservasGlobales.map(r => String(r.id)));
+
+                    await Promise.all([...reservasSnapshotIds]
+                        .filter(id => !idsActuales.has(id))
+                        .map(id => firebaseAPI.deleteDoc(firebaseAPI.doc(firebaseAPI.db, "clubs", CLUB_DOC_ID, "reservas", id)))
+                    );
+
+                    await Promise.all(reservasGlobales.map(r => guardarReservaEnFirebase({ ...r, clubId: CLUB_ID })));
+                    reservasSnapshotIds = idsActuales;
+                } catch(error) {
+                    logFirebaseError("guardado de reservas", error);
+                } finally {
+                    ignorarRenderSnapshot = false;
+                }
+            }
+
+            window.obtenerFechaHoy = function() {
+                const h = new Date();
+                return `${h.getFullYear()}-${String(h.getMonth()+1).padStart(2,"0")}-${String(h.getDate()).padStart(2,"0")}`;
+            };
+
+            window.aMinutos = function(horaStr) {
+                if (!horaStr || typeof horaStr !== "string") return 0;
+                const [h, m] = horaStr.split(":").map(Number);
+                return (h || 0) * 60 + (m || 0);
+            };
+
+            window.sumarMinutos = function(horaStr, minutosAnadir) {
+                if (!horaStr || typeof horaStr !== "string") return "00:00";
+                let total = window.aMinutos(horaStr) + (Number(minutosAnadir) || 0);
+                total = ((total % 1440) + 1440) % 1440;
+                return `${String(Math.floor(total / 60)).padStart(2,"0")}:${String(total % 60).padStart(2,"0")}`;
+            };
+
+            window.getDayOfWeekFromDate = function(fechaISO) {
+                const [y, m, d] = String(fechaISO).split("-").map(Number);
+                return new Date(y, (m || 1) - 1, d || 1).getDay();
+            };
+
+            window.validarEsHoraPasada = function(fechaISO, horaStr) {
+                const fecha = fechaISO || fechaSeleccionada;
+                const hoyISO = window.obtenerFechaHoy();
+                if (fecha < hoyISO) return true;
+                if (fecha > hoyISO) return false;
+                const ahora = new Date();
+                return window.aMinutos(horaStr) <= (ahora.getHours() * 60 + ahora.getMinutes());
+            };
+
+            window.obtenerConfiguracionClub = function() {
+                return {
+                    clubId: CLUB_ID,
+                    primerTurno,
+                    ultimoTurno,
+                    duracionDefault: duracionGlobal,
+                    diasAbiertos: diasAbiertosGlobal,
+                    canchasIndoor: canchasIndoorGlobal,
+                    canchasOutdoor: canchasOutdoorGlobal,
+                    canchasTenis: canchasTenisGlobal,
+                    precioIndoor: precioIndoorGlobal,
+                    precioOutdoor: precioOutdoorGlobal,
+                    precioTenis: precioTenisGlobal,
+                    telefono: telefonoClubGlobal,
+                    ubicacion: ubicacionClubGlobal,
+                    nombresIndoor: nombresIndoorGlobal,
+                    nombresOutdoor: nombresOutdoorGlobal,
+                    nombresTenis: nombresTenisGlobal
+                };
+            };
+
+            window.guardarConfiguracionCompartida = async function() {
+                if (!firebaseAPI) return;
+                try {
+                    await firebaseAPI.setDoc(refClub(), {
+                        ...window.obtenerConfiguracionClub(),
+                        nombre: CLUB_ID,
+                        actualizadoEn: firebaseAPI.serverTimestamp()
+                    }, { merge: true });
+                } catch(error) {
+                    logFirebaseError("guardado de configuración", error);
+                }
+            };
+
+            window.obtenerReservasCompartidas = function() {
+                return Array.isArray(reservasGlobales) ? reservasGlobales : [];
+            };
+
+            window.guardarReservasCompartidas = function() {
+                sincronizarReservasConFirebase();
+            };
+
+            window.cargarReservasCompartidas = function() {
+                return window.obtenerReservasCompartidas();
+            };
+
+            window.calcularBloquesReserva = function(hora, duracion) {
+                const bloques = [];
+                const bloquesTotales = Math.ceil((Number(duracion) || duracionGlobal || 90) / 30);
+                for (let i = 0; i < bloquesTotales; i++) bloques.push(window.sumarMinutos(hora, i * 30));
+                return bloques;
+            };
+
+            window.reservaAplicaEnFecha = function(reserva, fechaISO) {
+                const canceladas = reserva.fechasCanceladas || [];
+                if (canceladas.includes(fechaISO)) return false;
+                if ((reserva.fecha || fechaISO) === fechaISO) return true;
+                return reserva.fijo === true && window.getDayOfWeekFromDate(reserva.fecha) === window.getDayOfWeekFromDate(fechaISO) && fechaISO > reserva.fecha;
+            };
+
+            window.obtenerCanchasDisponibles = function(datos = {}) {
+                const fechaISO = datos.fecha || fechaSeleccionada;
+                const hora = datos.hora || reservaEnProcesoHora;
+                const duracion = Number(datos.duracion) || duracionGlobal || 90;
+                const config = window.obtenerConfiguracionClub();
+                const totalCanchas = Math.max(1, (Number(config.canchasIndoor)||0) + (Number(config.canchasOutdoor)||0) + (Number(config.canchasTenis)||0));
+                const bloquesNuevos = window.calcularBloquesReserva(hora, duracion);
+
+                const ocupadas = new Set();
+                reservasGlobales.forEach(r => {
+                    if (!window.reservaAplicaEnFecha(r, fechaISO)) return;
+                    const bloquesReserva = window.calcularBloquesReserva(r.hora, r.duracion || duracionGlobal);
+                    if (bloquesNuevos.some(b => bloquesReserva.includes(b))) ocupadas.add(String(r.cancha));
+                });
+
+                const disponibles = [];
+                for (let c = 1; c <= totalCanchas; c++) {
+                    if (!ocupadas.has(String(c))) disponibles.push(String(c));
+                }
+                return disponibles;
+            };
+
+            window.hayDisponibilidad = function(datos = {}) {
+                return window.obtenerCanchasDisponibles(datos).length > 0;
+            };
+
+            window.crearReserva = function(datos = {}) {
+                const fecha = datos.fecha || fechaSeleccionada;
+                const hora = datos.hora || reservaEnProcesoHora;
+                const duracion = Number(datos.duracion) || duracionGlobal || 90;
+                let cancha = datos.cancha ? String(datos.cancha) : "";
+
+                if (!fecha || !hora) return { ok:false, error:"Falta fecha u horario." };
+                if (window.validarEsHoraPasada(fecha, hora)) return { ok:false, error:"No se puede reservar un horario pasado." };
+
+                const disponibles = window.obtenerCanchasDisponibles({ fecha, hora, duracion });
+                if (!cancha) cancha = disponibles[0];
+                if (!disponibles.includes(String(cancha))) return { ok:false, error:"La cancha ya está ocupada en ese horario." };
+
+                const nueva = {
+                    id: datos.id || (crypto?.randomUUID ? crypto.randomUUID() : Date.now().toString()),
+                    clubId: CLUB_ID,
+                    fecha,
+                    hora,
+                    cancha,
+                    jugador: datos.jugador || datos.nombre || "Sin nombre",
+                    telefono: datos.telefono || "",
+                    duracion,
+                    fechaRegistro: datos.fechaRegistro || new Date().toISOString(),
+                    asistencia: false,
+                    fijo: false,
+                    fechasCanceladas: [],
+                    pagoEfectivo: 0,
+                    pagoTransferencia: 0,
+                    descuento: 0,
+                    consumos: [],
+                    tipoEvento: datos.tipoEvento || "Normal",
+                    esClase: datos.esClase || false,
+                    profe: datos.profe || null,
+                    origen: datos.origen || "admin"
+                };
+
+                reservasGlobales.push(nueva);
+                guardarReservaEnFirebase(nueva).catch(error => logFirebaseError("creación de reserva", error));
+                return { ok:true, reserva:nueva };
+            };
+
+            window.actualizarHorariosDisponibles = function() {
+                if (typeof renderizarPantallasOriginal === "function") renderizarPantallasOriginal();
+            };
+
+            window.renderizarPantallas = function() {
+                if (typeof renderizarPantallasOriginal === "function") renderizarPantallasOriginal();
+            };
+
+            window.seleccionarFecha = function(fechaISO) {
+                fechaSeleccionada = fechaISO;
+                renderizarCalendarios();
+                window.renderizarPantallas();
+            };
+
+            window.cambiarDia = function(delta) {
+                const idx = fechasValidas.indexOf(fechaSeleccionada);
+                const nuevoIdx = idx + delta;
+                if (nuevoIdx >= 0 && nuevoIdx < fechasValidas.length) window.seleccionarFecha(fechasValidas[nuevoIdx]);
+                else if (nuevoIdx < 0) alert("No puedes navegar a fechas pasadas.");
+                else alert("Límite de 1 año alcanzado.");
+            };
+
+            window.cambiarDiaClub = window.cambiarDia;
+            window.irAHoyClub = function() { window.seleccionarFecha(window.obtenerFechaHoy()); };
+
+            window.seleccionarHora = function(hora, btnElement) {
+                reservaEnProcesoHora = hora;
+                if (btnElement) {
+                    document.querySelectorAll(".btn-horario").forEach(b => b.classList.remove("activo"));
+                    btnElement.classList.add("activo");
+                }
+            };
+
+            window.confirmarReservaAdmin = function() {
+                const inputNombre = document.getElementById("admin-input-jugador").value.trim();
+                const inputTelefono = document.getElementById("admin-input-telefono").value.trim();
+                const canchaAsignada = document.getElementById("admin-cancha-id").value;
+                const tipoEvento = document.getElementById("admin-tipo-evento").value;
+                const duracionSel = parseInt(document.getElementById("admin-duracion").value) || duracionGlobal;
+                let profeSel = null;
+
+                if (tipoEvento === "Clases") {
+                    profeSel = document.getElementById("admin-select-profe").value;
+                    if (!profeSel) return alert("Selecciona un profesor.");
+                }
+                if (!inputNombre) return alert("Ingresa el Nombre.");
+
+                const resultado = window.crearReserva({
+                    fecha: fechaSeleccionada,
+                    hora: reservaEnProcesoHora,
+                    cancha: canchaAsignada,
+                    jugador: inputNombre,
+                    telefono: inputTelefono,
+                    duracion: duracionSel,
+                    tipoEvento,
+                    esClase: tipoEvento === "Clases",
+                    profe: profeSel,
+                    origen: "admin"
+                });
+
+                if (!resultado.ok) return alert("❌ " + resultado.error);
+                window.cerrarModalReservaAdmin();
+                window.renderizarPantallas();
+                if (typeof renderizarClasesPendientes === "function") renderizarClasesPendientes();
+            };
+
+            window.guardarConfiguracion = function() {
+                if (typeof guardarConfiguracionOriginal === "function") guardarConfiguracionOriginal();
+                window.guardarConfiguracionCompartida();
+                window.renderizarPantallas();
+            };
+
+            ["accionEliminar","accionCancelarExcepcion","hacerTurnoFijo","toggleConfirmarTurno","cobrarTurno"].forEach(nombre => {
+                const original = window[nombre];
+                if (typeof original === "function") {
+                    window[nombre] = function(...args) {
+                        const retorno = original.apply(this, args);
+                        window.guardarReservasCompartidas();
+                        window.renderizarPantallas();
+                        return retorno;
+                    };
+                }
+            });
+
+            const onloadOriginal = window.onload;
+            window.onload = function(evt) {
+                const lbl = document.getElementById("lbl-nombre-club");
+                if (lbl) lbl.innerText = CLUB_ID;
+                if (typeof onloadOriginal === "function") onloadOriginal(evt);
+                window.renderizarPantallas();
+                inicializarFirebase();
+            };
+        })();
+
     </script>
 </body>
 </html>
