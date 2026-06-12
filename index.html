@@ -139,12 +139,12 @@
             color: #0f172a;
         }
         body.panel-activo {
-            background-color: #1a1e24;
-            color: #ffffff;
+            background: #f7f8fa;
+            color: #07152b;
         }
         .auth-screen {
             width: 100%;
-            min-height: calc(100vh - 40px);
+            min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -274,6 +274,225 @@
             font-size: .88em;
             text-align: center;
             margin: 14px 0 0 0;
+        }
+
+        /* --- SEPARACIÓN REAL DE VISTAS --- */
+        body:not(.panel-activo) #app-content {
+            display: none !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+        }
+        body:not(.panel-activo) #auth-screen {
+            display: flex !important;
+        }
+        body.panel-activo #auth-screen {
+            display: none !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+        }
+        body.panel-activo #app-content {
+            display: flex !important;
+            visibility: visible !important;
+            pointer-events: auto !important;
+            min-height: 100vh;
+            background: #f7f8fa;
+            box-sizing: border-box;
+            padding: 24px 14px;
+        }
+
+        /* --- PANEL CON EL MISMO ESTILO VISUAL DEL LOGIN --- */
+        body.panel-activo .vista-club {
+            max-width: 980px;
+            background: #ffffff;
+            border: 1px solid #dbe1ea;
+            border-radius: 22px;
+            padding: 22px;
+            box-shadow: 0 26px 55px rgba(15, 23, 42, 0.12);
+        }
+        body.panel-activo #pantalla-club > div:first-child {
+            gap: 14px;
+            flex-wrap: wrap;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #e5eaf2;
+        }
+        body.panel-activo #pantalla-club h2,
+        body.panel-activo #pantalla-club h3,
+        body.panel-activo #pantalla-club label,
+        body.panel-activo .modal-content h3,
+        body.panel-activo .modal-content label {
+            color: #07152b !important;
+        }
+        body.panel-activo #lbl-nombre-club {
+            color: #2563eb !important;
+        }
+        body.panel-activo .header-panel-botones {
+            width: auto !important;
+            margin-left: auto;
+            gap: 10px !important;
+            padding: 0 !important;
+        }
+        body.panel-activo .header-panel-botones button {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px !important;
+            border: 1px solid #dbe1ea !important;
+            background: #ffffff !important;
+            color: #0f172a !important;
+            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.07);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        body.panel-activo #controles-fecha-club,
+        body.panel-activo .contenedor-grilla,
+        body.panel-activo .modal-content,
+        body.panel-activo .seccion-acordeon {
+            background: #ffffff !important;
+            border: 1px solid #dbe1ea !important;
+            color: #07152b !important;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+        }
+        body.panel-activo #controles-fecha-club {
+            border-radius: 16px !important;
+        }
+        body.panel-activo .contenedor-grilla {
+            border-radius: 16px !important;
+        }
+        body.panel-activo .header-acordeon {
+            background: #f8fafc !important;
+            color: #07152b !important;
+            border-color: #e5eaf2 !important;
+        }
+        body.panel-activo .contenido-acordeon {
+            background: #ffffff !important;
+            border-top: 1px solid #e5eaf2 !important;
+            color: #07152b !important;
+        }
+        body.panel-activo .modal-overlay {
+            background: rgba(15, 23, 42, 0.25) !important;
+            backdrop-filter: blur(6px);
+        }
+        body.panel-activo .modal-content {
+            border-radius: 22px !important;
+            box-shadow: 0 26px 55px rgba(15, 23, 42, 0.16) !important;
+        }
+        body.panel-activo #modal-profesores,
+        body.panel-activo #modal-finanzas,
+        body.panel-activo #modal-metricas,
+        body.panel-activo #modal-config {
+            background: #f7f8fa !important;
+        }
+        body.panel-activo #modal-profesores .modal-content,
+        body.panel-activo #modal-finanzas .modal-content,
+        body.panel-activo #modal-metricas .modal-content,
+        body.panel-activo #modal-config .modal-content {
+            max-width: 980px !important;
+            min-height: calc(100vh - 32px) !important;
+            margin: 16px auto !important;
+            border-radius: 22px !important;
+        }
+        body.panel-activo .input-form {
+            background: #eaf1fb !important;
+            color: #07152b !important;
+            border: 1px solid #d6deea !important;
+            border-radius: 12px !important;
+            color-scheme: light !important;
+        }
+        body.panel-activo th {
+            color: #52627a !important;
+            border-bottom-color: #dbe1ea !important;
+        }
+        body.panel-activo td {
+            color: #07152b !important;
+            border-bottom-color: #e5eaf2 !important;
+        }
+        body.panel-activo .text-neutral-main,
+        body.panel-activo .text-neutral-bold {
+            color: #07152b !important;
+        }
+        body.panel-activo .text-neutral-sub {
+            color: #52627a !important;
+        }
+        body.panel-activo .btn-modal {
+            border-radius: 12px !important;
+            box-shadow: none !important;
+        }
+        body.panel-activo .btn-guardar,
+        body.panel-activo .btn-gasto,
+        body.panel-activo .btn-balance,
+        body.panel-activo .btn-fijar,
+        body.panel-activo .btn-cobrar-clase {
+            background: #0f172a !important;
+            color: #ffffff !important;
+        }
+        body.panel-activo .btn-cerrar,
+        body.panel-activo .btn-stock {
+            background: #52627a !important;
+            color: #ffffff !important;
+        }
+        body.panel-activo .btn-eliminar {
+            background: #ef4444 !important;
+            color: #ffffff !important;
+        }
+        body.panel-activo .btn-whatsapp {
+            background: #25d366 !important;
+            color: #07152b !important;
+        }
+        body.panel-activo #lbl-fecha-club,
+        body.panel-activo #controles-fecha-club span,
+        body.panel-activo #controles-fecha-club button {
+            color: #07152b !important;
+        }
+        body.panel-activo #controles-fecha-club .btn-modal {
+            color: #ffffff !important;
+        }
+        body.panel-activo .contenedor-grilla > div {
+            border-color: #e5eaf2 !important;
+        }
+        body.panel-activo .contenedor-grilla > div:first-child,
+        body.panel-activo .contenedor-grilla > div > div:first-child {
+            background: #f8fafc !important;
+            color: #07152b !important;
+            border-color: #e5eaf2 !important;
+        }
+
+        body:not(.panel-activo),
+        body.panel-activo {
+            padding: 0 !important;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        body.panel-activo .modal-content p,
+        body.panel-activo .modal-content small {
+            color: #52627a !important;
+        }
+        body.panel-activo .modal-content strong,
+        body.panel-activo #res-precio-total,
+        body.panel-activo #cobrar-clase-total,
+        body.panel-activo #txt-faltante {
+            color: #07152b !important;
+        }
+        body.panel-activo *[style*="#1e252d"],
+        body.panel-activo *[style*="#242c36"] {
+            background: #ffffff !important;
+            border-color: #e5eaf2 !important;
+        }
+        body.panel-activo *[style*="#2c3540"],
+        body.panel-activo *[style*="#44505d"] {
+            border-color: #e5eaf2 !important;
+        }
+        body.panel-activo *[style*="#9ca3af"],
+        body.panel-activo *[style*="#d1d5db"] {
+            color: #52627a !important;
+        }
+        body.panel-activo *[style*="color: white"],
+        body.panel-activo *[style*="color:white"],
+        body.panel-activo *[style*="color: #ffffff"] {
+            color: #07152b !important;
+        }
+        body.panel-activo .btn-modal[style*="color:#171d24"],
+        body.panel-activo .btn-whatsapp[style*="color:#171d24"] {
+            color: #07152b !important;
         }
 
         /* --- RESPONSIVE (MÓVIL) --- */
@@ -912,9 +1131,13 @@
         
         let reservaSeleccionadaId = null; let reservaEnProcesoHora = null; let metricasChart = null;
 
-        // INICIALIZACIÓN MOCK
+        // INICIALIZACIÓN DEL PANEL
+        // No muestra el panel por sí sola. El panel recién se habilita desde Firebase
+        // cuando el usuario inició sesión y su rol es "club".
         window.onload = function() {
-            document.getElementById('app-content').style.display = 'flex';
+            if (!document.body.classList.contains('panel-activo')) return;
+            const app = document.getElementById('app-content');
+            if (app) app.style.display = 'flex';
             renderizarCalendarios();
             renderizarPantallas();
         };
@@ -1885,8 +2108,11 @@
 
             function iniciarPanelAprobado() {
                 document.body.classList.add("panel-activo");
-                document.getElementById("auth-screen").style.display = "none";
-                document.getElementById("app-content").style.display = "flex";
+                document.querySelectorAll(".modal-overlay").forEach(m => m.style.display = "none");
+                const authScreen = document.getElementById("auth-screen");
+                const app = document.getElementById("app-content");
+                if (authScreen) authScreen.style.display = "none";
+                if (app) app.style.display = "flex";
                 const lbl = document.getElementById("lbl-nombre-club");
                 if (lbl) lbl.innerText = CLUB_ID;
 
@@ -2259,8 +2485,11 @@
             const onloadOriginal = window.onload;
             window.onload = function() {
                 document.body.classList.remove("panel-activo");
-                document.getElementById("app-content").style.display = "none";
-                document.getElementById("auth-screen").style.display = "flex";
+                document.querySelectorAll(".modal-overlay").forEach(m => m.style.display = "none");
+                const app = document.getElementById("app-content");
+                const authScreen = document.getElementById("auth-screen");
+                if (app) app.style.display = "none";
+                if (authScreen) authScreen.style.display = "flex";
                 inicializarFirebase();
             };
         })();
