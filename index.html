@@ -133,31 +133,148 @@
 
 
 
-        /* --- LOGIN / REGISTRO --- */
+        /* --- LOGIN / REGISTRO - ESTILO CLARO --- */
+        body {
+            background: #f7f8fa;
+            color: #0f172a;
+        }
+        body.panel-activo {
+            background-color: #1a1e24;
+            color: #ffffff;
+        }
         .auth-screen {
-            width: 100%; min-height: calc(100vh - 40px);
-            display: flex; align-items: center; justify-content: center;
+            width: 100%;
+            min-height: calc(100vh - 40px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f7f8fa;
         }
         .auth-card {
-            width: 100%; max-width: 390px; background: #1e252d;
-            border: 1px solid #2c3540; border-radius: 16px; padding: 24px;
-            box-shadow: 0 10px 30px rgba(0,0,0,.35); box-sizing: border-box;
+            width: 100%;
+            max-width: 430px;
+            background: #ffffff;
+            border: 1px solid #dbe1ea;
+            border-radius: 22px;
+            padding: 28px 22px;
+            box-shadow: 0 26px 55px rgba(15, 23, 42, 0.16);
+            box-sizing: border-box;
+            text-align: center;
         }
-        .auth-card h1 { margin: 0 0 8px 0; font-size: 1.55em; color: #ffffff; }
-        .auth-subtitle { margin: 0 0 18px 0; color: #9ca3af; line-height: 1.45; font-size: .95em; }
-        .auth-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
-        .auth-tab {
-            border: 1px solid #44505d; background: #171d24; color: #d1d5db;
-            padding: 10px; border-radius: 8px; cursor: pointer; font-weight: 700;
+        .auth-card h1 {
+            margin: 0 0 8px 0;
+            font-size: 2em;
+            line-height: 1.15;
+            color: #07152b;
+            font-weight: 800;
+            letter-spacing: -0.03em;
         }
-        .auth-tab.active { background: #3b82f6; border-color: #6b9dfa; color: white; }
-        .auth-form { display: flex; flex-direction: column; gap: 10px; }
-        .auth-small { color: #9ca3af; font-size: .86em; text-align: center; margin: 2px 0 0 0; }
-        .auth-small button { background: none; border: none; color: #3b82f6; cursor: pointer; font-weight: 700; padding: 0; }
-        .auth-status { background: #171d24; border: 1px solid #44505d; border-radius: 10px; padding: 14px; text-align: left; }
-        .auth-status h3 { margin: 0 0 8px 0; color: #ffffff; }
-        .auth-status p { margin: 0 0 12px 0; color: #d1d5db; line-height: 1.45; }
-        .auth-message { min-height: 18px; color: #f59e0b; font-size: .88em; text-align: center; margin: 12px 0 0 0; }
+        .auth-subtitle {
+            max-width: 330px;
+            margin: 0 auto 24px auto;
+            color: #52627a;
+            line-height: 1.35;
+            font-size: 1.05em;
+        }
+        .auth-tabs {
+            display: none;
+        }
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 13px;
+            text-align: left;
+        }
+        .auth-field {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .auth-label {
+            color: #5f6b7d;
+            font-weight: 800;
+            font-size: 0.9em;
+        }
+        .auth-card .input-form {
+            width: 100%;
+            padding: 14px 15px;
+            border-radius: 12px;
+            border: 1px solid #d6deea;
+            background: #eaf1fb;
+            color: #000000;
+            font-family: inherit;
+            font-size: 0.95em;
+            outline: none;
+            box-sizing: border-box;
+            color-scheme: light;
+        }
+        .auth-card .input-form:focus {
+            border-color: #0f172a;
+            box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
+        }
+        .auth-primary {
+            width: 100%;
+            margin-top: 2px;
+            padding: 14px 16px;
+            border: none;
+            border-radius: 12px;
+            background: #0f172a;
+            color: #ffffff;
+            font-weight: 800;
+            font-size: 1em;
+            cursor: pointer;
+            transition: transform 0.16s ease, filter 0.16s ease;
+            font-family: inherit;
+        }
+        .auth-primary:hover {
+            filter: brightness(1.08);
+            transform: translateY(-1px);
+        }
+        .auth-small {
+            color: #52627a;
+            font-size: .92em;
+            text-align: center;
+            margin: 2px 0 0 0;
+        }
+        .auth-small button {
+            background: none;
+            border: none;
+            color: #0f172a;
+            cursor: pointer;
+            font-weight: 800;
+            padding: 0;
+            text-decoration: underline;
+            font-family: inherit;
+            font-size: 1em;
+        }
+        .auth-status {
+            background: #f8fafc;
+            border: 1px solid #dbe1ea;
+            border-radius: 14px;
+            padding: 16px;
+            text-align: left;
+        }
+        .auth-status h3 {
+            margin: 0 0 8px 0;
+            color: #07152b;
+        }
+        .auth-status p {
+            margin: 0 0 12px 0;
+            color: #52627a;
+            line-height: 1.45;
+        }
+        .auth-status .btn-cerrar {
+            background: #0f172a;
+            color: #ffffff;
+            border-radius: 12px;
+        }
+        .auth-message {
+            min-height: 18px;
+            color: #b45309;
+            font-size: .88em;
+            text-align: center;
+            margin: 14px 0 0 0;
+        }
 
         /* --- RESPONSIVE (MÓVIL) --- */
         @media (max-width: 600px) {
@@ -172,7 +289,7 @@
     <div id="auth-screen" class="auth-screen">
         <div class="auth-card">
             <h1>Administración de Clubes</h1>
-            <p class="auth-subtitle">Ingresá con una cuenta aprobada como <strong>club</strong> para configurar tu panel.</p>
+            <p class="auth-subtitle">Ingresá con tu cuenta para acceder al panel de administración de tu club.</p>
 
             <div class="auth-tabs">
                 <button id="tab-login" class="auth-tab active" onclick="window.mostrarAuth('login')">Iniciar sesión</button>
@@ -180,18 +297,34 @@
             </div>
 
             <div id="auth-login" class="auth-form">
-                <input id="login-email" class="input-form" type="email" autocomplete="email" placeholder="Mail">
-                <input id="login-password" class="input-form" type="password" autocomplete="current-password" placeholder="Contraseña">
-                <button class="btn-modal btn-guardar" onclick="window.loginClub()">Ingresar al panel</button>
-                <p class="auth-small">Si no tenés cuenta, <button onclick="window.mostrarAuth('register')">registrate acá</button>.</p>
+                <div class="auth-field">
+                    <label class="auth-label" for="login-email">Email:</label>
+                    <input id="login-email" class="input-form" type="email" autocomplete="email" placeholder="">
+                </div>
+                <div class="auth-field">
+                    <label class="auth-label" for="login-password">Contraseña:</label>
+                    <input id="login-password" class="input-form" type="password" autocomplete="current-password" placeholder="">
+                </div>
+                <button class="auth-primary" onclick="window.loginClub()">Iniciar sesión</button>
+                <p class="auth-small">¿No tenés cuenta? <button onclick="window.mostrarAuth('register')">Registrate aquí</button></p>
             </div>
 
             <div id="auth-register" class="auth-form" style="display:none;">
-                <input id="register-club" class="input-form" type="text" placeholder="Nombre del club">
-                <input id="register-email" class="input-form" type="email" autocomplete="email" placeholder="Mail del club">
-                <input id="register-password" class="input-form" type="password" autocomplete="new-password" placeholder="Contraseña (mínimo 6 caracteres)">
-                <button class="btn-modal btn-guardar" onclick="window.registrarClub()">Solicitar acceso</button>
-                <p class="auth-small">Al registrarte, tu cuenta queda en estado <strong>pendiente</strong> hasta aprobación manual.</p>
+                <div class="auth-field">
+                    <label class="auth-label" for="register-club">Nombre del club:</label>
+                    <input id="register-club" class="input-form" type="text" autocomplete="organization" placeholder="">
+                </div>
+                <div class="auth-field">
+                    <label class="auth-label" for="register-email">Email:</label>
+                    <input id="register-email" class="input-form" type="email" autocomplete="email" placeholder="">
+                </div>
+                <div class="auth-field">
+                    <label class="auth-label" for="register-password">Contraseña:</label>
+                    <input id="register-password" class="input-form" type="password" autocomplete="new-password" placeholder="Mínimo 6 caracteres">
+                </div>
+                <button class="auth-primary" onclick="window.registrarClub()">Registrarse</button>
+                <p class="auth-small">¿Ya tenés cuenta? <button onclick="window.mostrarAuth('login')">Iniciá sesión aquí</button></p>
+                <p class="auth-small">Tu usuario quedará pendiente hasta que se apruebe manualmente el rol <strong>club</strong>.</p>
             </div>
 
             <div id="auth-pending" class="auth-status" style="display:none;">
@@ -1661,20 +1794,16 @@
                         }, { merge: true });
 
                         // Este documento envía el mail si tenés instalada la extensión Firebase Trigger Email
-                        // apuntando a la colección "mail". Si todavía no está configurada, la solicitud queda guardada igual.
-                        try {
-                            await firebaseAPI.addDoc(firebaseAPI.collection(firebaseAPI.db, "mail"), {
-                                to: [ADMIN_EMAIL_SOLICITUDES],
-                                message: {
-                                    subject: `Solicitud de rol club - ${nombreClub}`,
-                                    text: `Es un club: ${nombreClub}\nSu estado está en pendiente.\nSu mail es: ${email}\nSolicita el rol de club para poder configurar su panel.`,
-                                    html: `<p><strong>Es un club:</strong> ${nombreClub}</p><p><strong>Estado:</strong> pendiente</p><p><strong>Mail:</strong> ${email}</p><p>Solicita el rol <strong>club</strong> para poder configurar su panel.</p>`
-                                },
-                                creadoEn: firebaseAPI.serverTimestamp()
-                            });
-                        } catch (mailError) {
-                            console.warn("La solicitud se guardó, pero no se pudo crear el mail automático:", mailError);
-                        }
+                        // apuntando a la colección "mail".
+                        await firebaseAPI.addDoc(firebaseAPI.collection(firebaseAPI.db, "mail"), {
+                            to: [ADMIN_EMAIL_SOLICITUDES],
+                            message: {
+                                subject: `Solicitud de rol club - ${nombreClub}`,
+                                text: `Es un club: ${nombreClub}\nSu estado está en pendiente.\nSu mail es: ${email}\nSolicita el rol de club para poder configurar su panel.`,
+                                html: `<p><strong>Es un club:</strong> ${nombreClub}</p><p><strong>Estado:</strong> pendiente</p><p><strong>Mail:</strong> ${email}</p><p>Solicita el rol <strong>club</strong> para poder configurar su panel.</p>`
+                            },
+                            creadoEn: firebaseAPI.serverTimestamp()
+                        });
 
                         mostrarPendiente("Solicitud enviada. Tu usuario quedó pendiente de aprobación.");
                     } catch (error) {
@@ -1691,6 +1820,7 @@
             }
 
             function mostrarPantallaAuth() {
+                document.body.classList.remove("panel-activo");
                 document.getElementById("app-content").style.display = "none";
                 document.getElementById("auth-screen").style.display = "flex";
                 const pending = document.getElementById("auth-pending");
@@ -1699,6 +1829,7 @@
             }
 
             function mostrarPendiente(mensaje) {
+                document.body.classList.remove("panel-activo");
                 document.getElementById("app-content").style.display = "none";
                 document.getElementById("auth-screen").style.display = "flex";
                 document.getElementById("auth-login").style.display = "none";
@@ -1753,6 +1884,7 @@
             }
 
             function iniciarPanelAprobado() {
+                document.body.classList.add("panel-activo");
                 document.getElementById("auth-screen").style.display = "none";
                 document.getElementById("app-content").style.display = "flex";
                 const lbl = document.getElementById("lbl-nombre-club");
@@ -2126,6 +2258,7 @@
 
             const onloadOriginal = window.onload;
             window.onload = function() {
+                document.body.classList.remove("panel-activo");
                 document.getElementById("app-content").style.display = "none";
                 document.getElementById("auth-screen").style.display = "flex";
                 inicializarFirebase();
