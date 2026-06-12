@@ -131,6 +131,34 @@
         .contenido-acordeon { padding: 15px; display: none; }
         .contenido-acordeon.abierto { display: block; border-top: 1px solid #2c3540;}
 
+
+
+        /* --- LOGIN / REGISTRO --- */
+        .auth-screen {
+            width: 100%; min-height: calc(100vh - 40px);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .auth-card {
+            width: 100%; max-width: 390px; background: #1e252d;
+            border: 1px solid #2c3540; border-radius: 16px; padding: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,.35); box-sizing: border-box;
+        }
+        .auth-card h1 { margin: 0 0 8px 0; font-size: 1.55em; color: #ffffff; }
+        .auth-subtitle { margin: 0 0 18px 0; color: #9ca3af; line-height: 1.45; font-size: .95em; }
+        .auth-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+        .auth-tab {
+            border: 1px solid #44505d; background: #171d24; color: #d1d5db;
+            padding: 10px; border-radius: 8px; cursor: pointer; font-weight: 700;
+        }
+        .auth-tab.active { background: #3b82f6; border-color: #6b9dfa; color: white; }
+        .auth-form { display: flex; flex-direction: column; gap: 10px; }
+        .auth-small { color: #9ca3af; font-size: .86em; text-align: center; margin: 2px 0 0 0; }
+        .auth-small button { background: none; border: none; color: #3b82f6; cursor: pointer; font-weight: 700; padding: 0; }
+        .auth-status { background: #171d24; border: 1px solid #44505d; border-radius: 10px; padding: 14px; text-align: left; }
+        .auth-status h3 { margin: 0 0 8px 0; color: #ffffff; }
+        .auth-status p { margin: 0 0 12px 0; color: #d1d5db; line-height: 1.45; }
+        .auth-message { min-height: 18px; color: #f59e0b; font-size: .88em; text-align: center; margin: 12px 0 0 0; }
+
         /* --- RESPONSIVE (MÓVIL) --- */
         @media (max-width: 600px) {
             body { padding: 10px; }
@@ -141,12 +169,48 @@
 </head>
 <body>
 
-    <div id="app-content" style="display: flex; width: 100%; flex-direction: column; align-items: center;">
+    <div id="auth-screen" class="auth-screen">
+        <div class="auth-card">
+            <h1>Administración de Clubes</h1>
+            <p class="auth-subtitle">Ingresá con una cuenta aprobada como <strong>club</strong> para configurar tu panel.</p>
+
+            <div class="auth-tabs">
+                <button id="tab-login" class="auth-tab active" onclick="window.mostrarAuth('login')">Iniciar sesión</button>
+                <button id="tab-register" class="auth-tab" onclick="window.mostrarAuth('register')">Registrarse</button>
+            </div>
+
+            <div id="auth-login" class="auth-form">
+                <input id="login-email" class="input-form" type="email" autocomplete="email" placeholder="Mail">
+                <input id="login-password" class="input-form" type="password" autocomplete="current-password" placeholder="Contraseña">
+                <button class="btn-modal btn-guardar" onclick="window.loginClub()">Ingresar al panel</button>
+                <p class="auth-small">Si no tenés cuenta, <button onclick="window.mostrarAuth('register')">registrate acá</button>.</p>
+            </div>
+
+            <div id="auth-register" class="auth-form" style="display:none;">
+                <input id="register-club" class="input-form" type="text" placeholder="Nombre del club">
+                <input id="register-email" class="input-form" type="email" autocomplete="email" placeholder="Mail del club">
+                <input id="register-password" class="input-form" type="password" autocomplete="new-password" placeholder="Contraseña (mínimo 6 caracteres)">
+                <button class="btn-modal btn-guardar" onclick="window.registrarClub()">Solicitar acceso</button>
+                <p class="auth-small">Al registrarte, tu cuenta queda en estado <strong>pendiente</strong> hasta aprobación manual.</p>
+            </div>
+
+            <div id="auth-pending" class="auth-status" style="display:none;">
+                <h3>Solicitud pendiente</h3>
+                <p>Tu cuenta fue creada correctamente, pero todavía no tiene el rol <strong>club</strong>. Cuando se apruebe desde Firebase vas a poder ingresar.</p>
+                <button class="btn-modal btn-cerrar" onclick="window.logoutClub()">Cerrar sesión</button>
+            </div>
+
+            <p id="auth-message" class="auth-message"></p>
+        </div>
+    </div>
+
+    <div id="app-content" style="display: none; width: 100%; flex-direction: column; align-items: center;">
         
         <div id="pantalla-club" class="vista-club" style="display: block;">
             
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; width: 100%;">
                 <h2 style="margin: 0; font-size: 1.6em; color: white;">👋 Hola, <span id="lbl-nombre-club" style="color: #3b82f6; text-transform: capitalize;">Admin</span></h2>
+                <button class="btn-modal btn-cerrar" style="width:auto; padding: 8px 12px; font-size:.85em;" onclick="window.logoutClub()">Cerrar sesión</button>
                 
                 <div class="header-panel-botones" style="display: flex; gap: 20px; align-items: center; justify-content: center; width: 100%; border: none; background: transparent; padding: 10px 0;">
                     <button onclick="window.abrirModalProfesores()" style="background: none; border: none; font-size: 1.8em; cursor: pointer; color: #d1d5db; transition: 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Gestión de Profesores">🧑‍🏫</button>
@@ -1506,12 +1570,19 @@
             };
 
             const params = new URLSearchParams(window.location.search);
-            const CLUB_ID = params.get("club") || params.get("clubId") || "Club Central";
-            const CLUB_DOC_ID = normalizarIdFirestore(CLUB_ID);
+            let CLUB_ID = params.get("club") || params.get("clubId") || "Club Central";
+            let CLUB_DOC_ID = normalizarIdFirestore(CLUB_ID);
             const FIREBASE_VERSION = "10.12.5";
+            const ADMIN_EMAIL_SOLICITUDES = "pric.administracion@gmail.com";
 
             let firebaseAPI = null;
             let firebaseInicializado = false;
+            let authAPI = null;
+            let usuarioActual = null;
+            let perfilActual = null;
+            let unsubClub = null;
+            let unsubReservas = null;
+            let panelIniciado = false;
             let reservasSnapshotIds = new Set();
             let ignorarRenderSnapshot = false;
 
@@ -1522,6 +1593,181 @@
                 return String(valor || "Club Central").trim().replace(/[\/#[\]?]/g, "_") || "Club Central";
             }
 
+
+            function setAuthMessage(mensaje, tipo = "info") {
+                const el = document.getElementById("auth-message");
+                if (!el) return;
+                el.innerText = mensaje || "";
+                el.style.color = tipo === "error" ? "#ef4444" : tipo === "ok" ? "#10b981" : "#f59e0b";
+            }
+
+            function prepararAuthUI() {
+                window.mostrarAuth = function(modo) {
+                    const login = document.getElementById("auth-login");
+                    const register = document.getElementById("auth-register");
+                    const pending = document.getElementById("auth-pending");
+                    const tabLogin = document.getElementById("tab-login");
+                    const tabRegister = document.getElementById("tab-register");
+                    if (pending) pending.style.display = "none";
+                    if (login) login.style.display = modo === "login" ? "flex" : "none";
+                    if (register) register.style.display = modo === "register" ? "flex" : "none";
+                    if (tabLogin) tabLogin.classList.toggle("active", modo === "login");
+                    if (tabRegister) tabRegister.classList.toggle("active", modo === "register");
+                    setAuthMessage("");
+                };
+
+                window.loginClub = async function() {
+                    const email = document.getElementById("login-email").value.trim();
+                    const password = document.getElementById("login-password").value;
+                    if (!email || !password) return setAuthMessage("Completá mail y contraseña.", "error");
+                    try {
+                        setAuthMessage("Verificando acceso...");
+                        await authAPI.signInWithEmailAndPassword(authAPI.auth, email, password);
+                    } catch (error) {
+                        console.error(error);
+                        setAuthMessage("No se pudo iniciar sesión. Revisá el mail y la contraseña.", "error");
+                    }
+                };
+
+                window.registrarClub = async function() {
+                    const nombreClub = document.getElementById("register-club").value.trim();
+                    const email = document.getElementById("register-email").value.trim();
+                    const password = document.getElementById("register-password").value;
+                    if (!nombreClub || !email || !password) return setAuthMessage("Completá nombre del club, mail y contraseña.", "error");
+                    if (password.length < 6) return setAuthMessage("La contraseña debe tener mínimo 6 caracteres.", "error");
+
+                    try {
+                        setAuthMessage("Creando solicitud...");
+                        const cred = await authAPI.createUserWithEmailAndPassword(authAPI.auth, email, password);
+                        await authAPI.updateProfile(cred.user, { displayName: nombreClub });
+
+                        const clubDocId = normalizarIdFirestore(nombreClub);
+                        const perfil = {
+                            uid: cred.user.uid,
+                            email,
+                            nombreClub,
+                            clubId: clubDocId,
+                            rol: "pendiente",
+                            estado: "pendiente",
+                            solicitaRol: "club",
+                            creadoEn: firebaseAPI.serverTimestamp(),
+                            actualizadoEn: firebaseAPI.serverTimestamp()
+                        };
+
+                        await firebaseAPI.setDoc(firebaseAPI.doc(firebaseAPI.db, "usuarios", cred.user.uid), perfil, { merge: true });
+                        await firebaseAPI.setDoc(firebaseAPI.doc(firebaseAPI.db, "solicitudesClub", cred.user.uid), {
+                            ...perfil,
+                            asunto: `Solicitud de rol club - ${nombreClub}`
+                        }, { merge: true });
+
+                        // Este documento envía el mail si tenés instalada la extensión Firebase Trigger Email
+                        // apuntando a la colección "mail". Si todavía no está configurada, la solicitud queda guardada igual.
+                        try {
+                            await firebaseAPI.addDoc(firebaseAPI.collection(firebaseAPI.db, "mail"), {
+                                to: [ADMIN_EMAIL_SOLICITUDES],
+                                message: {
+                                    subject: `Solicitud de rol club - ${nombreClub}`,
+                                    text: `Es un club: ${nombreClub}\nSu estado está en pendiente.\nSu mail es: ${email}\nSolicita el rol de club para poder configurar su panel.`,
+                                    html: `<p><strong>Es un club:</strong> ${nombreClub}</p><p><strong>Estado:</strong> pendiente</p><p><strong>Mail:</strong> ${email}</p><p>Solicita el rol <strong>club</strong> para poder configurar su panel.</p>`
+                                },
+                                creadoEn: firebaseAPI.serverTimestamp()
+                            });
+                        } catch (mailError) {
+                            console.warn("La solicitud se guardó, pero no se pudo crear el mail automático:", mailError);
+                        }
+
+                        mostrarPendiente("Solicitud enviada. Tu usuario quedó pendiente de aprobación.");
+                    } catch (error) {
+                        console.error(error);
+                        const msg = error?.code === "auth/email-already-in-use" ? "Ese mail ya está registrado." : "No se pudo registrar la solicitud.";
+                        setAuthMessage(msg, "error");
+                    }
+                };
+
+                window.logoutClub = async function() {
+                    try { await authAPI.signOut(authAPI.auth); }
+                    catch (error) { console.error(error); }
+                };
+            }
+
+            function mostrarPantallaAuth() {
+                document.getElementById("app-content").style.display = "none";
+                document.getElementById("auth-screen").style.display = "flex";
+                const pending = document.getElementById("auth-pending");
+                if (pending) pending.style.display = "none";
+                if (window.mostrarAuth) window.mostrarAuth("login");
+            }
+
+            function mostrarPendiente(mensaje) {
+                document.getElementById("app-content").style.display = "none";
+                document.getElementById("auth-screen").style.display = "flex";
+                document.getElementById("auth-login").style.display = "none";
+                document.getElementById("auth-register").style.display = "none";
+                document.getElementById("auth-pending").style.display = "block";
+                document.getElementById("tab-login").classList.remove("active");
+                document.getElementById("tab-register").classList.remove("active");
+                setAuthMessage(mensaje || "Tu cuenta está pendiente de aprobación.");
+            }
+
+            async function controlarSesion(user) {
+                usuarioActual = user || null;
+                perfilActual = null;
+
+                if (!user) {
+                    detenerEscuchasFirebase();
+                    panelIniciado = false;
+                    mostrarPantallaAuth();
+                    return;
+                }
+
+                try {
+                    const perfilRef = firebaseAPI.doc(firebaseAPI.db, "usuarios", user.uid);
+                    const perfilSnap = await firebaseAPI.getDoc(perfilRef);
+                    if (!perfilSnap.exists()) {
+                        mostrarPendiente("Tu usuario no tiene perfil asignado. Revisá la colección usuarios en Firebase.");
+                        return;
+                    }
+
+                    perfilActual = perfilSnap.data();
+                    if (perfilActual.rol !== "club") {
+                        mostrarPendiente(`Tu solicitud sigue pendiente. Rol actual: ${perfilActual.rol || "pendiente"}.`);
+                        return;
+                    }
+
+                    CLUB_ID = perfilActual.nombreClub || perfilActual.clubId || user.displayName || CLUB_ID;
+                    CLUB_DOC_ID = normalizarIdFirestore(perfilActual.clubId || CLUB_ID);
+                    iniciarPanelAprobado();
+                } catch (error) {
+                    console.error(error);
+                    setAuthMessage("No se pudo leer el perfil del usuario en Firestore.", "error");
+                }
+            }
+
+            function detenerEscuchasFirebase() {
+                if (typeof unsubClub === "function") unsubClub();
+                if (typeof unsubReservas === "function") unsubReservas();
+                unsubClub = null;
+                unsubReservas = null;
+                reservasGlobales = [];
+                reservasSnapshotIds = new Set();
+            }
+
+            function iniciarPanelAprobado() {
+                document.getElementById("auth-screen").style.display = "none";
+                document.getElementById("app-content").style.display = "flex";
+                const lbl = document.getElementById("lbl-nombre-club");
+                if (lbl) lbl.innerText = CLUB_ID;
+
+                if (!panelIniciado && typeof onloadOriginal === "function") {
+                    panelIniciado = true;
+                    onloadOriginal();
+                }
+
+                detenerEscuchasFirebase();
+                iniciarEscuchasFirebase();
+                window.renderizarPantallas();
+            }
+
             function logFirebaseError(contexto, error) {
                 console.error(`Firebase ${contexto}:`, error);
                 alert(`No se pudo conectar con Firebase (${contexto}). Revisa las reglas de Firestore y que estés usando el proyecto correcto.`);
@@ -1529,14 +1775,16 @@
 
             async function inicializarFirebase() {
                 try {
-                    const [appMod, firestoreMod, analyticsMod] = await Promise.all([
+                    const [appMod, firestoreMod, authMod, analyticsMod] = await Promise.all([
                         import(`https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}/firebase-app.js`),
                         import(`https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}/firebase-firestore.js`),
+                        import(`https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}/firebase-auth.js`),
                         import(`https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}/firebase-analytics.js`).catch(() => null)
                     ]);
 
                     const app = appMod.initializeApp(firebaseConfig);
                     const db = firestoreMod.getFirestore(app);
+                    const auth = authMod.getAuth(app);
 
                     try {
                         if (analyticsMod && typeof analyticsMod.getAnalytics === "function") analyticsMod.getAnalytics(app);
@@ -1545,8 +1793,10 @@
                     }
 
                     firebaseAPI = { app, db, ...firestoreMod };
+                    authAPI = { auth, ...authMod };
                     firebaseInicializado = true;
-                    iniciarEscuchasFirebase();
+                    prepararAuthUI();
+                    authMod.onAuthStateChanged(auth, controlarSesion);
                 } catch (error) {
                     logFirebaseError("inicialización", error);
                 }
@@ -1582,13 +1832,13 @@
             function iniciarEscuchasFirebase() {
                 if (!firebaseAPI) return;
 
-                firebaseAPI.onSnapshot(refClub(), (snap) => {
+                unsubClub = firebaseAPI.onSnapshot(refClub(), (snap) => {
                     if (snap.exists()) aplicarConfiguracionClub(snap.data());
                     else window.guardarConfiguracionCompartida();
                     if (typeof renderizarPantallasOriginal === "function") renderizarPantallasOriginal();
                 }, (error) => logFirebaseError("lectura de configuración", error));
 
-                firebaseAPI.onSnapshot(
+                unsubReservas = firebaseAPI.onSnapshot(
                     firebaseAPI.query(refReservas(), firebaseAPI.orderBy("fecha", "asc"), firebaseAPI.orderBy("hora", "asc")),
                     (snapshot) => {
                         if (ignorarRenderSnapshot) return;
@@ -1875,11 +2125,9 @@
             });
 
             const onloadOriginal = window.onload;
-            window.onload = function(evt) {
-                const lbl = document.getElementById("lbl-nombre-club");
-                if (lbl) lbl.innerText = CLUB_ID;
-                if (typeof onloadOriginal === "function") onloadOriginal(evt);
-                window.renderizarPantallas();
+            window.onload = function() {
+                document.getElementById("app-content").style.display = "none";
+                document.getElementById("auth-screen").style.display = "flex";
                 inicializarFirebase();
             };
         })();
