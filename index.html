@@ -589,12 +589,251 @@
                 window.setAuthMessage("");
             };
 
-            window.loginClub = window.loginClub || function () {
-                window.setAuthMessage("Firebase se está inicializando. Esperá unos segundos. Si queda igual, revisá consola/conexión.", "error");
+            /*
+                FIX CRÍTICO:
+                Antes había funciones temporales que mostraban:
+                "Firebase se está inicializando...".
+                Si el script principal tardaba o no llegaba a pisarlas, el botón quedaba clavado ahí.
+                Ahora estas funciones tempranas YA inicializan Firebase y ejecutan login/registro.
+            */
+            window.__firebaseAuthClubPromise = window.__firebaseAuthClubPromise || null;
+
+            function cargarScriptUnaVez(url) {
+                return new Promise(function(resolve, reject) {
+                    const existente = document.querySelector('script[src="' + url + '"]');
+                    if (existente) {
+                        if (existente.dataset.loaded === "1") return resolve();
+                        existente.addEventListener("load", function(){ resolve(); }, { once: true });
+                        existente.addEventListener("error", function(){ reject(new Error("No se pudo cargar " + url)); }, { once: true });
+                        return;
+                    }
+                    const script = document.createElement("script");
+                    script.src = url;
+                    script.async = false;
+                    script.onload = function(){ script.dataset.loaded = "1"; resolve(); };
+                    script.onerror = function(){ reject(new Error("No se pudo cargar " + url)); };
+                    document.head.appendChild(script);
+                });
+            }
+
+            function normalizarClubIdTemprano(valor) {
+                return String(valor || "Club Central")
+                    .trim()
+                    .replace(/[\\/#[\]?]/g, "_")
+                    .replace(/\s+/g, " ") || "Club Central";
+            }
+
+            async function inicializarFirebaseAuthClubTemprano() {
+                if (window.firebase && firebase.apps && firebase.auth && firebase.firestore) {
+                    if (!firebase.apps.length) {
+                        firebase.initializeApp({
+                            apiKey: "AIzaSyDqWKo3ZtPChbtf38osMiKwQpCRNvsN7ak",
+                            authDomain: "pric-60f50.firebaseapp.com",
+                            projectId: "pric-60f50",
+                            storageBucket: "pric-60f50.firebasestorage.app",
+                            messagingSenderId: "475470852361",
+                            appId: "1:475470852361:web:8acfa8b1e2963426ef23d8",
+                            measurementId: "G-ZXLT15L9JR"
+                        });
+                    }
+                    return { auth: firebase.auth(), db: firebase.firestore() };
+                }
+
+                if (!window.__firebaseAuthClubPromise) {
+                    window.__firebaseAuthClubPromise = (async function(){
+                        const version = "8.10.1";
+                        await cargarScriptUnaVez("https://www.gstatic.com/firebasejs/" + version + "/firebase-app.js");
+                        await cargarScriptUnaVez("https://www.gstatic.com/firebasejs/" + version + "/firebase-auth.js");
+                        await cargarScriptUnaVez("https://www.gstatic.com/firebasejs/" + version + "/firebase-firestore.js");
+
+                        if (!window.firebase) throw new Error("Firebase SDK no quedó disponible.");
+
+                        if (!firebase.apps.length) {
+                            firebase.initializeApp({
+                                apiKey: "AIzaSyDqWKo3ZtPChbtf38osMiKwQpCRNvsN7ak",
+                                authDomain: "pric-60f50.firebaseapp.com",
+                                projectId: "pric-60f50",
+                                storageBucket: "pric-60f50.firebasestorage.app",
+                                messagingSenderId: "475470852361",
+                                appId: "1:475470852361:web:8acfa8b1e2963426ef23d8",
+                                measurementId: "G-ZXLT15L9JR"
+                            });
+                        }
+
+                        return { auth: firebase.auth(), db: firebase.firestore() };
+                    })();
+                }
+
+                return window.__firebaseAuthClubPromise;
+            }
+
+            function ponerBotonCargandoTemprano(id, cargando, textoNormal, textoCargando) {
+                const btn = el(id);
+                if (!btn) return;
+                btn.disabled = !!cargando;
+                btn.textContent = cargando ? textoCargando : textoNormal;
+                btn.style.opacity = cargando ? "0.72" : "1";
+                btn.style.cursor = cargando ? "wait" : "pointer";
+            }
+
+            async function buscarClubPorEmailTemprano(db, email) {
+                const emailOriginal = String(email || "").trim();
+                const emailLower = emailOriginal.toLowerCase();
+                const opciones = [...new Set([emailOriginal, emailLower])];
+
+                for (const mail of opciones) {
+                    const snap = await db.collection("clubs").where("emailAdmin", "==", mail).limit(1).get();
+                    if (!snap.empty) {
+                        const doc = snap.docs[0];
+                        return { id: doc.id, ...doc.data() };
+                    }
+                }
+                return null;
+            }
+
+            function mostrarPendienteTemprano(mensaje) {
+                document.body.classList.remove("panel-activo");
+                const app = el("app-content");
+                const auth = el("auth-screen");
+                const login = el("auth-login");
+                const register = el("auth-register");
+                const pending = el("auth-pending");
+
+                if (app) app.style.display = "none";
+                if (auth) auth.style.display = "flex";
+                if (login) login.style.display = "none";
+                if (register) register.style.display = "none";
+                if (pending) pending.style.display = "block";
+                window.setAuthMessage(mensaje || "Tu club está pendiente de aprobación.", "info");
+            }
+
+            function mostrarPanelTemprano(club) {
+                document.body.classList.add("panel-activo");
+                const app = el("app-content");
+                const auth = el("auth-screen");
+                if (auth) auth.style.display = "none";
+                if (app) app.style.display = "flex";
+
+                window.CLUB_DOC_ID_ACTUAL = club.id;
+                window.CLUB_DATA_ACTUAL = club;
+
+                const lbl = el("lbl-nombre-club");
+                if (lbl) lbl.textContent = club.nombre || club.id || "Club";
+
+                try {
+                    if (typeof window.renderizarPantallas === "function") window.renderizarPantallas();
+                    if (typeof window.renderizarReservasClub === "function") window.renderizarReservasClub();
+                } catch(e) {
+                    console.warn("Panel cargado, render pendiente:", e);
+                }
+            }
+
+            window.loginClub = async function () {
+                const email = (el("login-email")?.value || "").trim();
+                const password = el("login-password")?.value || "";
+
+                if (!email || !password) {
+                    window.setAuthMessage("Completá email y contraseña.", "error");
+                    return;
+                }
+
+                try {
+                    ponerBotonCargandoTemprano("btn-login-club", true, "Iniciar sesión", "Ingresando...");
+                    window.setAuthMessage("Conectando con Firebase...", "info");
+
+                    const { auth, db } = await inicializarFirebaseAuthClubTemprano();
+
+                    window.setAuthMessage("Verificando acceso...", "info");
+                    await auth.signInWithEmailAndPassword(email, password);
+
+                    const club = await buscarClubPorEmailTemprano(db, email);
+
+                    if (!club) {
+                        await auth.signOut();
+                        window.setAuthMessage("No existe ningún club asociado a este email en la colección clubs.", "error");
+                        return;
+                    }
+
+                    if (club.estado === "aprobado" || club.estado === "activo") {
+                        mostrarPanelTemprano(club);
+                    } else {
+                        mostrarPendienteTemprano("Tu club está en estado: " + (club.estado || "pendiente") + ".");
+                    }
+                } catch (error) {
+                    console.error("loginClub temprano:", error);
+                    let msg = "No se pudo iniciar sesión.";
+                    if (["auth/user-not-found", "auth/wrong-password", "auth/invalid-credential", "auth/invalid-login-credentials"].includes(error?.code)) msg = "Email o contraseña incorrectos.";
+                    else if (error?.code === "auth/unauthorized-domain") msg = "Dominio no autorizado en Firebase Auth.";
+                    else if (error?.code === "auth/network-request-failed") msg = "Firebase no pudo conectarse. Revisá tu conexión.";
+                    else if (error?.message) msg = error.message;
+                    window.setAuthMessage(msg, "error");
+                } finally {
+                    ponerBotonCargandoTemprano("btn-login-club", false, "Iniciar sesión", "Ingresando...");
+                }
             };
 
-            window.registrarClub = window.registrarClub || function () {
-                window.setAuthMessage("Firebase se está inicializando. Esperá unos segundos. Si queda igual, revisá consola/conexión.", "error");
+            window.registrarClub = async function () {
+                const nombreClub = (el("register-club")?.value || "").trim();
+                const email = (el("register-email")?.value || "").trim();
+                const password = el("register-password")?.value || "";
+
+                if (!nombreClub || !email || !password) {
+                    window.setAuthMessage("Completá nombre del club, email y contraseña.", "error");
+                    return;
+                }
+                if (password.length < 6) {
+                    window.setAuthMessage("La contraseña debe tener mínimo 6 caracteres.", "error");
+                    return;
+                }
+
+                try {
+                    ponerBotonCargandoTemprano("btn-registrar-club", true, "Registrarse", "Registrando...");
+                    window.setAuthMessage("Conectando con Firebase...", "info");
+
+                    const { auth, db } = await inicializarFirebaseAuthClubTemprano();
+
+                    window.setAuthMessage("Creando usuario y club...", "info");
+                    const cred = await auth.createUserWithEmailAndPassword(email, password);
+                    await cred.user.updateProfile({ displayName: nombreClub });
+
+                    const clubDocId = normalizarClubIdTemprano(nombreClub);
+                    const clubRef = db.collection("clubs").doc(clubDocId);
+                    const clubSnap = await clubRef.get();
+
+                    if (clubSnap.exists) {
+                        throw new Error("Ya existe un club con ese nombre. Usá otro nombre o iniciá sesión.");
+                    }
+
+                    await clubRef.set({
+                        nombre: nombreClub,
+                        emailAdmin: email,
+                        estado: "pendiente",
+                        creadoEn: firebase.firestore.FieldValue.serverTimestamp(),
+                        actualizadoEn: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    window.CLUB_DOC_ID_ACTUAL = clubDocId;
+                    window.CLUB_DATA_ACTUAL = {
+                        id: clubDocId,
+                        nombre: nombreClub,
+                        emailAdmin: email,
+                        estado: "pendiente"
+                    };
+
+                    mostrarPendienteTemprano("Club creado correctamente. Queda pendiente hasta que se apruebe en Firebase.");
+                } catch (error) {
+                    console.error("registrarClub temprano:", error);
+                    let msg = "No se pudo registrar el club.";
+                    if (error?.code === "auth/email-already-in-use") msg = "Ese email ya está registrado. Iniciá sesión.";
+                    else if (error?.code === "auth/invalid-email") msg = "El email no es válido.";
+                    else if (error?.code === "auth/weak-password") msg = "La contraseña es muy débil.";
+                    else if (error?.code === "auth/unauthorized-domain") msg = "Dominio no autorizado en Firebase Auth.";
+                    else if (error?.code === "permission-denied") msg = "Firestore bloqueó la escritura. Revisá las reglas de seguridad para clubs.";
+                    else if (error?.message) msg = error.message;
+                    window.setAuthMessage(msg, "error");
+                } finally {
+                    ponerBotonCargandoTemprano("btn-registrar-club", false, "Registrarse", "Registrando...");
+                }
             };
 
             window.logoutClub = window.logoutClub || function () {
