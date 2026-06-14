@@ -199,9 +199,10 @@ await clubRef.set({
 nombre: nombreClub,
 emailAdmin: email,
 estado: "pendiente",
+datosClub: {},
 creadoEn: firebase.firestore.FieldValue.serverTimestamp(),
 actualizadoEn: firebase.firestore.FieldValue.serverTimestamp()
-});
+}, { merge: true });
 window.CLUB_DOC_ID_ACTUAL = clubDocId;
 window.CLUB_DATA_ACTUAL = {
 id: clubDocId,
@@ -1326,38 +1327,52 @@ if (limpio.fechaRegistro) limpio.fechaRegistro = normalizarFechaPersistida(limpi
 return limpio;
 }) : [];
 }
+function valorFirestoreUtil(valor) {
+if (valor === undefined || valor === null) return false;
+if (typeof valor === "string" && valor.trim() === "") return false;
+return true;
+}
+function numeroFirestoreUtil(valor, fallback) {
+if (!valorFirestoreUtil(valor)) return fallback;
+const n = Number(valor);
+return Number.isFinite(n) ? n : fallback;
+}
+function stringFirestoreUtil(valor, fallback) {
+return valorFirestoreUtil(valor) ? String(valor) : fallback;
+}
 function aplicarConfiguracionClub(config = {}) {
 if (!config || typeof config !== "object") return;
-primerTurno = config.primerTurno ?? primerTurno;
-ultimoTurno = config.ultimoTurno ?? ultimoTurno;
-duracionGlobal = Number(config.duracionDefault ?? config.duracionGlobal ?? duracionGlobal);
-diasAbiertosGlobal = Array.isArray(config.diasAbiertos) ? config.diasAbiertos : diasAbiertosGlobal;
-canchasIndoorGlobal = Number(config.canchasIndoor ?? canchasIndoorGlobal);
-canchasOutdoorGlobal = Number(config.canchasOutdoor ?? canchasOutdoorGlobal);
-canchasTenisGlobal = Number(config.canchasTenis ?? canchasTenisGlobal);
-precioIndoorGlobal = String(config.precioIndoor ?? precioIndoorGlobal);
-precioOutdoorGlobal = String(config.precioOutdoor ?? precioOutdoorGlobal);
-precioTenisGlobal = String(config.precioTenis ?? precioTenisGlobal);
-profeIndoorGlobal = String(config.profeIndoor ?? profeIndoorGlobal);
-profeOutdoorGlobal = String(config.profeOutdoor ?? profeOutdoorGlobal);
-profeTenisGlobal = String(config.profeTenis ?? profeTenisGlobal);
-senaIndoorGlobal = String(config.senaIndoor ?? senaIndoorGlobal);
-senaOutdoorGlobal = String(config.senaOutdoor ?? senaOutdoorGlobal);
-senaTenisGlobal = String(config.senaTenis ?? senaTenisGlobal);
-duracionIndoorGlobal = Number(config.duracionIndoor ?? config.duracionDefault ?? duracionIndoorGlobal);
-duracionOutdoorGlobal = Number(config.duracionOutdoor ?? duracionOutdoorGlobal);
-duracionTenisGlobal = Number(config.duracionTenis ?? duracionTenisGlobal);
-telefonoClubGlobal = config.telefono ?? telefonoClubGlobal;
-ubicacionClubGlobal = config.ubicacion ?? ubicacionClubGlobal;
-fotoClubGlobal = config.fotoClub ?? fotoClubGlobal;
-nombresIndoorGlobal = Array.isArray(config.nombresIndoor) ? config.nombresIndoor : nombresIndoorGlobal;
-nombresOutdoorGlobal = Array.isArray(config.nombresOutdoor) ? config.nombresOutdoor : nombresOutdoorGlobal;
-nombresTenisGlobal = Array.isArray(config.nombresTenis) ? config.nombresTenis : nombresTenisGlobal;
+const datos = (config.datosClub && typeof config.datosClub === "object") ? { ...config, ...config.datosClub } : config;
+primerTurno = stringFirestoreUtil(datos.primerTurno, primerTurno);
+ultimoTurno = stringFirestoreUtil(datos.ultimoTurno, ultimoTurno);
+duracionGlobal = numeroFirestoreUtil(datos.duracionDefault ?? datos.duracionGlobal, duracionGlobal);
+diasAbiertosGlobal = Array.isArray(datos.diasAbiertos) ? datos.diasAbiertos : diasAbiertosGlobal;
+canchasIndoorGlobal = numeroFirestoreUtil(datos.canchasIndoor, canchasIndoorGlobal);
+canchasOutdoorGlobal = numeroFirestoreUtil(datos.canchasOutdoor, canchasOutdoorGlobal);
+canchasTenisGlobal = numeroFirestoreUtil(datos.canchasTenis, canchasTenisGlobal);
+precioIndoorGlobal = stringFirestoreUtil(datos.precioIndoor, precioIndoorGlobal);
+precioOutdoorGlobal = stringFirestoreUtil(datos.precioOutdoor, precioOutdoorGlobal);
+precioTenisGlobal = stringFirestoreUtil(datos.precioTenis, precioTenisGlobal);
+profeIndoorGlobal = stringFirestoreUtil(datos.profeIndoor, profeIndoorGlobal);
+profeOutdoorGlobal = stringFirestoreUtil(datos.profeOutdoor, profeOutdoorGlobal);
+profeTenisGlobal = stringFirestoreUtil(datos.profeTenis, profeTenisGlobal);
+senaIndoorGlobal = stringFirestoreUtil(datos.senaIndoor, senaIndoorGlobal);
+senaOutdoorGlobal = stringFirestoreUtil(datos.senaOutdoor, senaOutdoorGlobal);
+senaTenisGlobal = stringFirestoreUtil(datos.senaTenis, senaTenisGlobal);
+duracionIndoorGlobal = numeroFirestoreUtil(datos.duracionIndoor ?? datos.duracionDefault, duracionIndoorGlobal);
+duracionOutdoorGlobal = numeroFirestoreUtil(datos.duracionOutdoor, duracionOutdoorGlobal);
+duracionTenisGlobal = numeroFirestoreUtil(datos.duracionTenis, duracionTenisGlobal);
+telefonoClubGlobal = stringFirestoreUtil(datos.telefono, telefonoClubGlobal);
+ubicacionClubGlobal = stringFirestoreUtil(datos.ubicacion, ubicacionClubGlobal);
+fotoClubGlobal = stringFirestoreUtil(datos.fotoClub, fotoClubGlobal);
+nombresIndoorGlobal = Array.isArray(datos.nombresIndoor) ? datos.nombresIndoor : nombresIndoorGlobal;
+nombresOutdoorGlobal = Array.isArray(datos.nombresOutdoor) ? datos.nombresOutdoor : nombresOutdoorGlobal;
+nombresTenisGlobal = Array.isArray(datos.nombresTenis) ? datos.nombresTenis : nombresTenisGlobal;
 nombresCanchasGlobal = [...nombresIndoorGlobal, ...nombresOutdoorGlobal, ...nombresTenisGlobal];
-inventarioGlobal = limpiarArrayFirestore(config.inventario);
-gastosGlobal = limpiarArrayFirestore(config.gastos);
-ingresosGlobal = limpiarArrayFirestore(config.ingresos);
-profesoresGlobal = limpiarArrayFirestore(config.profesores);
+inventarioGlobal = Array.isArray(datos.inventario) ? limpiarArrayFirestore(datos.inventario) : inventarioGlobal;
+gastosGlobal = Array.isArray(datos.gastos) ? limpiarArrayFirestore(datos.gastos) : gastosGlobal;
+ingresosGlobal = Array.isArray(datos.ingresos) ? limpiarArrayFirestore(datos.ingresos) : ingresosGlobal;
+profesoresGlobal = Array.isArray(datos.profesores) ? limpiarArrayFirestore(datos.profesores) : profesoresGlobal;
 }
 function iniciarEscuchasFirebase() {
 if (!firebaseAPI) return;
@@ -1465,11 +1480,22 @@ ingresos: limpiarArrayFirestore(ingresosGlobal),
 profesores: limpiarArrayFirestore(profesoresGlobal)
 };
 };
+function limpiarConfigPersistibleClub(config) {
+const limpio = {};
+Object.entries(config || {}).forEach(([k, v]) => {
+if (v === undefined || v === null) return;
+if (typeof v === "string" && v.trim() === "") return;
+limpio[k] = v;
+});
+return limpio;
+}
 window.guardarConfiguracionCompartida = async function() {
 if (!firebaseAPI) return;
 try {
+const configLimpia = limpiarConfigPersistibleClub(window.obtenerConfiguracionClub());
 await firebaseAPI.setDoc(refClub(), {
-...window.obtenerConfiguracionClub(),
+...configLimpia,
+datosClub: configLimpia,
 nombre: CLUB_ID,
 actualizadoEn: firebaseAPI.serverTimestamp()
 }, { merge: true });
@@ -1477,14 +1503,16 @@ actualizadoEn: firebaseAPI.serverTimestamp()
 logFirebaseError("guardado de configuración", error);
 }
 };
-window.obtenerReservasCompartidas = function() {
+window.obtenerReservasCompartidas = function() {window.obtenerReservasCompartidas = function() {
 return Array.isArray(reservasGlobales) ? reservasGlobales : [];
 };
 window.guardarEstadoClubCompleto = async function() {
 if (!firebaseAPI || !CLUB_DOC_ID) return;
 try {
+const configLimpia = limpiarConfigPersistibleClub(window.obtenerConfiguracionClub());
 await firebaseAPI.setDoc(refClub(), {
-...window.obtenerConfiguracionClub(),
+...configLimpia,
+datosClub: configLimpia,
 nombre: CLUB_ID,
 actualizadoEn: firebaseAPI.serverTimestamp()
 }, { merge: true });
@@ -1492,7 +1520,7 @@ actualizadoEn: firebaseAPI.serverTimestamp()
 logFirebaseError("guardado de datos del club", error);
 }
 };
-window.guardarReservasCompartidas = function() {
+window.guardarReservasCompartidas = function() {window.guardarReservasCompartidas = function() {
 sincronizarReservasConFirebase();
 window.guardarEstadoClubCompleto();
 };
@@ -1873,36 +1901,49 @@ ingresos: arregloGlobal("ingresosGlobal"),
 profesores: arregloGlobal("profesoresGlobal")
 });
 }
+function datoValidoPersistencia(valor){
+if (valor === undefined || valor === null) return false;
+if (typeof valor === "string" && valor.trim() === "") return false;
+return true;
+}
+function numeroSeguroPersistencia(valor, fallback){
+if (!datoValidoPersistencia(valor)) return fallback;
+const n = Number(valor);
+return Number.isFinite(n) ? n : fallback;
+}
+function stringSeguroPersistencia(valor, fallback){
+return datoValidoPersistencia(valor) ? String(valor) : fallback;
+}
 function aplicarConfig(data){
 if (!data || typeof data !== "object") return;
+const datos = (data.datosClub && typeof data.datosClub === "object") ? { ...data, ...data.datosClub } : data;
 aplicandoSnapshot = true;
 try {
-if (data.primerTurno != null) setGlobal("primerTurno", data.primerTurno);
-if (data.ultimoTurno != null) setGlobal("ultimoTurno", data.ultimoTurno);
-if (data.duracionDefault != null) setGlobal("duracionGlobal", Number(data.duracionDefault) || 90);
-if (Array.isArray(data.diasAbiertos)) setGlobal("diasAbiertosGlobal", data.diasAbiertos);
-if (data.telefono != null) setGlobal("telefonoClubGlobal", data.telefono);
-if (data.ubicacion != null) setGlobal("ubicacionClubGlobal", data.ubicacion);
-if (data.fotoClub != null) setGlobal("fotoClubGlobal", data.fotoClub);
+if (datoValidoPersistencia(datos.primerTurno)) setGlobal("primerTurno", String(datos.primerTurno));
+if (datoValidoPersistencia(datos.ultimoTurno)) setGlobal("ultimoTurno", String(datos.ultimoTurno));
+if (datoValidoPersistencia(datos.duracionDefault)) setGlobal("duracionGlobal", numeroSeguroPersistencia(datos.duracionDefault, getGlobal("duracionGlobal", 90)));
+if (Array.isArray(datos.diasAbiertos)) setGlobal("diasAbiertosGlobal", datos.diasAbiertos);
+if (datoValidoPersistencia(datos.telefono)) setGlobal("telefonoClubGlobal", String(datos.telefono));
+if (datoValidoPersistencia(datos.ubicacion)) setGlobal("ubicacionClubGlobal", String(datos.ubicacion));
+if (datoValidoPersistencia(datos.fotoClub)) setGlobal("fotoClubGlobal", String(datos.fotoClub));
 ["Indoor", "Outdoor", "Tenis"].forEach(tipo => {
-const min = tipo.toLowerCase();
 const suf = tipo === "Tenis" ? "Tenis" : tipo;
-if (data["canchas" + suf] != null) setGlobal("canchas" + suf + "Global", Number(data["canchas" + suf]) || 0);
-if (data["precio" + suf] != null) setGlobal("precio" + suf + "Global", String(data["precio" + suf]));
-if (data["profe" + suf] != null) setGlobal("profe" + suf + "Global", String(data["profe" + suf]));
-if (data["sena" + suf] != null) setGlobal("sena" + suf + "Global", String(data["sena" + suf]));
-if (data["duracion" + suf] != null) setGlobal("duracion" + suf + "Global", Number(data["duracion" + suf]) || 90);
-if (Array.isArray(data["nombres" + suf])) setGlobal("nombres" + suf + "Global", data["nombres" + suf]);
+if (datoValidoPersistencia(datos["canchas" + suf])) setGlobal("canchas" + suf + "Global", numeroSeguroPersistencia(datos["canchas" + suf], getGlobal("canchas" + suf + "Global", 0)));
+if (datoValidoPersistencia(datos["precio" + suf])) setGlobal("precio" + suf + "Global", String(datos["precio" + suf]));
+if (datoValidoPersistencia(datos["profe" + suf])) setGlobal("profe" + suf + "Global", String(datos["profe" + suf]));
+if (datoValidoPersistencia(datos["sena" + suf])) setGlobal("sena" + suf + "Global", String(datos["sena" + suf]));
+if (datoValidoPersistencia(datos["duracion" + suf])) setGlobal("duracion" + suf + "Global", numeroSeguroPersistencia(datos["duracion" + suf], getGlobal("duracion" + suf + "Global", 90)));
+if (Array.isArray(datos["nombres" + suf])) setGlobal("nombres" + suf + "Global", datos["nombres" + suf]);
 });
 setGlobal("nombresCanchasGlobal", [
 ...(getGlobal("nombresIndoorGlobal", []) || []),
 ...(getGlobal("nombresOutdoorGlobal", []) || []),
 ...(getGlobal("nombresTenisGlobal", []) || [])
 ]);
-if (Array.isArray(data.inventario)) setGlobal("inventarioGlobal", data.inventario);
-if (Array.isArray(data.gastos)) setGlobal("gastosGlobal", data.gastos);
-if (Array.isArray(data.ingresos)) setGlobal("ingresosGlobal", data.ingresos);
-if (Array.isArray(data.profesores)) setGlobal("profesoresGlobal", data.profesores);
+if (Array.isArray(datos.inventario)) setGlobal("inventarioGlobal", datos.inventario);
+if (Array.isArray(datos.gastos)) setGlobal("gastosGlobal", datos.gastos);
+if (Array.isArray(datos.ingresos)) setGlobal("ingresosGlobal", datos.ingresos);
+if (Array.isArray(datos.profesores)) setGlobal("profesoresGlobal", datos.profesores);
 if (typeof window.renderizarPantallas === "function") window.renderizarPantallas();
 if (typeof renderizarInventario === "function") renderizarInventario();
 if (typeof renderizarHistorial === "function") renderizarHistorial();
@@ -1925,15 +1966,28 @@ return;
 }
 const nombre = obtenerNombreClub(clubId);
 const ref = db.collection("clubs").doc(clubId);
+const snap = await ref.get();
+const previo = snap.exists ? (snap.data() || {}) : {};
+const previoDatos = (previo.datosClub && typeof previo.datosClub === "object") ? previo.datosClub : {};
+const actual = obtenerConfigActual();
+const actualLimpio = {};
+Object.entries(actual || {}).forEach(([k, v]) => {
+if (v === undefined || v === null) return;
+if (typeof v === "string" && v.trim() === "") return;
+actualLimpio[k] = v;
+});
+const fusion = { ...previoDatos, ...previo, ...actualLimpio };
+delete fusion.datosClub;
 await ref.set({
-...obtenerConfigActual(),
+...fusion,
+datosClub: fusion,
 nombre,
 guardadoPorPanel: true,
 ultimoMotivoGuardado: motivo || "accion-panel",
 actualizadoEn: firebase.firestore.FieldValue.serverTimestamp()
 }, { merge:true });
 }
-async function guardarReservas(){
+async function guardarReservas(){async function guardarReservas(){
 if (aplicandoSnapshot) return;
 const { db } = await firebaseListo();
 const clubId = await obtenerClubDocId();
