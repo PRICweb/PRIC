@@ -2676,6 +2676,23 @@
                 return firebaseAPI.collection(firebaseAPI.db, "clubs", CLUB_DOC_ID, "reservas");
             }
 
+            function normalizarFechaPersistida(valor) {
+                if (!valor) return new Date().toISOString();
+                if (typeof valor === "string") return valor;
+                if (valor instanceof Date) return valor.toISOString();
+                if (typeof valor.toDate === "function") return valor.toDate().toISOString();
+                if (typeof valor.seconds === "number") return new Date(valor.seconds * 1000).toISOString();
+                return String(valor);
+            }
+
+            function limpiarArrayFirestore(arr) {
+                return Array.isArray(arr) ? arr.map(item => {
+                    const limpio = { ...(item || {}) };
+                    if (limpio.fechaRegistro) limpio.fechaRegistro = normalizarFechaPersistida(limpio.fechaRegistro);
+                    return limpio;
+                }) : [];
+            }
+
             function aplicarConfiguracionClub(config = {}) {
                 if (!config || typeof config !== "object") return;
                 primerTurno = config.primerTurno ?? primerTurno;
@@ -2688,11 +2705,27 @@
                 precioIndoorGlobal = String(config.precioIndoor ?? precioIndoorGlobal);
                 precioOutdoorGlobal = String(config.precioOutdoor ?? precioOutdoorGlobal);
                 precioTenisGlobal = String(config.precioTenis ?? precioTenisGlobal);
+                profeIndoorGlobal = String(config.profeIndoor ?? profeIndoorGlobal);
+                profeOutdoorGlobal = String(config.profeOutdoor ?? profeOutdoorGlobal);
+                profeTenisGlobal = String(config.profeTenis ?? profeTenisGlobal);
+                senaIndoorGlobal = String(config.senaIndoor ?? senaIndoorGlobal);
+                senaOutdoorGlobal = String(config.senaOutdoor ?? senaOutdoorGlobal);
+                senaTenisGlobal = String(config.senaTenis ?? senaTenisGlobal);
+                duracionIndoorGlobal = Number(config.duracionIndoor ?? config.duracionDefault ?? duracionIndoorGlobal);
+                duracionOutdoorGlobal = Number(config.duracionOutdoor ?? duracionOutdoorGlobal);
+                duracionTenisGlobal = Number(config.duracionTenis ?? duracionTenisGlobal);
                 telefonoClubGlobal = config.telefono ?? telefonoClubGlobal;
                 ubicacionClubGlobal = config.ubicacion ?? ubicacionClubGlobal;
+                fotoClubGlobal = config.fotoClub ?? fotoClubGlobal;
                 nombresIndoorGlobal = Array.isArray(config.nombresIndoor) ? config.nombresIndoor : nombresIndoorGlobal;
                 nombresOutdoorGlobal = Array.isArray(config.nombresOutdoor) ? config.nombresOutdoor : nombresOutdoorGlobal;
                 nombresTenisGlobal = Array.isArray(config.nombresTenis) ? config.nombresTenis : nombresTenisGlobal;
+                nombresCanchasGlobal = [...nombresIndoorGlobal, ...nombresOutdoorGlobal, ...nombresTenisGlobal];
+
+                inventarioGlobal = limpiarArrayFirestore(config.inventario);
+                gastosGlobal = limpiarArrayFirestore(config.gastos);
+                ingresosGlobal = limpiarArrayFirestore(config.ingresos);
+                profesoresGlobal = limpiarArrayFirestore(config.profesores);
             }
 
             function iniciarEscuchasFirebase() {
@@ -2792,11 +2825,25 @@
                     precioIndoor: precioIndoorGlobal,
                     precioOutdoor: precioOutdoorGlobal,
                     precioTenis: precioTenisGlobal,
+                    profeIndoor: profeIndoorGlobal,
+                    profeOutdoor: profeOutdoorGlobal,
+                    profeTenis: profeTenisGlobal,
+                    senaIndoor: senaIndoorGlobal,
+                    senaOutdoor: senaOutdoorGlobal,
+                    senaTenis: senaTenisGlobal,
+                    duracionIndoor: duracionIndoorGlobal,
+                    duracionOutdoor: duracionOutdoorGlobal,
+                    duracionTenis: duracionTenisGlobal,
                     telefono: telefonoClubGlobal,
                     ubicacion: ubicacionClubGlobal,
+                    fotoClub: fotoClubGlobal,
                     nombresIndoor: nombresIndoorGlobal,
                     nombresOutdoor: nombresOutdoorGlobal,
-                    nombresTenis: nombresTenisGlobal
+                    nombresTenis: nombresTenisGlobal,
+                    inventario: limpiarArrayFirestore(inventarioGlobal),
+                    gastos: limpiarArrayFirestore(gastosGlobal),
+                    ingresos: limpiarArrayFirestore(ingresosGlobal),
+                    profesores: limpiarArrayFirestore(profesoresGlobal)
                 };
             };
 
@@ -2817,8 +2864,22 @@
                 return Array.isArray(reservasGlobales) ? reservasGlobales : [];
             };
 
+            window.guardarEstadoClubCompleto = async function() {
+                if (!firebaseAPI || !CLUB_DOC_ID) return;
+                try {
+                    await firebaseAPI.setDoc(refClub(), {
+                        ...window.obtenerConfiguracionClub(),
+                        nombre: CLUB_ID,
+                        actualizadoEn: firebaseAPI.serverTimestamp()
+                    }, { merge: true });
+                } catch(error) {
+                    logFirebaseError("guardado de datos del club", error);
+                }
+            };
+
             window.guardarReservasCompartidas = function() {
                 sincronizarReservasConFirebase();
+                window.guardarEstadoClubCompleto();
             };
 
             window.cargarReservasCompartidas = function() {
@@ -2978,13 +3039,50 @@
                 window.renderizarPantallas();
             };
 
-            ["accionEliminar","accionCancelarExcepcion","hacerTurnoFijo","toggleConfirmarTurno","cobrarTurno"].forEach(nombre => {
+            [
+                "accionEliminar",
+                "accionCancelarExcepcion",
+                "hacerTurnoFijo",
+                "toggleConfirmarTurno",
+                "cobrarTurno",
+                "agregarConsumoTurno",
+                "eliminarConsumoTurno",
+                "confirmarCobroClase"
+            ].forEach(nombre => {
                 const original = window[nombre];
                 if (typeof original === "function") {
                     window[nombre] = function(...args) {
                         const retorno = original.apply(this, args);
                         window.guardarReservasCompartidas();
                         window.renderizarPantallas();
+                        if (typeof renderizarInventario === "function") renderizarInventario();
+                        if (typeof renderizarHistorial === "function") renderizarHistorial();
+                        if (typeof renderizarClasesPendientes === "function") renderizarClasesPendientes();
+                        return retorno;
+                    };
+                }
+            });
+
+            [
+                "agregarProfe",
+                "eliminarProfe",
+                "agregarInventario",
+                "eliminarInventario",
+                "agregarStockGasto",
+                "venderProductoMostradorMov",
+                "confirmarReposicionStock",
+                "confirmarEditarPrecio",
+                "agregarGasto",
+                "agregarIngresoLibre"
+            ].forEach(nombre => {
+                const original = window[nombre];
+                if (typeof original === "function") {
+                    window[nombre] = function(...args) {
+                        const retorno = original.apply(this, args);
+                        window.guardarEstadoClubCompleto();
+                        if (typeof renderizarInventario === "function") renderizarInventario();
+                        if (typeof renderizarHistorial === "function") renderizarHistorial();
+                        if (typeof renderizarProfesores === "function") renderizarProfesores();
                         return retorno;
                     };
                 }
