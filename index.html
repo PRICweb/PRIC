@@ -511,8 +511,8 @@
             <p class="auth-subtitle">Ingresá con tu cuenta para acceder al panel de administración de tu club.</p>
 
             <div class="auth-tabs">
-                <button id="tab-login" class="auth-tab active" onclick="window.mostrarAuth('login')">Iniciar sesión</button>
-                <button id="tab-register" class="auth-tab" onclick="window.mostrarAuth('register')">Registrarse</button>
+                <button type="button" id="tab-login" class="auth-tab active" onclick="window.mostrarAuth('login')">Iniciar sesión</button>
+                <button type="button" id="tab-register" class="auth-tab" onclick="window.mostrarAuth('register')">Registrarse</button>
             </div>
 
             <div id="auth-login" class="auth-form">
@@ -524,8 +524,8 @@
                     <label class="auth-label" for="login-password">Contraseña:</label>
                     <input id="login-password" class="input-form" type="password" autocomplete="current-password" placeholder="">
                 </div>
-                <button class="auth-primary" onclick="window.loginClub()">Iniciar sesión</button>
-                <p class="auth-small">¿No tenés cuenta? <button onclick="window.mostrarAuth('register')">Registrate aquí</button></p>
+                <button type="button" class="auth-primary" onclick="window.loginClub()">Iniciar sesión</button>
+                <p class="auth-small">¿No tenés cuenta? <button type="button" onclick="window.mostrarAuth('register')">Registrate aquí</button></p>
             </div>
 
             <div id="auth-register" class="auth-form" style="display:none;">
@@ -541,8 +541,8 @@
                     <label class="auth-label" for="register-password">Contraseña:</label>
                     <input id="register-password" class="input-form" type="password" autocomplete="new-password" placeholder="Mínimo 6 caracteres">
                 </div>
-                <button class="auth-primary" onclick="window.registrarClub()">Registrarse</button>
-                <p class="auth-small">¿Ya tenés cuenta? <button onclick="window.mostrarAuth('login')">Iniciá sesión aquí</button></p>
+                <button type="button" class="auth-primary" onclick="window.registrarClub()">Registrarse</button>
+                <p class="auth-small">¿Ya tenés cuenta? <button type="button" onclick="window.mostrarAuth('login')">Iniciá sesión aquí</button></p>
                 <p class="auth-small">Tu usuario quedará pendiente hasta que se apruebe manualmente el rol <strong>club</strong>.</p>
             </div>
 
@@ -1957,13 +1957,27 @@
                 el.style.color = tipo === "error" ? "#ef4444" : tipo === "ok" ? "#10b981" : "#f59e0b";
             }
 
+            function firebaseListo() {
+                return Boolean(firebaseAPI && authAPI && authAPI.auth && typeof authAPI.signInWithEmailAndPassword === "function");
+            }
+
+            function setBotonAuthCargando(selector, cargando, textoCargando, textoNormal) {
+                const btn = document.querySelector(selector);
+                if (!btn) return;
+                btn.disabled = Boolean(cargando);
+                btn.style.opacity = cargando ? "0.72" : "1";
+                btn.style.cursor = cargando ? "wait" : "pointer";
+                if (textoCargando && textoNormal) btn.innerText = cargando ? textoCargando : textoNormal;
+            }
+
             function prepararAuthUI() {
-                window.mostrarAuth = function(modo) {
+                window.mostrarAuth = function(modo = "login") {
                     const login = document.getElementById("auth-login");
                     const register = document.getElementById("auth-register");
                     const pending = document.getElementById("auth-pending");
                     const tabLogin = document.getElementById("tab-login");
                     const tabRegister = document.getElementById("tab-register");
+
                     if (pending) pending.style.display = "none";
                     if (login) login.style.display = modo === "login" ? "flex" : "none";
                     if (register) register.style.display = modo === "register" ? "flex" : "none";
@@ -1973,26 +1987,58 @@
                 };
 
                 window.loginClub = async function() {
-                    const email = document.getElementById("login-email").value.trim();
-                    const password = document.getElementById("login-password").value;
-                    if (!email || !password) return setAuthMessage("Completá mail y contraseña.", "error");
+                    const emailInput = document.getElementById("login-email");
+                    const passwordInput = document.getElementById("login-password");
+                    const email = (emailInput?.value || "").trim();
+                    const password = passwordInput?.value || "";
+
+                    if (!email || !password) {
+                        setAuthMessage("Completá mail y contraseña.", "error");
+                        return;
+                    }
+
+                    if (!firebaseListo()) {
+                        setAuthMessage("Firebase todavía no terminó de cargar. Esperá unos segundos y volvé a intentar. Si sigue igual, abrí la consola y revisá conexión/importaciones.", "error");
+                        return;
+                    }
+
                     try {
+                        setBotonAuthCargando("#auth-login .auth-primary", true, "Ingresando...", "Iniciar sesión");
                         setAuthMessage("Verificando acceso...");
                         await authAPI.signInWithEmailAndPassword(authAPI.auth, email, password);
                     } catch (error) {
-                        console.error(error);
-                        setAuthMessage("No se pudo iniciar sesión. Revisá el mail y la contraseña.", "error");
+                        console.error("Error loginClub:", error);
+                        let mensaje = "No se pudo iniciar sesión. Revisá el mail y la contraseña.";
+                        if (error?.code === "auth/user-not-found" || error?.code === "auth/invalid-credential") mensaje = "Mail o contraseña incorrectos.";
+                        if (error?.code === "auth/too-many-requests") mensaje = "Demasiados intentos. Esperá unos minutos y probá de nuevo.";
+                        if (error?.code === "auth/network-request-failed") mensaje = "Firebase no pudo conectarse. Revisá tu conexión a internet.";
+                        setAuthMessage(mensaje, "error");
+                    } finally {
+                        setBotonAuthCargando("#auth-login .auth-primary", false, "Ingresando...", "Iniciar sesión");
                     }
                 };
 
                 window.registrarClub = async function() {
-                    const nombreClub = document.getElementById("register-club").value.trim();
-                    const email = document.getElementById("register-email").value.trim();
-                    const password = document.getElementById("register-password").value;
-                    if (!nombreClub || !email || !password) return setAuthMessage("Completá nombre del club, mail y contraseña.", "error");
-                    if (password.length < 6) return setAuthMessage("La contraseña debe tener mínimo 6 caracteres.", "error");
+                    const nombreClub = (document.getElementById("register-club")?.value || "").trim();
+                    const email = (document.getElementById("register-email")?.value || "").trim();
+                    const password = document.getElementById("register-password")?.value || "";
+
+                    if (!nombreClub || !email || !password) {
+                        setAuthMessage("Completá nombre del club, mail y contraseña.", "error");
+                        return;
+                    }
+                    if (password.length < 6) {
+                        setAuthMessage("La contraseña debe tener mínimo 6 caracteres.", "error");
+                        return;
+                    }
+
+                    if (!firebaseListo()) {
+                        setAuthMessage("Firebase todavía no terminó de cargar. Esperá unos segundos y volvé a intentar. Si sigue igual, abrí la consola y revisá conexión/importaciones.", "error");
+                        return;
+                    }
 
                     try {
+                        setBotonAuthCargando("#auth-register .auth-primary", true, "Registrando...", "Registrarse");
                         setAuthMessage("Creando solicitud...");
                         const cred = await authAPI.createUserWithEmailAndPassword(authAPI.auth, email, password);
                         await authAPI.updateProfile(cred.user, { displayName: nombreClub });
@@ -2030,16 +2076,42 @@
 
                         mostrarPendiente("Solicitud enviada. Tu usuario quedó pendiente de aprobación.");
                     } catch (error) {
-                        console.error(error);
-                        const msg = error?.code === "auth/email-already-in-use" ? "Ese mail ya está registrado." : "No se pudo registrar la solicitud.";
+                        console.error("Error registrarClub:", error);
+                        let msg = "No se pudo registrar la solicitud.";
+                        if (error?.code === "auth/email-already-in-use") msg = "Ese mail ya está registrado.";
+                        if (error?.code === "auth/network-request-failed") msg = "Firebase no pudo conectarse. Revisá tu conexión a internet.";
+                        if (error?.code === "permission-denied") msg = "Firestore bloqueó la escritura. Revisá las reglas de seguridad para usuarios, solicitudesClub y mail.";
                         setAuthMessage(msg, "error");
+                    } finally {
+                        setBotonAuthCargando("#auth-register .auth-primary", false, "Registrando...", "Registrarse");
                     }
                 };
 
                 window.logoutClub = async function() {
-                    try { await authAPI.signOut(authAPI.auth); }
-                    catch (error) { console.error(error); }
+                    try {
+                        if (authAPI?.auth && typeof authAPI.signOut === "function") {
+                            await authAPI.signOut(authAPI.auth);
+                        }
+                    } catch (error) {
+                        console.error("Error logoutClub:", error);
+                    } finally {
+                        mostrarPantallaAuth();
+                    }
                 };
+
+                if (!window.__authEnterKeyReady) {
+                    window.__authEnterKeyReady = true;
+                    document.addEventListener("keydown", (e) => {
+                        if (e.key !== "Enter") return;
+                        const loginVisible = document.getElementById("auth-login")?.style.display !== "none";
+                        const registerVisible = document.getElementById("auth-register")?.style.display !== "none";
+                        const dentroAuth = document.activeElement?.closest?.("#auth-screen");
+                        if (!dentroAuth) return;
+                        e.preventDefault();
+                        if (loginVisible) window.loginClub();
+                        else if (registerVisible) window.registrarClub();
+                    });
+                }
             }
 
             function mostrarPantallaAuth() {
@@ -2156,7 +2228,8 @@
                     prepararAuthUI();
                     authMod.onAuthStateChanged(auth, controlarSesion);
                 } catch (error) {
-                    logFirebaseError("inicialización", error);
+                    console.error("Firebase inicialización:", error);
+                    setAuthMessage("No se pudo inicializar Firebase. Revisá conexión a internet, dominios autorizados y que el archivo no esté bloqueando imports externos.", "error");
                 }
             }
 
@@ -2490,6 +2563,8 @@
                 const authScreen = document.getElementById("auth-screen");
                 if (app) app.style.display = "none";
                 if (authScreen) authScreen.style.display = "flex";
+                prepararAuthUI();
+                window.mostrarAuth("login");
                 inicializarFirebase();
             };
         })();
