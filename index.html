@@ -2185,4 +2185,196 @@ window.addEventListener('load', function(){
 setTimeout(actualizarSidebarClub, 300);
 });
 })();
-</script></body></html>
+</script>
+<style id="parche-config-acordeones-fullscreen">
+/* PARCHE: Configuración ocupa todo el espacio disponible del panel */
+body.panel-activo #modal-config.panel-view-active{
+  position:static !important;
+  display:block !important;
+  flex:1 1 auto !important;
+  width:auto !important;
+  max-width:none !important;
+  min-width:0 !important;
+  height:100vh !important;
+  min-height:100vh !important;
+  margin:0 !important;
+  padding:24px 28px !important;
+  overflow:auto !important;
+  background:#ffffff !important;
+  box-sizing:border-box !important;
+  border:0 !important;
+  z-index:auto !important;
+  backdrop-filter:none !important;
+}
+body.panel-activo #modal-config.panel-view-active .modal-content{
+  width:100% !important;
+  max-width:none !important;
+  min-height:calc(100vh - 48px) !important;
+  height:auto !important;
+  margin:0 !important;
+  padding:0 !important;
+  border:0 !important;
+  border-radius:0 !important;
+  box-shadow:none !important;
+  background:#ffffff !important;
+  color:#07152b !important;
+  text-align:left !important;
+  display:flex !important;
+  flex-direction:column !important;
+  gap:18px !important;
+  box-sizing:border-box !important;
+}
+body.panel-activo #modal-config.panel-view-active .modal-content > h3:first-child{
+  width:100% !important;
+  margin:0 !important;
+  padding:0 0 18px 0 !important;
+  border-bottom:1px solid #eeeeee !important;
+  color:#07152b !important;
+  font-size:1.7em !important;
+  font-weight:650 !important;
+  box-sizing:border-box !important;
+}
+body.panel-activo #modal-config.panel-view-active .modal-content > .scroll-interno{
+  width:100% !important;
+  max-height:none !important;
+  height:auto !important;
+  overflow:visible !important;
+  padding-right:0 !important;
+  display:flex !important;
+  flex-direction:column !important;
+  gap:15px !important;
+  box-sizing:border-box !important;
+}
+body.panel-activo #modal-config.panel-view-active .seccion-acordeon{
+  width:100% !important;
+  box-sizing:border-box !important;
+  margin:0 !important;
+  border-radius:8px !important;
+  overflow:hidden !important;
+}
+body.panel-activo #modal-config.panel-view-active .header-acordeon{
+  min-height:48px !important;
+  box-sizing:border-box !important;
+}
+body.panel-activo #modal-config.panel-view-active .contenido-acordeon{
+  display:none !important;
+  padding:18px !important;
+  box-sizing:border-box !important;
+}
+body.panel-activo #modal-config.panel-view-active .contenido-acordeon.abierto{
+  display:block !important;
+}
+body.panel-activo #modal-config.panel-view-active .modal-content > button.btn-guardar{
+  width:100% !important;
+  margin-top:20px !important;
+}
+body.panel-activo #modal-config.panel-view-active .modal-content > button.btn-cerrar{
+  display:none !important;
+}
+@media(max-width:760px){
+  body.panel-activo #modal-config.panel-view-active{
+    width:100% !important;
+    height:auto !important;
+    min-height:auto !important;
+    padding:18px 14px !important;
+  }
+  body.panel-activo #modal-config.panel-view-active .modal-content{
+    min-height:auto !important;
+  }
+}
+</style>
+<script id="parche-config-acordeones-funcionando">
+(function(){
+function byId(id){ return document.getElementById(id); }
+function setValue(id, value){ const e = byId(id); if(e) e.value = value == null ? '' : value; }
+function setChecked(id, value){ const e = byId(id); if(e) e.checked = !!value; }
+function joinNames(value){ return Array.isArray(value) ? value.join(', ') : (value || ''); }
+
+window.toggleAcordeon = function(id){
+  const contenido = byId(id);
+  if(!contenido) return;
+  const flecha = byId('flecha-' + id);
+  const abierto = contenido.classList.toggle('abierto');
+  contenido.style.display = abierto ? 'block' : 'none';
+  if(flecha) flecha.textContent = abierto ? '🔼' : '🔽';
+};
+
+window.cargarConfiguracionClub = function(){
+  try{
+    setValue('input-primer-turno', typeof primerTurno !== 'undefined' ? primerTurno : '08:00');
+    setValue('input-ultimo-turno', typeof ultimoTurno !== 'undefined' ? ultimoTurno : '21:30');
+    setValue('input-telefono-club', typeof telefonoClubGlobal !== 'undefined' ? telefonoClubGlobal : '');
+    setValue('input-ubicacion-club', typeof ubicacionClubGlobal !== 'undefined' ? ubicacionClubGlobal : '');
+    setValue('input-foto-club', typeof fotoClubGlobal !== 'undefined' ? fotoClubGlobal : '');
+
+    [0,1,2,3,4,5,6].forEach(function(d){
+      setChecked('dia-' + d, typeof diasAbiertosGlobal !== 'undefined' && Array.isArray(diasAbiertosGlobal) ? diasAbiertosGlobal.includes(d) : true);
+    });
+
+    setValue('input-canchas-in', typeof canchasIndoorGlobal !== 'undefined' ? canchasIndoorGlobal : 0);
+    setValue('input-precio-in', typeof precioIndoorGlobal !== 'undefined' ? precioIndoorGlobal : '0');
+    setValue('input-profe-in', typeof profeIndoorGlobal !== 'undefined' ? profeIndoorGlobal : '0');
+    setValue('input-sena-in', typeof senaIndoorGlobal !== 'undefined' ? senaIndoorGlobal : '0');
+    setValue('input-nombres-in', typeof nombresIndoorGlobal !== 'undefined' ? joinNames(nombresIndoorGlobal) : '');
+    setValue('input-duracion-in', typeof duracionIndoorGlobal !== 'undefined' ? duracionIndoorGlobal : 90);
+
+    setValue('input-canchas-out', typeof canchasOutdoorGlobal !== 'undefined' ? canchasOutdoorGlobal : 0);
+    setValue('input-precio-out', typeof precioOutdoorGlobal !== 'undefined' ? precioOutdoorGlobal : '0');
+    setValue('input-profe-out', typeof profeOutdoorGlobal !== 'undefined' ? profeOutdoorGlobal : '0');
+    setValue('input-sena-out', typeof senaOutdoorGlobal !== 'undefined' ? senaOutdoorGlobal : '0');
+    setValue('input-nombres-out', typeof nombresOutdoorGlobal !== 'undefined' ? joinNames(nombresOutdoorGlobal) : '');
+    setValue('input-duracion-out', typeof duracionOutdoorGlobal !== 'undefined' ? duracionOutdoorGlobal : 90);
+
+    setValue('input-canchas-tenis', typeof canchasTenisGlobal !== 'undefined' ? canchasTenisGlobal : 0);
+    setValue('input-precio-tenis', typeof precioTenisGlobal !== 'undefined' ? precioTenisGlobal : '0');
+    setValue('input-profe-tenis', typeof profeTenisGlobal !== 'undefined' ? profeTenisGlobal : '0');
+    setValue('input-sena-tenis', typeof senaTenisGlobal !== 'undefined' ? senaTenisGlobal : '0');
+    setValue('input-nombres-tenis', typeof nombresTenisGlobal !== 'undefined' ? joinNames(nombresTenisGlobal) : '');
+    setValue('input-duracion-tenis', typeof duracionTenisGlobal !== 'undefined' ? duracionTenisGlobal : 90);
+  }catch(e){ console.warn('No se pudo cargar la configuración visual:', e); }
+};
+
+function prepararAcordeonesConfig(){
+  ['ac-config-info','ac-config-indoor','ac-config-outdoor','ac-config-tenis'].forEach(function(id){
+    const contenido = byId(id);
+    const flecha = byId('flecha-' + id);
+    if(!contenido) return;
+    const abierto = contenido.classList.contains('abierto');
+    contenido.style.display = abierto ? 'block' : 'none';
+    if(flecha) flecha.textContent = abierto ? '🔼' : '🔽';
+  });
+}
+
+window.abrirModalConfig = function(){
+  const pantalla = byId('pantalla-club');
+  if(pantalla) pantalla.style.display = 'none';
+  ['modal-profesores','modal-finanzas','modal-metricas','modal-torneos'].forEach(function(id){
+    const v = byId(id); if(v){ v.classList.remove('panel-view-active'); v.style.display = 'none'; }
+  });
+  const modal = byId('modal-config');
+  if(modal){
+    modal.classList.add('panel-view-active');
+    modal.style.display = 'block';
+  }
+  if(typeof window.marcarSidebarActivo === 'function') window.marcarSidebarActivo('config');
+  if(typeof window.actualizarSidebarClub === 'function') window.actualizarSidebarClub();
+  window.cargarConfiguracionClub();
+  prepararAcordeonesConfig();
+};
+
+// Refuerza los clicks aunque el navegador ignore el onclick inline por algún conflicto.
+document.addEventListener('click', function(e){
+  const header = e.target.closest && e.target.closest('#modal-config .header-acordeon');
+  if(!header) return;
+  const contenido = header.nextElementSibling;
+  if(!contenido || !contenido.id) return;
+  e.preventDefault();
+  e.stopPropagation();
+  window.toggleAcordeon(contenido.id);
+}, true);
+
+document.addEventListener('DOMContentLoaded', prepararAcordeonesConfig);
+window.addEventListener('load', prepararAcordeonesConfig);
+})();
+</script>
+</body></html>
