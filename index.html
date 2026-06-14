@@ -544,7 +544,7 @@
                 </div>
                 <button type="button" id="btn-registrar-club" class="auth-primary">Registrarse</button>
                 <p class="auth-small">¿Ya tenés cuenta? <button type="button" id="btn-ir-login">Iniciá sesión aquí</button></p>
-                <p class="auth-small">Tu usuario quedará pendiente hasta que se apruebe manualmente el rol <strong>club</strong>.</p>
+                <p class="auth-small">Tu club quedará pendiente hasta que se apruebe manualmente en Firebase.</p>
             </div>
 
             <div id="auth-pending" class="auth-status" style="display:none;">
@@ -2070,25 +2070,33 @@
                     const password = passwordInput?.value || "";
 
                     if (!email || !password) {
-                        setAuthMessage("Completá mail y contraseña.", "error");
-                        return;
-                    }
-
-                    if (!firebaseListo()) {
-                        setAuthMessage("Firebase no terminó de inicializarse. Revisá la consola: puede haber bloqueo de CDN/importaciones, falta de internet o dominio no autorizado.", "error");
+                        setAuthMessage("Completá email y contraseña.", "error");
                         return;
                     }
 
                     try {
                         setBotonAuthCargando("#btn-login-club", true, "Ingresando...", "Iniciar sesión");
-                        setAuthMessage("Verificando acceso...");
+
+                        if (!firebaseListo()) {
+                            setAuthMessage("Inicializando Firebase...", "info");
+                            if (!firebaseInitPromise) firebaseInitPromise = inicializarFirebase();
+                            await firebaseInitPromise;
+                        }
+
+                        if (!firebaseListo()) {
+                            setAuthMessage("No se pudo inicializar Firebase. Revisá conexión, consola y reglas/dominio de Firebase.", "error");
+                            return;
+                        }
+
+                        setAuthMessage("Verificando acceso...", "info");
                         await authAPI.signInWithEmailAndPassword(authAPI.auth, email, password);
                     } catch (error) {
                         console.error("Error loginClub:", error);
-                        let mensaje = "No se pudo iniciar sesión. Revisá el mail y la contraseña.";
-                        if (error?.code === "auth/user-not-found" || error?.code === "auth/invalid-credential") mensaje = "Mail o contraseña incorrectos.";
+                        let mensaje = "No se pudo iniciar sesión. Revisá el email y la contraseña.";
+                        if (error?.code === "auth/user-not-found" || error?.code === "auth/wrong-password" || error?.code === "auth/invalid-credential" || error?.code === "auth/invalid-login-credentials") mensaje = "Email o contraseña incorrectos.";
                         if (error?.code === "auth/too-many-requests") mensaje = "Demasiados intentos. Esperá unos minutos y probá de nuevo.";
                         if (error?.code === "auth/network-request-failed") mensaje = "Firebase no pudo conectarse. Revisá tu conexión a internet.";
+                        if (error?.code === "auth/unauthorized-domain") mensaje = "Dominio no autorizado en Firebase Auth.";
                         setAuthMessage(mensaje, "error");
                     } finally {
                         setBotonAuthCargando("#btn-login-club", false, "Ingresando...", "Iniciar sesión");
@@ -2101,7 +2109,7 @@
                     const password = document.getElementById("register-password")?.value || "";
 
                     if (!nombreClub || !email || !password) {
-                        setAuthMessage("Completá nombre del club, mail y contraseña.", "error");
+                        setAuthMessage("Completá nombre del club, email y contraseña.", "error");
                         return;
                     }
                     if (password.length < 6) {
@@ -2109,14 +2117,21 @@
                         return;
                     }
 
-                    if (!firebaseListo()) {
-                        setAuthMessage("Firebase no terminó de inicializarse. Revisá la consola: puede haber bloqueo de CDN/importaciones, falta de internet o dominio no autorizado.", "error");
-                        return;
-                    }
-
                     try {
                         setBotonAuthCargando("#btn-registrar-club", true, "Registrando...", "Registrarse");
-                        setAuthMessage("Creando club...");
+
+                        if (!firebaseListo()) {
+                            setAuthMessage("Inicializando Firebase...", "info");
+                            if (!firebaseInitPromise) firebaseInitPromise = inicializarFirebase();
+                            await firebaseInitPromise;
+                        }
+
+                        if (!firebaseListo()) {
+                            setAuthMessage("No se pudo inicializar Firebase. Revisá conexión, consola y reglas/dominio de Firebase.", "error");
+                            return;
+                        }
+
+                        setAuthMessage("Creando club...", "info");
 
                         const cred = await authAPI.createUserWithEmailAndPassword(authAPI.auth, email, password);
                         await authAPI.updateProfile(cred.user, { displayName: nombreClub });
@@ -2129,24 +2144,35 @@
                             throw new Error("Ya existe un club con ese nombre. Usá otro nombre o iniciá sesión.");
                         }
 
-                        // Registro simple: SOLO crea el documento /clubs/{clubDocId}.
-                        // No crea usuarios, solicitudesClub ni mail.
                         await firebaseAPI.setDoc(clubRef, {
                             nombre: nombreClub,
                             emailAdmin: email,
                             estado: "pendiente",
                             creadoEn: firebaseAPI.serverTimestamp(),
                             actualizadoEn: firebaseAPI.serverTimestamp()
-                        });
+                        }, { merge: false });
+
+                        CLUB_ID = nombreClub;
+                        CLUB_DOC_ID = clubDocId;
+                        window.CLUB_DOC_ID_ACTUAL = CLUB_DOC_ID;
+                        window.CLUB_DATA_ACTUAL = {
+                            id: clubDocId,
+                            nombre: nombreClub,
+                            emailAdmin: email,
+                            estado: "pendiente"
+                        };
 
                         mostrarPendiente("Club creado correctamente. Queda pendiente hasta que se apruebe en Firebase.");
                     } catch (error) {
                         console.error("Error registrarClub:", error);
                         let msg = "No se pudo registrar el club.";
-                        if (error?.code === "auth/email-already-in-use") msg = "Ese mail ya está registrado. Iniciá sesión.";
-                        else if (error?.code === "auth/network-request-failed") msg = "Firebase no pudo conectarse. Revisá tu conexión a internet.";
-                        else if (error?.code === "permission-denied") msg = "Firestore bloqueó la escritura. Revisá las reglas de seguridad para la colección clubs.";
-                        else if (error?.message) msg = error.message;
+                        if (error?.code === "auth/email-already-in-use") msg = "Ese email ya está registrado. Iniciá sesión.";
+                        if (error?.code === "auth/invalid-email") msg = "El email no es válido.";
+                        if (error?.code === "auth/weak-password") msg = "La contraseña es muy débil.";
+                        if (error?.code === "auth/network-request-failed") msg = "Firebase no pudo conectarse. Revisá tu conexión a internet.";
+                        if (error?.code === "auth/unauthorized-domain") msg = "Dominio no autorizado en Firebase Auth.";
+                        if (error?.code === "permission-denied") msg = "Firestore bloqueó la escritura. Revisá las reglas de seguridad para la colección clubs.";
+                        if (error?.message && !error?.code) msg = error.message;
                         setAuthMessage(msg, "error");
                     } finally {
                         setBotonAuthCargando("#btn-registrar-club", false, "Registrando...", "Registrarse");
@@ -2770,5 +2796,9 @@
      - Login: Auth + lectura de /clubs por emailAdmin
      - Acceso: solo si estado es "aprobado" o "activo"
 ========================================================= -->
+
+<script>
+/* Fix final: auth espera Firebase y registro crea solo /clubs/{nombreClub}. */
+</script>
 </body>
 </html>
