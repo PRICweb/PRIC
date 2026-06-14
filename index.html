@@ -2377,4 +2377,314 @@ document.addEventListener('DOMContentLoaded', prepararAcordeonesConfig);
 window.addEventListener('load', prepararAcordeonesConfig);
 })();
 </script>
+
+
+<!-- PARCHE FINAL: CONFIGURACION SEGURA + GUARDAR TODO -->
+<style id="fix-config-final-css">
+body.panel-activo #modal-config.panel-view-active,
+body.panel-activo #modal-config[style*="display: block"]{
+  position:static !important;
+  inset:auto !important;
+  width:100% !important;
+  min-height:100vh !important;
+  flex:1 1 auto !important;
+  background:#ffffff !important;
+  padding:24px 28px !important;
+  overflow:auto !important;
+  box-sizing:border-box !important;
+  backdrop-filter:none !important;
+}
+body.panel-activo #modal-config.panel-view-active .modal-content,
+body.panel-activo #modal-config[style*="display: block"] .modal-content{
+  width:100% !important;
+  max-width:none !important;
+  min-height:auto !important;
+  margin:0 !important;
+  padding:0 !important;
+  border:0 !important;
+  border-radius:0 !important;
+  box-shadow:none !important;
+  background:#ffffff !important;
+  text-align:left !important;
+}
+body.panel-activo #modal-config .modal-content > .scroll-interno{
+  width:100% !important;
+  max-width:none !important;
+}
+body.panel-activo #modal-config .seccion-acordeon{
+  width:100% !important;
+  margin-bottom:14px !important;
+  border:1px solid #dbe1ea !important;
+  border-radius:8px !important;
+  overflow:hidden !important;
+  box-shadow:none !important;
+}
+body.panel-activo #modal-config .header-acordeon{
+  width:100% !important;
+  min-height:48px !important;
+  cursor:pointer !important;
+  background:#f8fafc !important;
+}
+body.panel-activo #modal-config .contenido-acordeon{
+  display:none;
+  padding:18px !important;
+  background:#ffffff !important;
+}
+body.panel-activo #modal-config .contenido-acordeon.abierto{
+  display:block !important;
+}
+body.panel-activo #modal-config button.btn-guardar{
+  width:100% !important;
+  margin-top:22px !important;
+  background:#0f172a !important;
+  color:#ffffff !important;
+}
+body.panel-activo #modal-config button.btn-guardar:disabled{
+  opacity:.7 !important;
+  cursor:wait !important;
+}
+</style>
+<script id="fix-config-final-js">
+(function(){
+  'use strict';
+  if (window.__FIX_CONFIG_GUARDAR_TODO_FINAL__) return;
+  window.__FIX_CONFIG_GUARDAR_TODO_FINAL__ = true;
+
+  function $(id){ return document.getElementById(id); }
+  function qsa(sel){ return Array.prototype.slice.call(document.querySelectorAll(sel)); }
+  function inputValue(id, fallback){
+    const el = $(id);
+    if (!el) return fallback;
+    const v = el.value;
+    return v === undefined || v === null ? fallback : String(v).trim();
+  }
+  function inputNumber(id, fallback){
+    const raw = inputValue(id, fallback);
+    if (raw === '') return Number(fallback || 0);
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : Number(fallback || 0);
+  }
+  function namesFromInput(id){
+    const txt = inputValue(id, '');
+    return txt ? txt.split(',').map(function(x){ return x.trim(); }).filter(Boolean) : [];
+  }
+  function diasSeleccionados(){
+    const checks = [0,1,2,3,4,5,6].filter(function(d){ return !!$('dia-' + d); });
+    if (!checks.length) return [0,1,2,3,4,5,6];
+    return checks.filter(function(d){ return $('dia-' + d).checked; });
+  }
+  function fireTimestamp(){
+    try { return firebase.firestore.FieldValue.serverTimestamp(); }
+    catch(e){ return new Date().toISOString(); }
+  }
+  function safeAssign(nombre, valor){
+    try { Function('valor', 'try { ' + nombre + ' = valor; } catch(e) { window["' + nombre + '"] = valor; }')(valor); }
+    catch(e){ window[nombre] = valor; }
+  }
+  function leerConfigFormulario(){
+    const cfg = {
+      primerTurno: inputValue('input-primer-turno', '08:00'),
+      ultimoTurno: inputValue('input-ultimo-turno', '21:30'),
+      diasAbiertos: diasSeleccionados(),
+      telefono: inputValue('input-telefono-club', ''),
+      ubicacion: inputValue('input-ubicacion-club', ''),
+      fotoClub: inputValue('input-foto-club', ''),
+
+      canchasIndoor: inputNumber('input-canchas-in', 0),
+      precioIndoor: inputValue('input-precio-in', '0') || '0',
+      profeIndoor: inputValue('input-profe-in', '0') || '0',
+      senaIndoor: inputValue('input-sena-in', '0') || '0',
+      nombresIndoor: namesFromInput('input-nombres-in'),
+      duracionIndoor: inputNumber('input-duracion-in', 90),
+
+      canchasOutdoor: inputNumber('input-canchas-out', 0),
+      precioOutdoor: inputValue('input-precio-out', '0') || '0',
+      profeOutdoor: inputValue('input-profe-out', '0') || '0',
+      senaOutdoor: inputValue('input-sena-out', '0') || '0',
+      nombresOutdoor: namesFromInput('input-nombres-out'),
+      duracionOutdoor: inputNumber('input-duracion-out', 90),
+
+      canchasTenis: inputNumber('input-canchas-tenis', 0),
+      precioTenis: inputValue('input-precio-tenis', '0') || '0',
+      profeTenis: inputValue('input-profe-tenis', '0') || '0',
+      senaTenis: inputValue('input-sena-tenis', '0') || '0',
+      nombresTenis: namesFromInput('input-nombres-tenis'),
+      duracionTenis: inputNumber('input-duracion-tenis', 90)
+    };
+    cfg.duracionDefault = cfg.duracionIndoor || 90;
+    cfg.nombresCanchas = [].concat(cfg.nombresIndoor, cfg.nombresOutdoor, cfg.nombresTenis);
+    return cfg;
+  }
+  function aplicarConfigAGlobales(cfg){
+    safeAssign('primerTurno', cfg.primerTurno);
+    safeAssign('ultimoTurno', cfg.ultimoTurno);
+    safeAssign('diasAbiertosGlobal', cfg.diasAbiertos);
+    safeAssign('telefonoClubGlobal', cfg.telefono);
+    safeAssign('ubicacionClubGlobal', cfg.ubicacion);
+    safeAssign('fotoClubGlobal', cfg.fotoClub);
+    safeAssign('canchasIndoorGlobal', cfg.canchasIndoor);
+    safeAssign('precioIndoorGlobal', cfg.precioIndoor);
+    safeAssign('profeIndoorGlobal', cfg.profeIndoor);
+    safeAssign('senaIndoorGlobal', cfg.senaIndoor);
+    safeAssign('nombresIndoorGlobal', cfg.nombresIndoor);
+    safeAssign('duracionIndoorGlobal', cfg.duracionIndoor);
+    safeAssign('canchasOutdoorGlobal', cfg.canchasOutdoor);
+    safeAssign('precioOutdoorGlobal', cfg.precioOutdoor);
+    safeAssign('profeOutdoorGlobal', cfg.profeOutdoor);
+    safeAssign('senaOutdoorGlobal', cfg.senaOutdoor);
+    safeAssign('nombresOutdoorGlobal', cfg.nombresOutdoor);
+    safeAssign('duracionOutdoorGlobal', cfg.duracionOutdoor);
+    safeAssign('canchasTenisGlobal', cfg.canchasTenis);
+    safeAssign('precioTenisGlobal', cfg.precioTenis);
+    safeAssign('profeTenisGlobal', cfg.profeTenis);
+    safeAssign('senaTenisGlobal', cfg.senaTenis);
+    safeAssign('nombresTenisGlobal', cfg.nombresTenis);
+    safeAssign('duracionTenisGlobal', cfg.duracionTenis);
+    safeAssign('duracionGlobal', cfg.duracionDefault);
+    safeAssign('nombresCanchasGlobal', cfg.nombresCanchas);
+  }
+  function limpiarParaFirestore(obj){
+    const out = {};
+    Object.keys(obj || {}).forEach(function(k){
+      const v = obj[k];
+      if (v === undefined || v === null) return;
+      if (typeof v === 'function') return;
+      if (Array.isArray(v)) { out[k] = v.filter(function(x){ return x !== undefined && x !== null; }); return; }
+      if (typeof v === 'object') { out[k] = limpiarParaFirestore(v); return; }
+      out[k] = v;
+    });
+    return out;
+  }
+  async function obtenerFirestoreYClub(){
+    if (!window.firebase || !firebase.firestore) throw new Error('Firebase no está disponible todavía. Recargá la página e iniciá sesión nuevamente.');
+    const db = firebase.firestore();
+    let clubId = window.CLUB_DOC_ID_ACTUAL || (window.CLUB_DATA_ACTUAL && (window.CLUB_DATA_ACTUAL.id || window.CLUB_DATA_ACTUAL.nombre));
+    if (!clubId) {
+      const sidebar = $('sidebar-club-id');
+      if (sidebar && sidebar.textContent && sidebar.textContent.trim() !== '---') clubId = sidebar.textContent.trim();
+    }
+    if (!clubId) {
+      const lbl = $('lbl-nombre-club');
+      if (lbl && lbl.textContent && lbl.textContent.trim() && lbl.textContent.trim() !== 'Admin') clubId = lbl.textContent.trim();
+    }
+    const user = firebase.auth && firebase.auth().currentUser;
+    if (!clubId && user && user.email) {
+      const email = String(user.email).trim();
+      const variantes = Array.from(new Set([email, email.toLowerCase()]));
+      for (const mail of variantes) {
+        const snap = await db.collection('clubs').where('emailAdmin', '==', mail).limit(1).get();
+        if (!snap.empty) { clubId = snap.docs[0].id; break; }
+      }
+    }
+    if (!clubId) throw new Error('No se detectó el club logueado. Cerrá sesión y volvé a entrar.');
+    clubId = String(clubId).trim().replace(/[\\/#[\]?]/g, '_');
+    window.CLUB_DOC_ID_ACTUAL = clubId;
+    return { db: db, clubId: clubId };
+  }
+  function setBotonGuardando(guardando){
+    qsa('#modal-config button').forEach(function(btn){
+      const txt = (btn.textContent || '').trim().toLowerCase();
+      if (txt.indexOf('guardar todo') !== -1) {
+        btn.disabled = !!guardando;
+        btn.textContent = guardando ? 'Guardando...' : 'Guardar Todo';
+      }
+    });
+  }
+  function notificar(msg, ok){
+    let n = $('toast-config-final');
+    if (!n) {
+      n = document.createElement('div');
+      n.id = 'toast-config-final';
+      n.style.cssText = 'position:fixed;right:22px;bottom:22px;z-index:99999;padding:12px 16px;border-radius:12px;font-weight:700;box-shadow:0 12px 30px rgba(15,23,42,.22);max-width:360px;';
+      document.body.appendChild(n);
+    }
+    n.textContent = msg;
+    n.style.background = ok ? '#10b981' : '#ef4444';
+    n.style.color = '#fff';
+    n.style.display = 'block';
+    clearTimeout(n.__t);
+    n.__t = setTimeout(function(){ n.style.display = 'none'; }, ok ? 2600 : 5200);
+  }
+  async function guardarConfiguracionSeguro(){
+    setBotonGuardando(true);
+    try {
+      const cfg = leerConfigFormulario();
+      aplicarConfigAGlobales(cfg);
+      const datos = limpiarParaFirestore(cfg);
+      const fb = await obtenerFirestoreYClub();
+      const ref = fb.db.collection('clubs').doc(fb.clubId);
+      const snap = await ref.get();
+      const previo = snap.exists ? (snap.data() || {}) : {};
+      const previoDatos = previo.datosClub && typeof previo.datosClub === 'object' ? previo.datosClub : {};
+      const fusionDatosClub = Object.assign({}, previoDatos, datos);
+      const payload = Object.assign({}, datos, {
+        datosClub: fusionDatosClub,
+        guardadoPorPanel: true,
+        ultimoMotivoGuardado: 'guardar-configuracion',
+        actualizadoEn: fireTimestamp()
+      });
+      if (!payload.nombre) payload.nombre = (window.CLUB_DATA_ACTUAL && window.CLUB_DATA_ACTUAL.nombre) || fb.clubId;
+      await ref.set(payload, { merge:true });
+      if (typeof window.renderizarPantallas === 'function') window.renderizarPantallas();
+      if (typeof window.renderizarReservasClub === 'function') window.renderizarReservasClub();
+      notificar('Configuración guardada correctamente.', true);
+      return true;
+    } catch (err) {
+      console.error('Error en Guardar Todo:', err);
+      notificar(err && err.message ? err.message : 'No se pudo guardar la configuración.', false);
+      return false;
+    } finally {
+      setBotonGuardando(false);
+    }
+  }
+
+  window.guardarConfiguracion = guardarConfiguracionSeguro;
+  window.guardarConfiguracionSeguro = guardarConfiguracionSeguro;
+
+  function toggleAcordeonSeguro(id){
+    const contenido = $(id);
+    if (!contenido) return;
+    const flecha = $('flecha-' + id);
+    const abre = !contenido.classList.contains('abierto');
+    contenido.classList.toggle('abierto', abre);
+    contenido.style.display = abre ? 'block' : 'none';
+    if (flecha) flecha.textContent = abre ? '🔼' : '🔽';
+  }
+  window.toggleAcordeon = toggleAcordeonSeguro;
+
+  function prepararConfig(){
+    const modal = $('modal-config');
+    if (!modal) return;
+    qsa('#modal-config .header-acordeon').forEach(function(header){
+      if (header.__fixConfigHeader) return;
+      header.__fixConfigHeader = true;
+      header.addEventListener('click', function(ev){
+        ev.preventDefault();
+        ev.stopPropagation();
+        const cont = header.nextElementSibling;
+        if (cont && cont.id) toggleAcordeonSeguro(cont.id);
+      }, true);
+    });
+    qsa('#modal-config button').forEach(function(btn){
+      if (((btn.textContent || '').trim().toLowerCase()).indexOf('guardar todo') !== -1) {
+        btn.onclick = null;
+        if (!btn.__fixGuardarTodo) {
+          btn.__fixGuardarTodo = true;
+          btn.addEventListener('click', function(ev){
+            ev.preventDefault();
+            ev.stopPropagation();
+            guardarConfiguracionSeguro();
+          }, true);
+        }
+      }
+    });
+  }
+  document.addEventListener('DOMContentLoaded', prepararConfig);
+  window.addEventListener('load', prepararConfig);
+  setTimeout(prepararConfig, 300);
+  setTimeout(prepararConfig, 1200);
+  setTimeout(prepararConfig, 2500);
+})();
+</script>
+
 </body></html>
