@@ -2744,5 +2744,318 @@
         })();
 
     </script>
+
+
+<!-- =========================================================
+     FIREBASE AUTH FIX DEFINITIVO - SDK v8 directo
+     Este bloque queda al final y pisa cualquier función provisoria anterior.
+========================================================= -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<script>
+(function () {
+    "use strict";
+
+    const firebaseConfigFinal = {
+        apiKey: "AIzaSyDqWKo3ZtPChbtf38osMiKwQpCRNvsN7ak",
+        authDomain: "pric-60f50.firebaseapp.com",
+        projectId: "pric-60f50",
+        storageBucket: "pric-60f50.firebasestorage.app",
+        messagingSenderId: "475470852361",
+        appId: "1:475470852361:web:8acfa8b1e2963426ef23d8",
+        measurementId: "G-ZXLT15L9JR"
+    };
+
+    const ADMIN_MAIL = "pric.administracion@gmail.com";
+    const paramsFinal = new URLSearchParams(window.location.search);
+
+    let authFinal = null;
+    let dbFinal = null;
+    let firebaseFinalListo = false;
+
+    function $(id) {
+        return document.getElementById(id);
+    }
+
+    function normalizarId(valor) {
+        return String(valor || "Club Central").trim().replace(/[\\/#[\]?]/g, "_") || "Club Central";
+    }
+
+    function setMsg(texto, tipo) {
+        const msg = $("auth-message");
+        if (!msg) return;
+        msg.textContent = texto || "";
+        msg.style.color = tipo === "ok" ? "#10b981" : tipo === "error" ? "#ef4444" : "#b45309";
+    }
+
+    function setButtonLoading(id, loading, normalText, loadingText) {
+        const btn = $(id);
+        if (!btn) return;
+        btn.disabled = !!loading;
+        btn.textContent = loading ? loadingText : normalText;
+        btn.style.opacity = loading ? "0.72" : "1";
+        btn.style.cursor = loading ? "wait" : "pointer";
+    }
+
+    window.mostrarAuth = function (modo) {
+        modo = modo || "login";
+        const login = $("auth-login");
+        const register = $("auth-register");
+        const pending = $("auth-pending");
+        if (pending) pending.style.display = "none";
+        if (login) login.style.display = modo === "login" ? "flex" : "none";
+        if (register) register.style.display = modo === "register" ? "flex" : "none";
+        setMsg("");
+    };
+
+    function mostrarPanel(perfil) {
+        document.body.classList.add("panel-activo");
+        const authScreen = $("auth-screen");
+        const app = $("app-content");
+        if (authScreen) authScreen.style.display = "none";
+        if (app) app.style.display = "flex";
+
+        const nombre = perfil?.nombreClub || perfil?.clubNombre || perfil?.clubId || perfil?.email || "Club";
+        const lbl = $("lbl-nombre-club");
+        if (lbl) lbl.textContent = nombre;
+
+        try {
+            if (typeof window.renderizarPantallas === "function") window.renderizarPantallas();
+            if (typeof window.renderizarReservasClub === "function") window.renderizarReservasClub();
+        } catch (e) {
+            console.warn("Panel cargado, pero hubo un problema renderizando datos:", e);
+        }
+    }
+
+    function mostrarPendiente() {
+        document.body.classList.remove("panel-activo");
+        const authScreen = $("auth-screen");
+        const app = $("app-content");
+        const login = $("auth-login");
+        const register = $("auth-register");
+        const pending = $("auth-pending");
+        if (app) app.style.display = "none";
+        if (authScreen) authScreen.style.display = "flex";
+        if (login) login.style.display = "none";
+        if (register) register.style.display = "none";
+        if (pending) pending.style.display = "block";
+        setMsg("");
+    }
+
+    function inicializarFirebaseFinal() {
+        if (firebaseFinalListo) return true;
+
+        if (!window.firebase || !firebase.initializeApp || !firebase.auth || !firebase.firestore) {
+            setMsg("No cargó Firebase. Revisá conexión o si el navegador/extensión bloquea www.gstatic.com.", "error");
+            return false;
+        }
+
+        try {
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfigFinal);
+            }
+            authFinal = firebase.auth();
+            dbFinal = firebase.firestore();
+            firebaseFinalListo = true;
+            setMsg("");
+            return true;
+        } catch (error) {
+            console.error("Error inicializando Firebase final:", error);
+            setMsg("No se pudo inicializar Firebase. Abrí la consola y revisá el error exacto.", "error");
+            return false;
+        }
+    }
+
+    window.loginClub = async function () {
+        const email = ($("login-email")?.value || "").trim();
+        const password = $("login-password")?.value || "";
+
+        if (!email || !password) {
+            setMsg("Completá email y contraseña.", "error");
+            return;
+        }
+
+        if (!inicializarFirebaseFinal()) return;
+
+        try {
+            setButtonLoading("btn-login-club", true, "Iniciar sesión", "Ingresando...");
+            setMsg("Verificando acceso...", "info");
+            await authFinal.signInWithEmailAndPassword(email, password);
+        } catch (error) {
+            console.error("Login Firebase:", error);
+            let mensaje = "No se pudo iniciar sesión.";
+            if (["auth/user-not-found", "auth/wrong-password", "auth/invalid-login-credentials", "auth/invalid-credential"].includes(error.code)) {
+                mensaje = "Email o contraseña incorrectos.";
+            } else if (error.code === "auth/unauthorized-domain") {
+                mensaje = "Dominio no autorizado en Firebase Auth. Agregá el dominio desde Authentication > Settings > Authorized domains.";
+            } else if (error.code === "auth/network-request-failed") {
+                mensaje = "Firebase no pudo conectarse. Revisá internet o bloqueo del navegador.";
+            } else if (error.message) {
+                mensaje = error.message;
+            }
+            setMsg(mensaje, "error");
+        } finally {
+            setButtonLoading("btn-login-club", false, "Iniciar sesión", "Ingresando...");
+        }
+    };
+
+    window.registrarClub = async function () {
+        const nombreClub = ($("register-club")?.value || "").trim();
+        const email = ($("register-email")?.value || "").trim();
+        const password = $("register-password")?.value || "";
+
+        if (!nombreClub || !email || !password) {
+            setMsg("Completá nombre del club, email y contraseña.", "error");
+            return;
+        }
+        if (password.length < 6) {
+            setMsg("La contraseña debe tener mínimo 6 caracteres.", "error");
+            return;
+        }
+
+        if (!inicializarFirebaseFinal()) return;
+
+        try {
+            setButtonLoading("btn-registrar-club", true, "Registrarse", "Registrando...");
+            setMsg("Creando usuario y solicitud...", "info");
+
+            const cred = await authFinal.createUserWithEmailAndPassword(email, password);
+            await cred.user.updateProfile({ displayName: nombreClub });
+
+            const clubId = normalizarId(nombreClub);
+            const perfil = {
+                uid: cred.user.uid,
+                email,
+                nombreClub,
+                clubId,
+                rol: "pendiente",
+                estado: "pendiente",
+                solicitaRol: "club",
+                creadoEn: firebase.firestore.FieldValue.serverTimestamp(),
+                actualizadoEn: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            await dbFinal.collection("usuarios").doc(cred.user.uid).set(perfil, { merge: true });
+            await dbFinal.collection("solicitudesClub").doc(cred.user.uid).set({
+                ...perfil,
+                asunto: `Solicitud de rol club - ${nombreClub}`,
+                mailDestino: ADMIN_MAIL
+            }, { merge: true });
+
+            await dbFinal.collection("clubs").doc(clubId).set({
+                nombre: nombreClub,
+                emailAdmin: email,
+                estado: "pendiente",
+                creadoEn: firebase.firestore.FieldValue.serverTimestamp(),
+                actualizadoEn: firebase.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+
+            await dbFinal.collection("mail").add({
+                to: ADMIN_MAIL,
+                message: {
+                    subject: `Solicitud de rol club - ${nombreClub}`,
+                    text: `El club ${nombreClub} se registró con estado pendiente. Mail: ${email}. Solicita el rol de club para configurar su panel.`
+                },
+                creadoEn: firebase.firestore.FieldValue.serverTimestamp()
+            }).catch((mailError) => {
+                console.warn("No se pudo crear el documento mail. El usuario igual fue creado:", mailError);
+            });
+
+            mostrarPendiente();
+        } catch (error) {
+            console.error("Registro Firebase:", error);
+            let mensaje = "No se pudo registrar el club.";
+            if (error.code === "auth/email-already-in-use") mensaje = "Ese email ya está registrado. Iniciá sesión.";
+            else if (error.code === "auth/invalid-email") mensaje = "El email no es válido.";
+            else if (error.code === "auth/weak-password") mensaje = "La contraseña es muy débil.";
+            else if (error.code === "auth/unauthorized-domain") mensaje = "Dominio no autorizado en Firebase Auth. Agregá el dominio desde Authentication > Settings > Authorized domains.";
+            else if (error.code === "permission-denied") mensaje = "Firestore rechazó la escritura. Revisá las reglas de seguridad para usuarios, solicitudesClub, clubs y mail.";
+            else if (error.message) mensaje = error.message;
+            setMsg(mensaje, "error");
+        } finally {
+            setButtonLoading("btn-registrar-club", false, "Registrarse", "Registrando...");
+        }
+    };
+
+    window.logoutClub = async function () {
+        try {
+            if (inicializarFirebaseFinal() && authFinal.currentUser) await authFinal.signOut();
+        } catch (e) {
+            console.warn("Error cerrando sesión:", e);
+        }
+        document.body.classList.remove("panel-activo");
+        const authScreen = $("auth-screen");
+        const app = $("app-content");
+        if (app) app.style.display = "none";
+        if (authScreen) authScreen.style.display = "flex";
+        window.mostrarAuth("login");
+    };
+
+    function bindFinal(id, fn) {
+        const btn = $(id);
+        if (!btn) return;
+        btn.onclick = function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            fn();
+            return false;
+        };
+    }
+
+    function conectarFinal() {
+        bindFinal("btn-ir-registro", () => window.mostrarAuth("register"));
+        bindFinal("btn-ir-login", () => window.mostrarAuth("login"));
+        bindFinal("btn-login-club", () => window.loginClub());
+        bindFinal("btn-registrar-club", () => window.registrarClub());
+        bindFinal("btn-pending-logout", () => window.logoutClub());
+        bindFinal("tab-login", () => window.mostrarAuth("login"));
+        bindFinal("tab-register", () => window.mostrarAuth("register"));
+    }
+
+    function iniciarFinal() {
+        conectarFinal();
+        document.body.classList.remove("panel-activo");
+        const app = $("app-content");
+        const authScreen = $("auth-screen");
+        if (app) app.style.display = "none";
+        if (authScreen) authScreen.style.display = "flex";
+        window.mostrarAuth("login");
+
+        if (inicializarFirebaseFinal()) {
+            authFinal.onAuthStateChanged(async function (user) {
+                if (!user) {
+                    document.body.classList.remove("panel-activo");
+                    const app = $("app-content");
+                    const authScreen = $("auth-screen");
+                    if (app) app.style.display = "none";
+                    if (authScreen) authScreen.style.display = "flex";
+                    return;
+                }
+
+                try {
+                    const perfilSnap = await dbFinal.collection("usuarios").doc(user.uid).get();
+                    const perfil = perfilSnap.exists ? perfilSnap.data() : { email: user.email, rol: "pendiente" };
+                    if (perfil.rol === "club" || perfil.estado === "aprobado") {
+                        mostrarPanel(perfil);
+                    } else {
+                        mostrarPendiente();
+                    }
+                } catch (error) {
+                    console.error("Lectura perfil:", error);
+                    setMsg("Sesión iniciada, pero no se pudo leer el perfil en Firestore. Revisá reglas de usuarios.", "error");
+                }
+            });
+        }
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", iniciarFinal, { once: true });
+    } else {
+        iniciarFinal();
+    }
+})();
+</script>
+
 </body>
 </html>
