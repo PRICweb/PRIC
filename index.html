@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portal Privado - Administrador de Club</title>
+    <!-- Corrección v4: login/registro con Firebase SDK compat -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         /* --- ESTILOS GENERALES --- */
@@ -2279,34 +2280,110 @@
                 alert(`No se pudo conectar con Firebase (${contexto}). Revisa las reglas de Firestore y que estés usando el proyecto correcto.`);
             }
 
+            function cargarScriptFirebase(url) {
+                return new Promise((resolve, reject) => {
+                    const existente = document.querySelector(`script[src="${url}"]`);
+                    if (existente) {
+                        if (existente.dataset.loaded === "1") return resolve();
+                        existente.addEventListener("load", resolve, { once: true });
+                        existente.addEventListener("error", () => reject(new Error(`No se pudo cargar ${url}`)), { once: true });
+                        return;
+                    }
+
+                    const script = document.createElement("script");
+                    script.src = url;
+                    script.async = false;
+                    script.dataset.firebaseSdk = "1";
+                    script.onload = () => {
+                        script.dataset.loaded = "1";
+                        resolve();
+                    };
+                    script.onerror = () => reject(new Error(`No se pudo cargar ${url}`));
+                    document.head.appendChild(script);
+                });
+            }
+
+            function envolverDocSnapCompat(snap) {
+                return {
+                    id: snap.id,
+                    exists: () => Boolean(snap.exists),
+                    data: () => snap.data()
+                };
+            }
+
+            function envolverSnapshotCompat(snap) {
+                if (typeof snap.docChanges === "function") {
+                    return {
+                        docs: snap.docs.map(doc => envolverDocSnapCompat(doc)),
+                        docChanges: () => snap.docChanges().map(change => ({
+                            ...change,
+                            doc: envolverDocSnapCompat(change.doc)
+                        }))
+                    };
+                }
+                return envolverDocSnapCompat(snap);
+            }
+
             async function inicializarFirebase() {
                 try {
-                    const [appMod, firestoreMod, authMod, analyticsMod] = await Promise.all([
-                        import(`https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}/firebase-app.js`),
-                        import(`https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}/firebase-firestore.js`),
-                        import(`https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}/firebase-auth.js`),
-                        import(`https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}/firebase-analytics.js`).catch(() => null)
-                    ]);
+                    // Uso SDK compat, no import() dinámico.
+                    // Esto es más estable cuando abrís el HTML directo desde el navegador.
+                    await cargarScriptFirebase(`https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}/firebase-app-compat.js`);
+                    await cargarScriptFirebase(`https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}/firebase-auth-compat.js`);
+                    await cargarScriptFirebase(`https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}/firebase-firestore-compat.js`);
+                    await cargarScriptFirebase(`https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}/firebase-analytics-compat.js`).catch(() => null);
 
-                    const app = appMod.initializeApp(firebaseConfig);
-                    const db = firestoreMod.getFirestore(app);
-                    const auth = authMod.getAuth(app);
+                    if (!window.firebase) {
+                        throw new Error("Firebase SDK no quedó disponible en window.firebase.");
+                    }
+
+                    const app = firebase.apps && firebase.apps.length
+                        ? firebase.app()
+                        : firebase.initializeApp(firebaseConfig);
+
+                    const db = firebase.firestore();
+                    const auth = firebase.auth();
 
                     try {
-                        if (analyticsMod && typeof analyticsMod.getAnalytics === "function") analyticsMod.getAnalytics(app);
+                        if (firebase.analytics) firebase.analytics();
                     } catch(e) {
                         console.warn("Analytics no disponible en este entorno:", e);
                     }
 
-                    firebaseAPI = { app, db, ...firestoreMod };
-                    authAPI = { auth, ...authMod };
+                    firebaseAPI = {
+                        app,
+                        db,
+                        doc: (_db, ...segments) => db.doc(segments.map(String).join("/")),
+                        collection: (_db, ...segments) => db.collection(segments.map(String).join("/")),
+                        getDoc: async (ref) => envolverDocSnapCompat(await ref.get()),
+                        setDoc: (ref, data, options) => ref.set(data, options || {}),
+                        addDoc: (colRef, data) => colRef.add(data),
+                        deleteDoc: (ref) => ref.delete(),
+                        onSnapshot: (refOrQuery, ok, error) => refOrQuery.onSnapshot(
+                            snap => ok(envolverSnapshotCompat(snap)),
+                            error
+                        ),
+                        query: (colRef, ...constraints) => constraints.reduce((q, fn) => fn(q), colRef),
+                        orderBy: (field, direction = "asc") => (q) => q.orderBy(field, direction),
+                        serverTimestamp: () => firebase.firestore.FieldValue.serverTimestamp()
+                    };
+
+                    authAPI = {
+                        auth,
+                        signInWithEmailAndPassword: (_auth, email, password) => auth.signInWithEmailAndPassword(email, password),
+                        createUserWithEmailAndPassword: (_auth, email, password) => auth.createUserWithEmailAndPassword(email, password),
+                        updateProfile: (user, data) => user.updateProfile(data),
+                        onAuthStateChanged: (_auth, callback) => auth.onAuthStateChanged(callback),
+                        signOut: (_auth) => auth.signOut()
+                    };
+
                     firebaseInicializado = true;
-                    console.log("Firebase inicializado correctamente para Administración de Clubes");
+                    console.log("Firebase inicializado correctamente con SDK compat para Administración de Clubes");
                     prepararAuthUI();
-                    authMod.onAuthStateChanged(auth, controlarSesion);
+                    authAPI.onAuthStateChanged(auth, controlarSesion);
                 } catch (error) {
                     console.error("Firebase inicialización:", error);
-                    setAuthMessage("No se pudo inicializar Firebase. Revisá conexión a internet, dominios autorizados y que el archivo no esté bloqueando imports externos.", "error");
+                    setAuthMessage("No se pudo inicializar Firebase. Revisá tu conexión a internet y que el navegador no bloquee los scripts de gstatic.com.", "error");
                 }
             }
 
