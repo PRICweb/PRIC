@@ -3760,5 +3760,187 @@ body.panel-activo #lbl-nombre-club{color:#9a7468 !important;}
 })();
 </script>
 
+
+<!-- === PATCH PANEL LATERAL: VISTAS INLINE + COLORES ORIGINALES === -->
+<style>
+/* Quita el marrón del panel izquierdo y del encabezado */
+body.panel-activo .sidebar-brand-club .sidebar-club-id,
+body.panel-activo .sidebar-item-club.active,
+body.panel-activo #titulo-turnero-panel,
+body.panel-activo #titulo-turnero-panel span,
+body.panel-activo #lbl-nombre-club {
+    color: #07152b !important;
+}
+body.panel-activo .sidebar-item-club.active {
+    background: #f2f2f2 !important;
+}
+body.panel-activo .sidebar-item-club:hover {
+    color: #07152b !important;
+}
+
+/* Las secciones principales dejan de abrirse como modal y pasan a ser vistas del panel derecho */
+body.panel-activo .panel-view-active {
+    position: static !important;
+    inset: auto !important;
+    width: auto !important;
+    height: auto !important;
+    min-height: 100vh !important;
+    flex: 1 1 auto !important;
+    display: block !important;
+    background: #ffffff !important;
+    padding: 24px 28px !important;
+    overflow: auto !important;
+    z-index: auto !important;
+    box-sizing: border-box !important;
+    backdrop-filter: none !important;
+}
+body.panel-activo .panel-view-active .modal-content {
+    width: 100% !important;
+    max-width: none !important;
+    min-height: auto !important;
+    margin: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+    padding: 0 !important;
+    color: #07152b !important;
+    text-align: left !important;
+}
+body.panel-activo .panel-view-active .modal-content > h3:first-child {
+    color: #07152b !important;
+    font-size: 1.7em !important;
+    font-weight: 650 !important;
+    border-bottom: 1px solid #eeeeee !important;
+    padding-bottom: 18px !important;
+    margin-bottom: 20px !important;
+}
+
+/* En modo vista, no hace falta el botón “Volver al panel”: se navega desde la izquierda */
+body.panel-activo .panel-view-active .modal-content > button.btn-cerrar:last-child {
+    display: none !important;
+}
+
+@media(max-width:760px){
+    body.panel-activo .panel-view-active{
+        min-height:auto !important;
+        padding:18px 14px !important;
+    }
+}
+</style>
+
+<script>
+(function(){
+    const VISTAS_PANEL_CLUB = {
+        profes: 'modal-profesores',
+        finanzas: 'modal-finanzas',
+        metricas: 'modal-metricas',
+        config: 'modal-config',
+        torneos: 'modal-torneos'
+    };
+
+    function qsa(sel){ return Array.prototype.slice.call(document.querySelectorAll(sel)); }
+
+    function actualizarSidebarClub(){
+        const id = window.CLUB_DOC_ID_ACTUAL || (window.CLUB_DATA_ACTUAL && (window.CLUB_DATA_ACTUAL.id || window.CLUB_DATA_ACTUAL.nombre)) || '---';
+        const idEl = document.getElementById('sidebar-club-id');
+        if(idEl) idEl.textContent = id;
+
+        const lbl = document.getElementById('lbl-nombre-club');
+        if(lbl && window.CLUB_DATA_ACTUAL && window.CLUB_DATA_ACTUAL.nombre){
+            lbl.textContent = window.CLUB_DATA_ACTUAL.nombre;
+        }
+    }
+
+    function marcarSidebarActivo(target){
+        qsa('.sidebar-item-club[data-sidebar-target]').forEach(function(btn){
+            btn.classList.toggle('active', btn.getAttribute('data-sidebar-target') === target);
+        });
+    }
+
+    function cerrarVistasInline(){
+        Object.values(VISTAS_PANEL_CLUB).forEach(function(id){
+            const vista = document.getElementById(id);
+            if(!vista) return;
+            vista.classList.remove('panel-view-active');
+            vista.style.display = 'none';
+        });
+    }
+
+    function mostrarTurnero(){
+        cerrarVistasInline();
+        const pantalla = document.getElementById('pantalla-club');
+        if(pantalla) pantalla.style.display = 'block';
+        marcarSidebarActivo('turnero');
+        if(typeof window.cambiarVista === 'function') window.cambiarVista('club');
+        if(typeof window.renderizarReservasClub === 'function') window.renderizarReservasClub();
+    }
+
+    function mostrarVistaInline(seccion){
+        const id = VISTAS_PANEL_CLUB[seccion];
+        const vista = document.getElementById(id);
+        if(!vista) return;
+
+        const pantalla = document.getElementById('pantalla-club');
+        if(pantalla) pantalla.style.display = 'none';
+
+        cerrarVistasInline();
+        vista.classList.add('panel-view-active');
+        vista.style.display = 'block';
+        marcarSidebarActivo(seccion);
+
+        if(seccion === 'profes'){
+            if(typeof window.renderizarProfesores === 'function') window.renderizarProfesores();
+            if(typeof window.renderizarClasesPendientes === 'function') window.renderizarClasesPendientes();
+        }
+        if(seccion === 'finanzas'){
+            if(typeof window.renderizarInventario === 'function') window.renderizarInventario();
+            if(typeof window.renderizarHistorial === 'function') window.renderizarHistorial();
+        }
+        if(seccion === 'metricas'){
+            setTimeout(function(){ if(typeof window.actualizarGraficos === 'function') window.actualizarGraficos(); }, 80);
+        }
+        if(seccion === 'config'){
+            if(typeof window.cargarConfiguracionClub === 'function') window.cargarConfiguracionClub();
+        }
+        if(seccion === 'torneos'){
+            if(typeof window.renderizarTorneosAdmin === 'function') window.renderizarTorneosAdmin();
+        }
+    }
+
+    window.actualizarSidebarClub = actualizarSidebarClub;
+    window.marcarSidebarActivo = marcarSidebarActivo;
+
+    window.abrirSeccionPanelClub = function(seccion){
+        actualizarSidebarClub();
+        if(seccion === 'turnero') return mostrarTurnero();
+        if(VISTAS_PANEL_CLUB[seccion]) return mostrarVistaInline(seccion);
+    };
+
+    /* Compatibilidad: si alguna parte vieja del código llama “abrirModal...”, ahora abre la vista derecha */
+    window.abrirModalProfesores = function(){ mostrarVistaInline('profes'); };
+    window.abrirModalFinanzas = function(){ mostrarVistaInline('finanzas'); };
+    window.abrirModalMetricas = function(){ mostrarVistaInline('metricas'); };
+    window.abrirModalConfig = function(){ mostrarVistaInline('config'); };
+
+    window.cerrarModalProfesores = mostrarTurnero;
+    window.cerrarModalFinanzas = mostrarTurnero;
+    window.cerrarModalMetricas = mostrarTurnero;
+    window.cerrarModalConfig = mostrarTurnero;
+    window.cerrarModalTorneos = mostrarTurnero;
+
+    document.addEventListener('DOMContentLoaded', function(){
+        setTimeout(function(){
+            actualizarSidebarClub();
+            mostrarTurnero();
+        }, 150);
+    });
+
+    window.addEventListener('load', function(){
+        setTimeout(actualizarSidebarClub, 300);
+    });
+})();
+</script>
+
 </body>
 </html>
