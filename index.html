@@ -589,11 +589,11 @@
             };
 
             window.loginClub = window.loginClub || function () {
-                window.setAuthMessage("Firebase todavía está cargando. Esperá unos segundos y volvé a intentar.", "error");
+                window.setAuthMessage("Firebase se está inicializando. Esperá unos segundos. Si queda igual, revisá consola/conexión.", "error");
             };
 
             window.registrarClub = window.registrarClub || function () {
-                window.setAuthMessage("Firebase todavía está cargando. Esperá unos segundos y volvé a intentar.", "error");
+                window.setAuthMessage("Firebase se está inicializando. Esperá unos segundos. Si queda igual, revisá consola/conexión.", "error");
             };
 
             window.logoutClub = window.logoutClub || function () {
@@ -2074,7 +2074,7 @@
                     }
 
                     if (!firebaseListo()) {
-                        setAuthMessage("Firebase todavía no terminó de cargar. Esperá unos segundos y volvé a intentar. Si sigue igual, abrí la consola y revisá conexión/importaciones.", "error");
+                        setAuthMessage("Firebase no terminó de inicializarse. Revisá la consola: puede haber bloqueo de CDN/importaciones, falta de internet o dominio no autorizado.", "error");
                         return;
                     }
 
@@ -2109,7 +2109,7 @@
                     }
 
                     if (!firebaseListo()) {
-                        setAuthMessage("Firebase todavía no terminó de cargar. Esperá unos segundos y volvé a intentar. Si sigue igual, abrí la consola y revisá conexión/importaciones.", "error");
+                        setAuthMessage("Firebase no terminó de inicializarse. Revisá la consola: puede haber bloqueo de CDN/importaciones, falta de internet o dominio no autorizado.", "error");
                         return;
                     }
 
@@ -2633,17 +2633,37 @@
             });
 
             const onloadOriginal = window.onload;
-            window.onload = function() {
+            let firebaseInitPromise = null;
+            let arranqueAuthHecho = false;
+
+            function arrancarAuthYFirebase() {
+                // Se ejecuta apenas el DOM está disponible. No espera a window.onload,
+                // porque window.onload puede quedar trabado si un CDN externo tarda o falla.
                 document.body.classList.remove("panel-activo");
                 document.querySelectorAll(".modal-overlay").forEach(m => m.style.display = "none");
                 const app = document.getElementById("app-content");
                 const authScreen = document.getElementById("auth-screen");
                 if (app) app.style.display = "none";
                 if (authScreen) authScreen.style.display = "flex";
+
                 prepararAuthUI();
-                window.mostrarAuth("login");
-                inicializarFirebase();
+                if (window.mostrarAuth) window.mostrarAuth("login");
+
+                arranqueAuthHecho = true;
+                if (!firebaseInitPromise) {
+                    firebaseInitPromise = inicializarFirebase();
+                }
+            }
+
+            window.onload = function() {
+                if (!arranqueAuthHecho) arrancarAuthYFirebase();
             };
+
+            if (document.readyState === "loading") {
+                document.addEventListener("DOMContentLoaded", arrancarAuthYFirebase, { once: true });
+            } else {
+                arrancarAuthYFirebase();
+            }
         })();
 
     </script>
