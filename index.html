@@ -511,8 +511,8 @@
             <p class="auth-subtitle">Ingresá con tu cuenta para acceder al panel de administración de tu club.</p>
 
             <div class="auth-tabs">
-                <button type="button" id="tab-login" class="auth-tab active" onclick="window.mostrarAuth('login')">Iniciar sesión</button>
-                <button type="button" id="tab-register" class="auth-tab" onclick="window.mostrarAuth('register')">Registrarse</button>
+                <button type="button" id="tab-login" class="auth-tab active">Iniciar sesión</button>
+                <button type="button" id="tab-register" class="auth-tab">Registrarse</button>
             </div>
 
             <div id="auth-login" class="auth-form">
@@ -524,8 +524,8 @@
                     <label class="auth-label" for="login-password">Contraseña:</label>
                     <input id="login-password" class="input-form" type="password" autocomplete="current-password" placeholder="">
                 </div>
-                <button type="button" class="auth-primary" onclick="window.loginClub()">Iniciar sesión</button>
-                <p class="auth-small">¿No tenés cuenta? <button type="button" onclick="window.mostrarAuth('register')">Registrate aquí</button></p>
+                <button type="button" id="btn-login-club" class="auth-primary">Iniciar sesión</button>
+                <p class="auth-small">¿No tenés cuenta? <button type="button" id="btn-ir-registro">Registrate aquí</button></p>
             </div>
 
             <div id="auth-register" class="auth-form" style="display:none;">
@@ -541,20 +541,96 @@
                     <label class="auth-label" for="register-password">Contraseña:</label>
                     <input id="register-password" class="input-form" type="password" autocomplete="new-password" placeholder="Mínimo 6 caracteres">
                 </div>
-                <button type="button" class="auth-primary" onclick="window.registrarClub()">Registrarse</button>
-                <p class="auth-small">¿Ya tenés cuenta? <button type="button" onclick="window.mostrarAuth('login')">Iniciá sesión aquí</button></p>
+                <button type="button" id="btn-registrar-club" class="auth-primary">Registrarse</button>
+                <p class="auth-small">¿Ya tenés cuenta? <button type="button" id="btn-ir-login">Iniciá sesión aquí</button></p>
                 <p class="auth-small">Tu usuario quedará pendiente hasta que se apruebe manualmente el rol <strong>club</strong>.</p>
             </div>
 
             <div id="auth-pending" class="auth-status" style="display:none;">
                 <h3>Solicitud pendiente</h3>
                 <p>Tu cuenta fue creada correctamente, pero todavía no tiene el rol <strong>club</strong>. Cuando se apruebe desde Firebase vas a poder ingresar.</p>
-                <button class="btn-modal btn-cerrar" onclick="window.logoutClub()">Cerrar sesión</button>
+                <button type="button" id="btn-pending-logout" class="btn-modal btn-cerrar">Cerrar sesión</button>
             </div>
 
             <p id="auth-message" class="auth-message"></p>
         </div>
     </div>
+
+
+    <script>
+        /* =========================================================
+           BOOTSTRAP INMEDIATO DEL LOGIN / REGISTRO
+           Esto se ejecuta apenas se carga la vista de autenticación.
+           No depende de Firebase ni del resto del código del panel.
+        ========================================================= */
+        (function () {
+            function el(id) { return document.getElementById(id); }
+
+            window.setAuthMessage = window.setAuthMessage || function (mensaje, tipo = "info") {
+                const msg = el("auth-message");
+                if (!msg) return;
+                msg.textContent = mensaje || "";
+                msg.style.color = tipo === "error" ? "#ef4444" : tipo === "ok" ? "#10b981" : "#b45309";
+            };
+
+            window.mostrarAuth = function (modo = "login") {
+                const login = el("auth-login");
+                const register = el("auth-register");
+                const pending = el("auth-pending");
+                const tabLogin = el("tab-login");
+                const tabRegister = el("tab-register");
+
+                if (pending) pending.style.display = "none";
+                if (login) login.style.display = modo === "login" ? "flex" : "none";
+                if (register) register.style.display = modo === "register" ? "flex" : "none";
+                if (tabLogin) tabLogin.classList.toggle("active", modo === "login");
+                if (tabRegister) tabRegister.classList.toggle("active", modo === "register");
+                window.setAuthMessage("");
+            };
+
+            window.loginClub = window.loginClub || function () {
+                window.setAuthMessage("Firebase todavía está cargando. Esperá unos segundos y volvé a intentar.", "error");
+            };
+
+            window.registrarClub = window.registrarClub || function () {
+                window.setAuthMessage("Firebase todavía está cargando. Esperá unos segundos y volvé a intentar.", "error");
+            };
+
+            window.logoutClub = window.logoutClub || function () {
+                document.body.classList.remove("panel-activo");
+                const app = el("app-content");
+                const auth = el("auth-screen");
+                if (app) app.style.display = "none";
+                if (auth) auth.style.display = "flex";
+                window.mostrarAuth("login");
+            };
+
+            function conectarBoton(id, accion) {
+                const btn = el(id);
+                if (!btn || btn.dataset.authBound === "1") return;
+                btn.dataset.authBound = "1";
+                btn.addEventListener("click", function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    accion();
+                });
+            }
+
+            function conectarAuth() {
+                conectarBoton("tab-login", function () { window.mostrarAuth("login"); });
+                conectarBoton("tab-register", function () { window.mostrarAuth("register"); });
+                conectarBoton("btn-ir-registro", function () { window.mostrarAuth("register"); });
+                conectarBoton("btn-ir-login", function () { window.mostrarAuth("login"); });
+                conectarBoton("btn-login-club", function () { window.loginClub(); });
+                conectarBoton("btn-registrar-club", function () { window.registrarClub(); });
+                conectarBoton("btn-pending-logout", function () { window.logoutClub(); });
+                window.mostrarAuth("login");
+            }
+
+            conectarAuth();
+            document.addEventListener("DOMContentLoaded", conectarAuth);
+        })();
+    </script>
 
     <div id="app-content" style="display: none; width: 100%; flex-direction: column; align-items: center;">
         
@@ -2003,7 +2079,7 @@
                     }
 
                     try {
-                        setBotonAuthCargando("#auth-login .auth-primary", true, "Ingresando...", "Iniciar sesión");
+                        setBotonAuthCargando("#btn-login-club", true, "Ingresando...", "Iniciar sesión");
                         setAuthMessage("Verificando acceso...");
                         await authAPI.signInWithEmailAndPassword(authAPI.auth, email, password);
                     } catch (error) {
@@ -2014,7 +2090,7 @@
                         if (error?.code === "auth/network-request-failed") mensaje = "Firebase no pudo conectarse. Revisá tu conexión a internet.";
                         setAuthMessage(mensaje, "error");
                     } finally {
-                        setBotonAuthCargando("#auth-login .auth-primary", false, "Ingresando...", "Iniciar sesión");
+                        setBotonAuthCargando("#btn-login-club", false, "Ingresando...", "Iniciar sesión");
                     }
                 };
 
@@ -2038,7 +2114,7 @@
                     }
 
                     try {
-                        setBotonAuthCargando("#auth-register .auth-primary", true, "Registrando...", "Registrarse");
+                        setBotonAuthCargando("#btn-registrar-club", true, "Registrando...", "Registrarse");
                         setAuthMessage("Creando solicitud...");
                         const cred = await authAPI.createUserWithEmailAndPassword(authAPI.auth, email, password);
                         await authAPI.updateProfile(cred.user, { displayName: nombreClub });
@@ -2083,7 +2159,7 @@
                         if (error?.code === "permission-denied") msg = "Firestore bloqueó la escritura. Revisá las reglas de seguridad para usuarios, solicitudesClub y mail.";
                         setAuthMessage(msg, "error");
                     } finally {
-                        setBotonAuthCargando("#auth-register .auth-primary", false, "Registrando...", "Registrarse");
+                        setBotonAuthCargando("#btn-registrar-club", false, "Registrando...", "Registrarse");
                     }
                 };
 
@@ -2225,6 +2301,7 @@
                     firebaseAPI = { app, db, ...firestoreMod };
                     authAPI = { auth, ...authMod };
                     firebaseInicializado = true;
+                    console.log("Firebase inicializado correctamente para Administración de Clubes");
                     prepararAuthUI();
                     authMod.onAuthStateChanged(auth, controlarSesion);
                 } catch (error) {
