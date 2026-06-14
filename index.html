@@ -3137,5 +3137,391 @@
 <script>
 /* Fix final: auth espera Firebase y registro crea solo /clubs/{nombreClub}. */
 </script>
+
+<script>
+/* =========================================================
+   FIX FINAL DE PERSISTENCIA POR CLUB
+   Guarda SIEMPRE en: clubs/{CLUB_DOC_ID_ACTUAL}
+   Reservas en: clubs/{CLUB_DOC_ID_ACTUAL}/reservas/{reservaId}
+========================================================= */
+(function(){
+    "use strict";
+    if (window.__FIX_PERSISTENCIA_CLUB_FINAL__) return;
+    window.__FIX_PERSISTENCIA_CLUB_FINAL__ = true;
+
+    const firebaseConfigPersistencia = {
+        apiKey: "AIzaSyDqWKo3ZtPChbtf38osMiKwQpCRNvsN7ak",
+        authDomain: "pric-60f50.firebaseapp.com",
+        projectId: "pric-60f50",
+        storageBucket: "pric-60f50.firebasestorage.app",
+        messagingSenderId: "475470852361",
+        appId: "1:475470852361:web:8acfa8b1e2963426ef23d8",
+        measurementId: "G-ZXLT15L9JR"
+    };
+
+    let colaGuardado = Promise.resolve();
+    let listenersActivos = false;
+    let ultimoClubEscuchado = null;
+    let unsubClubPersistencia = null;
+    let unsubReservasPersistencia = null;
+    let aplicandoSnapshot = false;
+
+    function $(id){ return document.getElementById(id); }
+
+    function cargarScript(src){
+        return new Promise((resolve, reject) => {
+            const existente = document.querySelector('script[src="' + src + '"]');
+            if (existente) {
+                if (existente.dataset.loaded === "1" || window.firebase) return resolve();
+                existente.addEventListener("load", resolve, { once:true });
+                existente.addEventListener("error", () => reject(new Error("No se pudo cargar " + src)), { once:true });
+                return;
+            }
+            const s = document.createElement("script");
+            s.src = src;
+            s.async = false;
+            s.onload = () => { s.dataset.loaded = "1"; resolve(); };
+            s.onerror = () => reject(new Error("No se pudo cargar " + src));
+            document.head.appendChild(s);
+        });
+    }
+
+    async function firebaseListo(){
+        if (!window.firebase || !firebase.firestore || !firebase.auth) {
+            const v = "8.10.1";
+            await cargarScript("https://www.gstatic.com/firebasejs/" + v + "/firebase-app.js");
+            await cargarScript("https://www.gstatic.com/firebasejs/" + v + "/firebase-auth.js");
+            await cargarScript("https://www.gstatic.com/firebasejs/" + v + "/firebase-firestore.js");
+        }
+        if (!firebase.apps || !firebase.apps.length) firebase.initializeApp(firebaseConfigPersistencia);
+        return { db: firebase.firestore(), auth: firebase.auth() };
+    }
+
+    function normalizarId(valor){
+        return String(valor || "").trim().replace(/[\\/#[\]?]/g, "_").replace(/\s+/g, " ");
+    }
+
+    function getGlobal(nombre, fallback){
+        try {
+            const valor = eval(nombre);
+            return valor === undefined ? fallback : valor;
+        } catch(e) {
+            return fallback;
+        }
+    }
+
+    function setGlobal(nombre, valor){
+        try { eval(nombre + " = valor"); } catch(e) {}
+    }
+
+    function val(id, fallback){
+        const el = $(id);
+        if (!el) return fallback;
+        return el.value !== undefined ? el.value : fallback;
+    }
+
+    function num(id, fallback){
+        const n = Number(val(id, fallback));
+        return Number.isFinite(n) ? n : Number(fallback || 0);
+    }
+
+    function arrDesdeInput(id, fallback){
+        const el = $(id);
+        if (!el) return Array.isArray(fallback) ? fallback : [];
+        const txt = String(el.value || "").trim();
+        return txt ? txt.split(",").map(x => x.trim()).filter(Boolean) : [];
+    }
+
+    function limpiarDato(valor){
+        if (valor === undefined || typeof valor === "function") return null;
+        if (valor === null) return null;
+        if (valor instanceof Date) return valor.toISOString();
+        if (Array.isArray(valor)) return valor.map(limpiarDato).filter(v => v !== undefined);
+        if (typeof valor === "object") {
+            const out = {};
+            Object.keys(valor).forEach(k => {
+                if (k.startsWith("__")) return;
+                const v = limpiarDato(valor[k]);
+                if (v !== undefined) out[k] = v;
+            });
+            return out;
+        }
+        return valor;
+    }
+
+    function arregloGlobal(nombre){
+        const arr = getGlobal(nombre, []);
+        return Array.isArray(arr) ? arr : [];
+    }
+
+    async function obtenerClubDocId(){
+        if (window.CLUB_DOC_ID_ACTUAL) return normalizarId(window.CLUB_DOC_ID_ACTUAL);
+        if (window.CLUB_DATA_ACTUAL && window.CLUB_DATA_ACTUAL.id) return normalizarId(window.CLUB_DATA_ACTUAL.id);
+
+        const { db, auth } = await firebaseListo();
+        const user = auth.currentUser;
+        if (user && user.email) {
+            const email = String(user.email).trim();
+            const variantes = [...new Set([email, email.toLowerCase()])];
+            for (const mail of variantes) {
+                const snap = await db.collection("clubs").where("emailAdmin", "==", mail).limit(1).get();
+                if (!snap.empty) {
+                    const doc = snap.docs[0];
+                    window.CLUB_DOC_ID_ACTUAL = doc.id;
+                    window.CLUB_DATA_ACTUAL = { id: doc.id, ...doc.data() };
+                    return doc.id;
+                }
+            }
+        }
+
+        const nombreLbl = $("lbl-nombre-club")?.textContent?.trim();
+        if (nombreLbl && nombreLbl !== "Admin") {
+            window.CLUB_DOC_ID_ACTUAL = normalizarId(nombreLbl);
+            return window.CLUB_DOC_ID_ACTUAL;
+        }
+
+        return null;
+    }
+
+    function obtenerNombreClub(clubId){
+        return (window.CLUB_DATA_ACTUAL && window.CLUB_DATA_ACTUAL.nombre) ||
+               getGlobal("CLUB_ID", null) ||
+               $("lbl-nombre-club")?.textContent?.trim() ||
+               clubId;
+    }
+
+    function obtenerConfigActual(){
+        const indoorNombres = arrDesdeInput("input-nombres-in", getGlobal("nombresIndoorGlobal", []));
+        const outdoorNombres = arrDesdeInput("input-nombres-out", getGlobal("nombresOutdoorGlobal", []));
+        const tenisNombres = arrDesdeInput("input-nombres-tenis", getGlobal("nombresTenisGlobal", []));
+
+        let dias = [];
+        const hayChecksDias = [0,1,2,3,4,5,6].some(d => !!$("dia-" + d));
+        if (hayChecksDias) [0,1,2,3,4,5,6].forEach(d => { if ($("dia-" + d)?.checked) dias.push(d); });
+        else dias = getGlobal("diasAbiertosGlobal", [0,1,2,3,4,5,6]);
+
+        return limpiarDato({
+            primerTurno: val("input-primer-turno", getGlobal("primerTurno", "08:00")),
+            ultimoTurno: val("input-ultimo-turno", getGlobal("ultimoTurno", "21:30")),
+            duracionDefault: Number(getGlobal("duracionGlobal", 90)) || 90,
+            diasAbiertos: dias,
+
+            telefono: val("input-telefono-club", getGlobal("telefonoClubGlobal", "")),
+            ubicacion: val("input-ubicacion-club", getGlobal("ubicacionClubGlobal", "")),
+            fotoClub: val("input-foto-club", getGlobal("fotoClubGlobal", "")),
+
+            canchasIndoor: num("input-canchas-in", getGlobal("canchasIndoorGlobal", 0)),
+            precioIndoor: String(val("input-precio-in", getGlobal("precioIndoorGlobal", "0"))),
+            profeIndoor: String(val("input-profe-in", getGlobal("profeIndoorGlobal", "0"))),
+            senaIndoor: String(val("input-sena-in", getGlobal("senaIndoorGlobal", "0"))),
+            nombresIndoor: indoorNombres,
+            duracionIndoor: num("input-duracion-in", getGlobal("duracionIndoorGlobal", 90)),
+
+            canchasOutdoor: num("input-canchas-out", getGlobal("canchasOutdoorGlobal", 0)),
+            precioOutdoor: String(val("input-precio-out", getGlobal("precioOutdoorGlobal", "0"))),
+            profeOutdoor: String(val("input-profe-out", getGlobal("profeOutdoorGlobal", "0"))),
+            senaOutdoor: String(val("input-sena-out", getGlobal("senaOutdoorGlobal", "0"))),
+            nombresOutdoor: outdoorNombres,
+            duracionOutdoor: num("input-duracion-out", getGlobal("duracionOutdoorGlobal", 90)),
+
+            canchasTenis: num("input-canchas-tenis", getGlobal("canchasTenisGlobal", 0)),
+            precioTenis: String(val("input-precio-tenis", getGlobal("precioTenisGlobal", "0"))),
+            profeTenis: String(val("input-profe-tenis", getGlobal("profeTenisGlobal", "0"))),
+            senaTenis: String(val("input-sena-tenis", getGlobal("senaTenisGlobal", "0"))),
+            nombresTenis: tenisNombres,
+            duracionTenis: num("input-duracion-tenis", getGlobal("duracionTenisGlobal", 90)),
+
+            inventario: arregloGlobal("inventarioGlobal"),
+            gastos: arregloGlobal("gastosGlobal"),
+            ingresos: arregloGlobal("ingresosGlobal"),
+            profesores: arregloGlobal("profesoresGlobal")
+        });
+    }
+
+    function aplicarConfig(data){
+        if (!data || typeof data !== "object") return;
+        aplicandoSnapshot = true;
+        try {
+            if (data.primerTurno != null) setGlobal("primerTurno", data.primerTurno);
+            if (data.ultimoTurno != null) setGlobal("ultimoTurno", data.ultimoTurno);
+            if (data.duracionDefault != null) setGlobal("duracionGlobal", Number(data.duracionDefault) || 90);
+            if (Array.isArray(data.diasAbiertos)) setGlobal("diasAbiertosGlobal", data.diasAbiertos);
+
+            if (data.telefono != null) setGlobal("telefonoClubGlobal", data.telefono);
+            if (data.ubicacion != null) setGlobal("ubicacionClubGlobal", data.ubicacion);
+            if (data.fotoClub != null) setGlobal("fotoClubGlobal", data.fotoClub);
+
+            ["Indoor", "Outdoor", "Tenis"].forEach(tipo => {
+                const min = tipo.toLowerCase();
+                const suf = tipo === "Tenis" ? "Tenis" : tipo;
+                if (data["canchas" + suf] != null) setGlobal("canchas" + suf + "Global", Number(data["canchas" + suf]) || 0);
+                if (data["precio" + suf] != null) setGlobal("precio" + suf + "Global", String(data["precio" + suf]));
+                if (data["profe" + suf] != null) setGlobal("profe" + suf + "Global", String(data["profe" + suf]));
+                if (data["sena" + suf] != null) setGlobal("sena" + suf + "Global", String(data["sena" + suf]));
+                if (data["duracion" + suf] != null) setGlobal("duracion" + suf + "Global", Number(data["duracion" + suf]) || 90);
+                if (Array.isArray(data["nombres" + suf])) setGlobal("nombres" + suf + "Global", data["nombres" + suf]);
+            });
+
+            setGlobal("nombresCanchasGlobal", [
+                ...(getGlobal("nombresIndoorGlobal", []) || []),
+                ...(getGlobal("nombresOutdoorGlobal", []) || []),
+                ...(getGlobal("nombresTenisGlobal", []) || [])
+            ]);
+
+            if (Array.isArray(data.inventario)) setGlobal("inventarioGlobal", data.inventario);
+            if (Array.isArray(data.gastos)) setGlobal("gastosGlobal", data.gastos);
+            if (Array.isArray(data.ingresos)) setGlobal("ingresosGlobal", data.ingresos);
+            if (Array.isArray(data.profesores)) setGlobal("profesoresGlobal", data.profesores);
+
+            if (typeof window.renderizarPantallas === "function") window.renderizarPantallas();
+            if (typeof renderizarInventario === "function") renderizarInventario();
+            if (typeof renderizarHistorial === "function") renderizarHistorial();
+            if (typeof renderizarProfesores === "function") renderizarProfesores();
+            if (typeof renderizarClasesPendientes === "function") renderizarClasesPendientes();
+        } catch(e) {
+            console.warn("No se pudo aplicar configuración del club:", e);
+        } finally {
+            setTimeout(() => { aplicandoSnapshot = false; }, 300);
+        }
+    }
+
+    async function guardarClub(motivo){
+        if (aplicandoSnapshot) return;
+        const { db } = await firebaseListo();
+        const clubId = await obtenerClubDocId();
+        if (!clubId) {
+            console.error("No hay CLUB_DOC_ID_ACTUAL. No se puede guardar.");
+            alert("No se pudo guardar: no se detectó el club logueado.");
+            return;
+        }
+        const nombre = obtenerNombreClub(clubId);
+        const ref = db.collection("clubs").doc(clubId);
+        await ref.set({
+            ...obtenerConfigActual(),
+            nombre,
+            guardadoPorPanel: true,
+            ultimoMotivoGuardado: motivo || "accion-panel",
+            actualizadoEn: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge:true });
+    }
+
+    async function guardarReservas(){
+        if (aplicandoSnapshot) return;
+        const { db } = await firebaseListo();
+        const clubId = await obtenerClubDocId();
+        if (!clubId) return;
+        const reservas = arregloGlobal("reservasGlobales");
+        let batch = db.batch();
+        let count = 0;
+        reservas.forEach((reserva, index) => {
+            if (!reserva || typeof reserva !== "object") return;
+            if (!reserva.id) reserva.id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()) + "_" + index;
+            const ref = db.collection("clubs").doc(clubId).collection("reservas").doc(String(reserva.id));
+            batch.set(ref, limpiarDato({
+                ...reserva,
+                clubId,
+                actualizadoEn: firebase.firestore.FieldValue.serverTimestamp()
+            }), { merge:true });
+            count++;
+        });
+        if (count > 0) await batch.commit();
+    }
+
+    async function guardarTodo(motivo){
+        colaGuardado = colaGuardado.then(async () => {
+            await guardarClub(motivo);
+            await guardarReservas();
+            console.log("✅ Datos guardados en Firebase:", motivo || "accion-panel", window.CLUB_DOC_ID_ACTUAL);
+        }).catch(error => {
+            console.error("❌ Error guardando datos del club:", error);
+            const msg = error && error.code === "permission-denied"
+                ? "Firebase no permitió guardar. Revisá las reglas de Firestore para clubs/{clubId}."
+                : "No se pudo guardar en Firebase. Abrí la consola para ver el error exacto.";
+            alert(msg);
+        });
+        return colaGuardado;
+    }
+
+    window.guardarTodoClubAhora = guardarTodo;
+    window.guardarEstadoClubCompleto = function(){ return guardarTodo("guardarEstadoClubCompleto"); };
+    window.guardarReservasCompartidas = function(){ return guardarTodo("guardarReservasCompartidas"); };
+    window.guardarConfiguracionCompartida = function(){ return guardarTodo("guardarConfiguracionCompartida"); };
+
+    function parchearFuncion(nombre, guardarReservasTambien){
+        const original = window[nombre];
+        if (typeof original !== "function" || original.__persistenciaPatch) return;
+        const envuelta = function(...args){
+            const retorno = original.apply(this, args);
+            Promise.resolve(retorno).finally(() => {
+                setTimeout(() => guardarTodo(nombre), guardarReservasTambien ? 250 : 150);
+            });
+            return retorno;
+        };
+        envuelta.__persistenciaPatch = true;
+        window[nombre] = envuelta;
+    }
+
+    function instalarParches(){
+        parchearFuncion("guardarConfiguracion", false);
+        [
+            "agregarProfe", "eliminarProfe",
+            "agregarInventario", "eliminarInventario", "agregarStockGasto", "venderProductoMostradorMov",
+            "confirmarReposicionStock", "confirmarEditarPrecio", "agregarGasto", "agregarIngresoLibre"
+        ].forEach(n => parchearFuncion(n, false));
+
+        [
+            "confirmarReservaAdmin", "accionEliminar", "accionCancelarExcepcion", "hacerTurnoFijo",
+            "toggleConfirmarTurno", "cobrarTurno", "agregarConsumoTurno", "eliminarConsumoTurno", "confirmarCobroClase"
+        ].forEach(n => parchearFuncion(n, true));
+    }
+
+    async function iniciarEscuchaPropia(){
+        const { db, auth } = await firebaseListo();
+        const clubId = await obtenerClubDocId();
+        if (!clubId || ultimoClubEscuchado === clubId) return;
+
+        if (typeof unsubClubPersistencia === "function") unsubClubPersistencia();
+        if (typeof unsubReservasPersistencia === "function") unsubReservasPersistencia();
+        ultimoClubEscuchado = clubId;
+
+        unsubClubPersistencia = db.collection("clubs").doc(clubId).onSnapshot(doc => {
+            if (doc.exists) {
+                window.CLUB_DOC_ID_ACTUAL = doc.id;
+                window.CLUB_DATA_ACTUAL = { id: doc.id, ...doc.data() };
+                aplicarConfig(doc.data());
+            }
+        }, err => console.error("Lectura club:", err));
+
+        unsubReservasPersistencia = db.collection("clubs").doc(clubId).collection("reservas")
+            .onSnapshot(snapshot => {
+                if (aplicandoSnapshot) return;
+                const reservas = [];
+                snapshot.forEach(doc => reservas.push({ id: doc.id, ...doc.data(), clubId }));
+                setGlobal("reservasGlobales", reservas);
+                if (typeof window.renderizarPantallas === "function") window.renderizarPantallas();
+                if (typeof renderizarClasesPendientes === "function") renderizarClasesPendientes();
+            }, err => console.error("Lectura reservas:", err));
+    }
+
+    function cicloInstalacion(){
+        instalarParches();
+        iniciarEscuchaPropia().catch(e => console.warn("Escucha propia no iniciada todavía:", e));
+    }
+
+    document.addEventListener("DOMContentLoaded", cicloInstalacion);
+    window.addEventListener("load", cicloInstalacion);
+    setTimeout(cicloInstalacion, 800);
+    setTimeout(cicloInstalacion, 2000);
+    setTimeout(cicloInstalacion, 4000);
+
+    firebaseListo().then(({ auth }) => {
+        auth.onAuthStateChanged(() => {
+            setTimeout(cicloInstalacion, 300);
+            setTimeout(cicloInstalacion, 1200);
+        });
+    }).catch(e => console.warn("Firebase persistencia pendiente:", e));
+})();
+</script>
+
 </body>
 </html>
