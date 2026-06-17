@@ -2505,4 +2505,84 @@ else {
     window.addEventListener('load', function () { setTimeout(function () { mostrar(vistaActual || 'turnero'); }, 500); });
 })();
 </script>
+
+<style id="parche-config-vista-modalidad-css">
+body.panel-activo #modal-config{display:none!important;visibility:hidden!important;pointer-events:none!important;position:static!important;z-index:-1!important}
+body.panel-activo #panel-config-club.panel-seccion-activa{display:block!important;flex:1 1 auto!important;width:auto!important;min-height:100vh!important;margin:0!important;padding:24px 28px!important;background:#fff!important;color:#07152b!important;box-sizing:border-box!important;overflow:auto!important}
+body.panel-activo #panel-config-club .modal-content{display:flex!important;flex-direction:column!important;gap:18px!important;width:100%!important;max-width:none!important;min-height:auto!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;background:#fff!important;box-shadow:none!important;text-align:left!important;color:#07152b!important}
+body.panel-activo #panel-config-club .modal-content>h3:first-child{width:100%!important;margin:0 0 4px 0!important;padding-bottom:16px!important;border-bottom:1px solid #e5eaf2!important;color:#07152b!important;font-size:1.55rem!important;font-weight:700!important;text-align:left!important}
+body.panel-activo #panel-config-club .modal-content>button.btn-cerrar:last-child{display:none!important}
+body.panel-activo #panel-config-club .seccion-acordeon{width:100%!important;background:#fff!important;border:1px solid #dbe1ea!important;border-radius:8px!important;box-shadow:none!important;margin-bottom:12px!important}
+body.panel-activo #panel-config-club .header-acordeon{background:#f8fafc!important;color:#07152b!important;border:0!important}
+body.panel-activo #panel-config-club .contenido-acordeon{background:#fff!important;color:#07152b!important;border-top:1px solid #e5eaf2!important}
+.turnero-modalidad-box{margin-left:auto;display:flex;align-items:center;gap:8px;min-width:230px}.turnero-modalidad-box label{font-size:.82rem;font-weight:800;color:#52627a!important;white-space:nowrap}.turnero-modalidad-box select{height:38px;min-width:145px;padding:8px 12px;border-radius:12px;border:1px solid #d6deea;background:#eaf1fb;color:#07152b;font-family:inherit;font-weight:700;box-sizing:border-box}.turnero-modalidad-empty{padding:22px;border:1px solid #dbe1ea;border-radius:16px;background:#fff;color:#52627a;font-weight:700;text-align:center;margin-top:14px}@media(max-width:760px){body.panel-activo #panel-config-club.panel-seccion-activa{min-height:auto!important;padding:18px 14px!important}.turnero-modalidad-box{width:100%;margin-left:0;justify-content:space-between}.turnero-modalidad-box select{flex:1}}
+</style>
+<script id="parche-config-vista-modalidad-js">
+(function(){
+'use strict';
+if(window.__PATCH_CONFIG_VISTA_MODALIDAD__)return;window.__PATCH_CONFIG_VISTA_MODALIDAD__=true;
+var $=function(id){return document.getElementById(id)};
+function qsa(sel){return Array.prototype.slice.call(document.querySelectorAll(sel))}
+function g(name,def){var v=window[name];return v==null?def:v}
+function n(name){var v=Number(g(name,0));return Number.isFinite(v)?v:0}
+function setVal(id,v){var el=$(id);if(el)el.value=(v==null?'':String(v))}
+function arr(v){return Array.isArray(v)?v:[]}
+function rellenarConfig(){
+ setVal('input-primer-turno',g('primerTurno','08:00'));setVal('input-ultimo-turno',g('ultimoTurno','21:30'));
+ setVal('input-telefono-club',g('telefonoClubGlobal',''));setVal('input-ubicacion-club',g('ubicacionClubGlobal',''));setVal('input-foto-club',g('fotoClubGlobal',''));
+ [0,1,2,3,4,5,6].forEach(function(d){var el=$('dia-'+d);if(el)el.checked=arr(g('diasAbiertosGlobal',[0,1,2,3,4,5,6])).map(Number).indexOf(d)>-1});
+ setVal('input-canchas-in',g('canchasIndoorGlobal',0));setVal('input-precio-in',g('precioIndoorGlobal','0'));setVal('input-profe-in',g('profeIndoorGlobal','0'));setVal('input-sena-in',g('senaIndoorGlobal','0'));setVal('input-nombres-in',arr(g('nombresIndoorGlobal',[])).join(', '));setVal('input-duracion-in',g('duracionIndoorGlobal',90));
+ setVal('input-canchas-out',g('canchasOutdoorGlobal',0));setVal('input-precio-out',g('precioOutdoorGlobal','0'));setVal('input-profe-out',g('profeOutdoorGlobal','0'));setVal('input-sena-out',g('senaOutdoorGlobal','0'));setVal('input-nombres-out',arr(g('nombresOutdoorGlobal',[])).join(', '));setVal('input-duracion-out',g('duracionOutdoorGlobal',90));
+ setVal('input-canchas-tenis',g('canchasTenisGlobal',0));setVal('input-precio-tenis',g('precioTenisGlobal','0'));setVal('input-profe-tenis',g('profeTenisGlobal','0'));setVal('input-sena-tenis',g('senaTenisGlobal','0'));setVal('input-nombres-tenis',arr(g('nombresTenisGlobal',[])).join(', '));setVal('input-duracion-tenis',g('duracionTenisGlobal',90));
+}
+function crearPanelConfig(){
+ var app=$('app-content');if(!app)return null;var panel=$('panel-config-club');if(panel)return panel;
+ var modal=$('modal-config');if(!modal)return null;var content=modal.querySelector('.modal-content');
+ panel=document.createElement('section');panel.className='panel-seccion-club';panel.id='panel-config-club';panel.setAttribute('data-panel-section','config');panel.style.display='none';
+ if(content)panel.appendChild(content);else panel.innerHTML='<div class="panel-header-club"><h2>Configuración del Club</h2></div>';
+ var ref=$('panel-metricas-club')||$('panel-movimientos-club')||$('pantalla-club');
+ if(ref&&ref.parentNode)ref.parentNode.insertBefore(panel,ref.nextSibling);else app.appendChild(panel);
+ modal.style.display='none';modal.setAttribute('aria-hidden','true');
+ return panel;
+}
+function cerrarFlotantes(){['modal-reserva-admin','modal-acciones','modal-agregar-producto','modal-editar-precio','modal-reponer-stock','modal-cobrar-clase','modal-alerta-turnero','modal-confirm-turnero','modal-config'].forEach(function(id){var el=$(id);if(el){el.classList.remove('panel-view-active');el.style.display='none'}})}
+function marcar(seccion){qsa('.sidebar-item-club[data-sidebar-target]').forEach(function(btn){btn.classList.toggle('active',btn.getAttribute('data-sidebar-target')===seccion)});var sid=$('sidebar-club-id');var id=window.CLUB_DOC_ID_ACTUAL||(window.CLUB_DATA_ACTUAL&&(window.CLUB_DATA_ACTUAL.id||window.CLUB_DATA_ACTUAL.nombre))||'---';if(sid)sid.textContent=id}
+function ocultarTodo(){var p=$('pantalla-club');if(p){p.classList.remove('panel-view-active');p.style.display='none'}qsa('.panel-seccion-club').forEach(function(el){el.classList.remove('panel-seccion-activa','panel-view-active');el.style.display='none'});['modal-profesores','modal-torneos'].forEach(function(id){var el=$(id);if(el){el.classList.remove('panel-view-active');el.style.display='none'}});cerrarFlotantes()}
+function seguro(fn){try{if(typeof fn==='function')return fn()}catch(e){console.warn('No se pudo actualizar la vista:',e)}}
+function mostrar(seccion){seccion=seccion||'turnero';crearPanelConfig();ocultarTodo();var node=null;
+ if(seccion==='turnero'){node=$('pantalla-club');if(node){node.classList.add('panel-view-active');node.style.display='block'}seguro(window.renderizarPantallas);seguro(window.renderizarReservasClub)}
+ else if(seccion==='profes'){node=$('modal-profesores');if(node){node.classList.add('panel-view-active');node.style.display='block'}seguro(window.renderizarProfesores);seguro(window.renderizarClasesPendientes)}
+ else if(seccion==='torneos'){node=$('modal-torneos');if(node){node.classList.add('panel-view-active');node.style.display='block'}seguro(window.renderizarTorneosAdmin)}
+ else{node=$('panel-'+seccion+'-club');if(node){node.classList.add('panel-seccion-activa');node.style.display='block'}
+   if(seccion==='inventario')seguro(window.renderizarInventario);
+   if(seccion==='finanzas'){seguro(window.renderizarHistorial);seguro(window.actualizarResumenFinanzasClub||window.actualizarResumenFinanzas)}
+   if(seccion==='movimientos')seguro(window.renderizarSelectMovimiento||window.renderizarMovimientos);
+   if(seccion==='metricas')setTimeout(function(){seguro(window.actualizarGraficos)},80);
+   if(seccion==='config')rellenarConfig();
+ }
+ if(!node){return mostrar('turnero')}marcar(seccion);
+}
+function asegurarSelectorModalidad(){
+ var controles=$('controles-fecha-club');if(!controles)return;var sel=$('select-modalidad-turnero');
+ if(!sel){var box=document.createElement('div');box.className='turnero-modalidad-box';box.innerHTML='<label for="select-modalidad-turnero">Modalidad</label><select id="select-modalidad-turnero"></select>';controles.appendChild(box);sel=$('select-modalidad-turnero');sel.addEventListener('change',function(){window.modalidadTurneroActual=this.value;try{localStorage.setItem('modalidadTurneroActual',this.value)}catch(e){}aplicarFiltroModalidad()});}
+ var indoor=n('canchasIndoorGlobal'),outdoor=n('canchasOutdoorGlobal'),tenis=n('canchasTenisGlobal');var opciones=[];
+ if(indoor>0)opciones.push(['indoor','Pádel Indoor']);if(outdoor>0)opciones.push(['outdoor','Pádel Outdoor']);if(tenis>0)opciones.push(['tenis','Tenis']);
+ if(opciones.length>1)opciones.unshift(['todas','Todas']);if(!opciones.length)opciones.push(['todas','Todas']);
+ var actual=window.modalidadTurneroActual;try{actual=actual||localStorage.getItem('modalidadTurneroActual')}catch(e){}
+ if(!opciones.some(function(o){return o[0]===actual}))actual=opciones[0][0];
+ sel.innerHTML=opciones.map(function(o){return '<option value="'+o[0]+'">'+o[1]+'</option>'}).join('');sel.value=actual;window.modalidadTurneroActual=actual;
+}
+function aplicarFiltroModalidad(){
+ asegurarSelectorModalidad();var cont=document.querySelector('#lista-reservas-club .contenedor-grilla');if(!cont)return;var modalidad=window.modalidadTurneroActual||'todas';var indoor=n('canchasIndoorGlobal'),outdoor=n('canchasOutdoorGlobal'),tenis=n('canchasTenisGlobal');var cols=Array.prototype.slice.call(cont.children).slice(1);var visibles=0;
+ cols.forEach(function(col,idx){var c=idx+1;var tipo=c<=indoor?'indoor':(c<=indoor+outdoor?'outdoor':'tenis');var show=(modalidad==='todas'||modalidad===tipo);col.style.display=show?'block':'none';if(show)visibles++;});
+ var msg=$('msg-modalidad-vacia');if(msg)msg.remove();if(!visibles){var m=document.createElement('div');m.id='msg-modalidad-vacia';m.className='turnero-modalidad-empty';m.textContent='No hay canchas cargadas para esta modalidad.';var lista=$('lista-reservas-club');if(lista)lista.appendChild(m)}
+}
+function instalar(){crearPanelConfig();window.abrirSeccionPanelClub=mostrar;window.abrirModalConfig=function(){mostrar('config')};window.cerrarModalConfig=function(){mostrar('turnero')};window.abrirModalFinanzas=function(){mostrar('finanzas')};window.abrirModalMetricas=function(){mostrar('metricas')};window.abrirModalProfesores=function(){mostrar('profes')};window.cerrarModalProfesores=function(){mostrar('turnero')};window.cerrarModalTorneos=function(){mostrar('turnero')};
+ if(!window.renderizarPantallas.__modalidadPatch){var original=window.renderizarPantallas;var nueva=function(){var r=original&&original.apply(this,arguments);asegurarSelectorModalidad();aplicarFiltroModalidad();return r};nueva.__modalidadPatch=true;window.renderizarPantallas=nueva;}
+ asegurarSelectorModalidad();aplicarFiltroModalidad();}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(instalar,80)});else setTimeout(instalar,80);
+window.addEventListener('load',function(){setTimeout(instalar,300);setTimeout(function(){aplicarFiltroModalidad()},900)});
+})();
+</script>
+
 </body></html>
