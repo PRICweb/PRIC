@@ -3849,4 +3849,467 @@ body.panel-activo .categorias-empty-inv{color:#52627a!important;font-size:.9rem!
   firebaseListo().then(function(x){ x.auth.onAuthStateChanged(function(){ setTimeout(cicloFinal, 250); setTimeout(cicloFinal, 1200); }); }).catch(function(e){ console.warn('Firebase pendiente para parche final:', e); });
 })();
 </script>
+
+<script id="parche-definitivo-turnos-firestore">
+(function(){
+  "use strict";
+  if (window.__PARCHE_DEFINITIVO_TURNOS_FIRESTORE__) return;
+  window.__PARCHE_DEFINITIVO_TURNOS_FIRESTORE__ = true;
+
+  const FIREBASE_CONFIG_TURNOS = {
+    apiKey: "AIzaSyDqWKo3ZtPChbtf38osMiKwQpCRNvsN7ak",
+    authDomain: "pric-60f50.firebaseapp.com",
+    projectId: "pric-60f50",
+    storageBucket: "pric-60f50.firebasestorage.app",
+    messagingSenderId: "475470852361",
+    appId: "1:475470852361:web:8acfa8b1e2963426ef23d8",
+    measurementId: "G-ZXLT15L9JR"
+  };
+
+  let dbTurnos = null;
+  let authTurnos = null;
+  let unsubTurnosDoc = null;
+  let unsubTurnosReservas = null;
+  let clubIdEscuchado = null;
+  let guardadoTurnosEnCola = Promise.resolve();
+  let aplicandoSnapshotTurnos = false;
+
+  function $(id){ return document.getElementById(id); }
+
+  function leerGlobal(nombre, fallback){
+    try { return Function("return (typeof " + nombre + " !== 'undefined') ? " + nombre + " : arguments[0];")(fallback); }
+    catch(e){ return Object.prototype.hasOwnProperty.call(window, nombre) ? window[nombre] : fallback; }
+  }
+
+  function escribirGlobal(nombre, valor){
+    try { Function("valor", nombre + " = valor;")(valor); } catch(e) {}
+    try { window[nombre] = valor; } catch(e) {}
+  }
+
+  function arrGlobal(nombre){
+    const v = leerGlobal(nombre, []);
+    return Array.isArray(v) ? v : [];
+  }
+
+  function setArrGlobal(nombre, valor){
+    const limpio = Array.isArray(valor) ? valor : [];
+    escribirGlobal(nombre, limpio);
+    return limpio;
+  }
+
+  function numero(v, fallback){
+    const n = Number(v);
+    return Number.isFinite(n) ? n : Number(fallback || 0);
+  }
+
+  function texto(v){
+    return String(v == null ? "" : v).trim();
+  }
+
+  function normalizarId(v){
+    return texto(v).replace(/[\/\\#[\]?]/g, "_").replace(/\s+/g, " ");
+  }
+
+  function limpiarParaFirestore(valor){
+    if (valor === undefined || typeof valor === "function") return undefined;
+    if (valor === null) return null;
+    if (valor instanceof Date) return valor.toISOString();
+    if (Array.isArray(valor)) return valor.map(limpiarParaFirestore).filter(function(x){ return x !== undefined; });
+    if (typeof valor === "object") {
+      if (typeof valor.toDate === "function") return valor.toDate().toISOString();
+      if (typeof valor.seconds === "number" && Object.keys(valor).length <= 2) return new Date(valor.seconds * 1000).toISOString();
+      const out = {};
+      Object.keys(valor).forEach(function(k){
+        if (k.indexOf("__") === 0) return;
+        const v = limpiarParaFirestore(valor[k]);
+        if (v !== undefined) out[k] = v;
+      });
+      return out;
+    }
+    return valor;
+  }
+
+  function cargarScriptFirebase(url){
+    return new Promise(function(resolve, reject){
+      const existe = document.querySelector('script[src="' + url + '"]');
+      if (existe) {
+        if (existe.dataset.loaded === "1" || window.firebase) return resolve();
+        existe.addEventListener("load", resolve, { once:true });
+        existe.addEventListener("error", function(){ reject(new Error("No se pudo cargar " + url)); }, { once:true });
+        return;
+      }
+      const s = document.createElement("script");
+      s.src = url;
+      s.async = false;
+      s.onload = function(){ s.dataset.loaded = "1"; resolve(); };
+      s.onerror = function(){ reject(new Error("No se pudo cargar " + url)); };
+      document.head.appendChild(s);
+    });
+  }
+
+  async function firebaseTurnosListo(){
+    if (!window.firebase || !firebase.auth || !firebase.firestore) {
+      const v = "8.10.1";
+      await cargarScriptFirebase("https://www.gstatic.com/firebasejs/" + v + "/firebase-app.js");
+      await cargarScriptFirebase("https://www.gstatic.com/firebasejs/" + v + "/firebase-auth.js");
+      await cargarScriptFirebase("https://www.gstatic.com/firebasejs/" + v + "/firebase-firestore.js");
+    }
+    if (!firebase.apps || !firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG_TURNOS);
+    dbTurnos = firebase.firestore();
+    authTurnos = firebase.auth();
+    return { db: dbTurnos, auth: authTurnos };
+  }
+
+  async function detectarClubIdTurnos(){
+    await firebaseTurnosListo();
+
+    let id = window.CLUB_DOC_ID_ACTUAL || (window.CLUB_DATA_ACTUAL && (window.CLUB_DATA_ACTUAL.id || window.CLUB_DATA_ACTUAL.nombre));
+
+    const side = $("sidebar-club-id");
+    if ((!id || id === "---") && side && texto(side.textContent) && texto(side.textContent) !== "---") id = texto(side.textContent);
+
+    const lbl = $("lbl-nombre-club");
+    if ((!id || id === "---") && lbl && texto(lbl.textContent) && !/^admin$/i.test(texto(lbl.textContent))) id = texto(lbl.textContent);
+
+    const user = authTurnos && authTurnos.currentUser;
+    if (user && user.email) {
+      const email = texto(user.email);
+      const variantes = Array.from(new Set([email, email.toLowerCase()]));
+      for (const mail of variantes) {
+        const snapTop = await dbTurnos.collection("clubs").where("emailAdmin", "==", mail).limit(1).get().catch(function(){ return { empty:true }; });
+        if (!snapTop.empty) {
+          const doc = snapTop.docs[0];
+          id = doc.id;
+          window.CLUB_DATA_ACTUAL = Object.assign({ id: doc.id }, doc.data() || {});
+          break;
+        }
+        const snapDatos = await dbTurnos.collection("clubs").where("datosClub.emailAdmin", "==", mail).limit(1).get().catch(function(){ return { empty:true }; });
+        if (!snapDatos.empty) {
+          const doc = snapDatos.docs[0];
+          id = doc.id;
+          window.CLUB_DATA_ACTUAL = Object.assign({ id: doc.id }, doc.data() || {});
+          break;
+        }
+      }
+    }
+
+    id = normalizarId(id || "");
+    if (id) {
+      window.CLUB_DOC_ID_ACTUAL = id;
+      if (side) side.textContent = id;
+    }
+    return id;
+  }
+
+  function refrescarPanelTurnos(){
+    try { if (typeof window.renderizarPantallas === "function") window.renderizarPantallas(); } catch(e) {}
+    try { if (typeof window.renderizarReservasClub === "function") window.renderizarReservasClub(); } catch(e) {}
+    try { if (typeof window.renderizarClasesPendientes === "function") window.renderizarClasesPendientes(); } catch(e) {}
+    try { if (typeof window.renderizarHistorial === "function") window.renderizarHistorial(); } catch(e) {}
+    try { if (typeof window.actualizarResumenFinanzasClub === "function") window.actualizarResumenFinanzasClub(); } catch(e) {}
+    try { if (typeof window.renderizarInventario === "function") window.renderizarInventario(); } catch(e) {}
+  }
+
+  async function guardarDatosClubParcialFirebase(parcial, motivo){
+    await firebaseTurnosListo();
+    const clubId = await detectarClubIdTurnos();
+    if (!clubId) throw new Error("No se detectó el club logueado.");
+    const payload = {
+      datosClub: limpiarParaFirestore(parcial || {}),
+      ultimoMotivoGuardado: motivo || "guardado-panel",
+      actualizadoEn: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    await dbTurnos.collection("clubs").doc(clubId).set(payload, { merge:true });
+  }
+
+  async function guardarReservaFirebaseDefinitiva(reserva){
+    await firebaseTurnosListo();
+    const clubId = await detectarClubIdTurnos();
+    if (!clubId) throw new Error("No se detectó el club logueado.");
+    if (!reserva || !reserva.id) throw new Error("La reserva no tiene ID.");
+    const payload = limpiarParaFirestore(Object.assign({}, reserva, { clubId: clubId }));
+    payload.actualizadoEn = firebase.firestore.FieldValue.serverTimestamp();
+    await dbTurnos.collection("clubs").doc(clubId).collection("reservas").doc(String(reserva.id)).set(payload, { merge:true });
+  }
+
+  async function borrarReservaFirebaseDefinitiva(id){
+    await firebaseTurnosListo();
+    const clubId = await detectarClubIdTurnos();
+    if (!clubId || !id) return;
+    await dbTurnos.collection("clubs").doc(clubId).collection("reservas").doc(String(id)).delete();
+  }
+
+  async function sincronizarTodasLasReservasFirebase(){
+    if (aplicandoSnapshotTurnos) return;
+    await firebaseTurnosListo();
+    const clubId = await detectarClubIdTurnos();
+    if (!clubId) throw new Error("No se detectó el club logueado.");
+    const reservas = arrGlobal("reservasGlobales").filter(function(r){ return r && r.id; });
+    const idsLocales = new Set(reservas.map(function(r){ return String(r.id); }));
+    const col = dbTurnos.collection("clubs").doc(clubId).collection("reservas");
+    const snap = await col.get();
+
+    const batch = dbTurnos.batch();
+    snap.forEach(function(doc){
+      if (!idsLocales.has(doc.id)) batch.delete(doc.ref);
+    });
+    reservas.forEach(function(r){
+      const ref = col.doc(String(r.id));
+      const payload = limpiarParaFirestore(Object.assign({}, r, { clubId: clubId, actualizadoEn: firebase.firestore.FieldValue.serverTimestamp() }));
+      batch.set(ref, payload, { merge:true });
+    });
+    await batch.commit();
+  }
+
+  function guardarEstadoArraysFirebase(motivo){
+    return guardarDatosClubParcialFirebase({
+      inventario: arrGlobal("inventarioGlobal"),
+      gastos: arrGlobal("gastosGlobal"),
+      ingresos: arrGlobal("ingresosGlobal"),
+      profesores: arrGlobal("profesoresGlobal"),
+      categoriasInventario: Array.isArray(window.categoriasInventarioGlobal) ? window.categoriasInventarioGlobal : undefined
+    }, motivo || "estado-arrays");
+  }
+
+  function encolarGuardadoCompleto(motivo){
+    guardadoTurnosEnCola = guardadoTurnosEnCola.then(async function(){
+      await sincronizarTodasLasReservasFirebase();
+      await guardarEstadoArraysFirebase(motivo);
+    }).catch(function(error){
+      console.error("Error guardando en Firebase:", error);
+      alert("No se pudo guardar en Firebase. Revisá reglas/permisos de Firestore. Detalle: " + (error.message || error));
+      throw error;
+    });
+    return guardadoTurnosEnCola;
+  }
+
+  async function iniciarLecturaFirebaseDefinitiva(){
+    await firebaseTurnosListo();
+    const clubId = await detectarClubIdTurnos();
+    if (!clubId) return false;
+    if (clubIdEscuchado === clubId && unsubTurnosDoc && unsubTurnosReservas) return true;
+
+    if (typeof unsubTurnosDoc === "function") { try { unsubTurnosDoc(); } catch(e) {} }
+    if (typeof unsubTurnosReservas === "function") { try { unsubTurnosReservas(); } catch(e) {} }
+
+    clubIdEscuchado = clubId;
+    const refClub = dbTurnos.collection("clubs").doc(clubId);
+
+    unsubTurnosDoc = refClub.onSnapshot(function(snap){
+      if (!snap.exists) return;
+      const data = snap.data() || {};
+      const dc = data.datosClub && typeof data.datosClub === "object" ? data.datosClub : data;
+
+      if (Array.isArray(dc.inventario)) setArrGlobal("inventarioGlobal", limpiarParaFirestore(dc.inventario));
+      if (Array.isArray(dc.gastos)) setArrGlobal("gastosGlobal", limpiarParaFirestore(dc.gastos));
+      if (Array.isArray(dc.ingresos)) setArrGlobal("ingresosGlobal", limpiarParaFirestore(dc.ingresos));
+      if (Array.isArray(dc.profesores)) setArrGlobal("profesoresGlobal", limpiarParaFirestore(dc.profesores));
+      if (Array.isArray(dc.categoriasInventario)) {
+        window.categoriasInventarioGlobal = dc.categoriasInventario.slice();
+      }
+      refrescarPanelTurnos();
+    }, function(error){
+      console.error("No se pudo leer datosClub desde Firebase:", error);
+    });
+
+    unsubTurnosReservas = refClub.collection("reservas").orderBy("fecha", "asc").orderBy("hora", "asc").onSnapshot(function(snapshot){
+      aplicandoSnapshotTurnos = true;
+      const reservas = [];
+      snapshot.forEach(function(doc){
+        reservas.push(Object.assign({ id: doc.id, clubId: clubId }, limpiarParaFirestore(doc.data() || {})));
+      });
+      setArrGlobal("reservasGlobales", reservas);
+      aplicandoSnapshotTurnos = false;
+      refrescarPanelTurnos();
+    }, function(error){
+      aplicandoSnapshotTurnos = false;
+      console.error("No se pudo leer reservas desde Firebase:", error);
+    });
+
+    return true;
+  }
+
+  function validarHoraPasada(fechaISO, hora){
+    if (typeof window.validarEsHoraPasada === "function") {
+      try {
+        if (window.validarEsHoraPasada.length >= 2) return window.validarEsHoraPasada(fechaISO, hora);
+        return window.validarEsHoraPasada(hora);
+      } catch(e) {}
+    }
+    const hoy = new Date();
+    const hoyISO = hoy.getFullYear() + "-" + String(hoy.getMonth()+1).padStart(2,"0") + "-" + String(hoy.getDate()).padStart(2,"0");
+    if (fechaISO < hoyISO) return true;
+    if (fechaISO > hoyISO) return false;
+    const partes = String(hora || "00:00").split(":").map(Number);
+    return ((partes[0] || 0) * 60 + (partes[1] || 0)) <= (hoy.getHours() * 60 + hoy.getMinutes());
+  }
+
+  function aMinutos(hora){
+    if (typeof window.aMinutos === "function") return window.aMinutos(hora);
+    const p = String(hora || "00:00").split(":").map(Number);
+    return (p[0] || 0) * 60 + (p[1] || 0);
+  }
+
+  function fechaAplica(reserva, fechaISO){
+    if (!reserva) return false;
+    if (Array.isArray(reserva.fechasCanceladas) && reserva.fechasCanceladas.includes(fechaISO)) return false;
+    if (reserva.fecha === fechaISO) return true;
+    if (!reserva.fijo) return false;
+    if (typeof window.getDayOfWeekFromDate === "function") {
+      return window.getDayOfWeekFromDate(reserva.fecha) === window.getDayOfWeekFromDate(fechaISO) && fechaISO > reserva.fecha;
+    }
+    return false;
+  }
+
+  window.guardarReservaFirebaseDefinitiva = guardarReservaFirebaseDefinitiva;
+  window.sincronizarTodasLasReservasFirebase = sincronizarTodasLasReservasFirebase;
+  window.iniciarLecturaFirebaseDefinitiva = iniciarLecturaFirebaseDefinitiva;
+
+  window.confirmarReservaAdmin = async function(){
+    const inputNombre = texto($("admin-input-jugador") && $("admin-input-jugador").value);
+    const inputTelefono = texto($("admin-input-telefono") && $("admin-input-telefono").value);
+    const canchaAsignada = texto($("admin-cancha-id") && $("admin-cancha-id").value);
+    const tipoEvento = texto($("admin-tipo-evento") && $("admin-tipo-evento").value) || "Normal";
+    const duracionGlobalActual = numero(leerGlobal("duracionGlobal", 90), 90);
+    const duracionSel = parseInt(($("admin-duracion") && $("admin-duracion").value) || duracionGlobalActual, 10) || duracionGlobalActual;
+    const fechaSeleccionadaActual = leerGlobal("fechaSeleccionada", "");
+    const horaActual = leerGlobal("reservaEnProcesoHora", "");
+
+    let profeSel = null;
+    if (tipoEvento === "Clases") {
+      profeSel = texto($("admin-select-profe") && $("admin-select-profe").value);
+      if (!profeSel) { alert("Selecciona un profesor."); return; }
+    }
+    if (!inputNombre) { alert("Ingresa el Nombre."); return; }
+    if (!fechaSeleccionadaActual || !horaActual || !canchaAsignada) { alert("Falta fecha, horario o cancha."); return; }
+    if (validarHoraPasada(fechaSeleccionadaActual, horaActual)) { alert("No puedes reservar un horario pasado."); return; }
+
+    const minNuevoInicio = aMinutos(horaActual);
+    const minNuevoFin = minNuevoInicio + duracionSel;
+    const reservas = arrGlobal("reservasGlobales").slice();
+
+    const colision = reservas.find(function(r){
+      if (!fechaAplica(r, fechaSeleccionadaActual) || String(r.cancha) !== String(canchaAsignada)) return false;
+      const minInicioExt = aMinutos(r.hora);
+      const minFinExt = minInicioExt + (parseInt(r.duracion, 10) || duracionGlobalActual);
+      return minNuevoInicio < minFinExt && minNuevoFin > minInicioExt;
+    });
+
+    if (colision) {
+      alert('❌ No se puede agendar aquí. Se pisa con "' + (colision.jugador || "otro turno") + '".');
+      return;
+    }
+
+    const nueva = {
+      id: (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()),
+      fecha: fechaSeleccionadaActual,
+      hora: horaActual,
+      cancha: canchaAsignada,
+      jugador: inputNombre,
+      telefono: inputTelefono,
+      duracion: duracionSel,
+      fechaRegistro: new Date().toISOString(),
+      asistencia: false,
+      fijo: false,
+      fechasCanceladas: [],
+      pagoEfectivo: 0,
+      pagoTransferencia: 0,
+      descuento: 0,
+      consumos: [],
+      tipoEvento: tipoEvento,
+      esClase: tipoEvento === "Clases",
+      profe: profeSel,
+      origen: "admin"
+    };
+
+    reservas.push(nueva);
+    setArrGlobal("reservasGlobales", reservas);
+    refrescarPanelTurnos();
+
+    const btn = $("btn-guardar-reserva-admin");
+    if (btn) { btn.disabled = true; btn.textContent = "Guardando..."; }
+
+    try {
+      await guardarReservaFirebaseDefinitiva(nueva);
+      if (typeof window.cerrarModalReservaAdmin === "function") window.cerrarModalReservaAdmin();
+      refrescarPanelTurnos();
+    } catch(error) {
+      console.error("No se pudo guardar el turno:", error);
+      setArrGlobal("reservasGlobales", reservas.filter(function(r){ return String(r.id) !== String(nueva.id); }));
+      refrescarPanelTurnos();
+      alert("No se pudo guardar el turno en Firebase. No quedó registrado. Detalle: " + (error.message || error));
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = "Guardar Evento"; }
+    }
+  };
+
+  function envolverMutacionTurno(nombre){
+    const original = window[nombre];
+    if (typeof original !== "function" || original.__firebaseDefinitivo) return;
+    const envuelta = function(){
+      const antes = arrGlobal("reservasGlobales").map(function(r){ return r && r.id ? String(r.id) : ""; });
+      const retorno = original.apply(this, arguments);
+      Promise.resolve(retorno).then(function(){
+        const despues = arrGlobal("reservasGlobales").map(function(r){ return r && r.id ? String(r.id) : ""; });
+        const borrados = antes.filter(function(id){ return id && despues.indexOf(id) === -1; });
+        const promesasBorrado = borrados.map(borrarReservaFirebaseDefinitiva);
+        return Promise.all(promesasBorrado).then(function(){ return sincronizarTodasLasReservasFirebase(); });
+      }).then(refrescarPanelTurnos).catch(function(error){
+        console.error("No se pudo persistir la acción " + nombre + ":", error);
+        alert("La acción se hizo en pantalla, pero no se pudo guardar en Firebase: " + (error.message || error));
+      });
+      return retorno;
+    };
+    envuelta.__firebaseDefinitivo = true;
+    window[nombre] = envuelta;
+  }
+
+  ["accionEliminar","accionCancelarExcepcion","hacerTurnoFijo","toggleConfirmarTurno","cobrarTurno","agregarConsumoTurno","eliminarConsumoTurno","confirmarCobroClase"].forEach(envolverMutacionTurno);
+
+  function envolverMutacionDatosClub(nombre){
+    const original = window[nombre];
+    if (typeof original !== "function" || original.__firebaseDatosClubDefinitivo) return;
+    const envuelta = function(){
+      const retorno = original.apply(this, arguments);
+      Promise.resolve(retorno).then(function(){ return guardarEstadoArraysFirebase(nombre); })
+        .then(refrescarPanelTurnos)
+        .catch(function(error){ console.error("No se pudo persistir " + nombre + ":", error); });
+      return retorno;
+    };
+    envuelta.__firebaseDatosClubDefinitivo = true;
+    window[nombre] = envuelta;
+  }
+
+  ["agregarProfe","eliminarProfe","crearCategoriaInventario","eliminarCategoriaInventario","agregarInventario","eliminarInventario","confirmarEditarPrecio","confirmarReposicionStock","venderProductoMostradorMov","agregarGasto","agregarIngresoLibre"].forEach(envolverMutacionDatosClub);
+
+  function ciclo(){
+    iniciarLecturaFirebaseDefinitiva().catch(function(error){
+      console.warn("Lectura Firebase pendiente:", error);
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", function(){
+    setTimeout(ciclo, 100);
+    setTimeout(ciclo, 1000);
+  });
+  window.addEventListener("load", function(){
+    setTimeout(ciclo, 200);
+    setTimeout(ciclo, 1400);
+  });
+  window.addEventListener("focus", ciclo);
+  setInterval(function(){
+    if (document.body.classList.contains("panel-activo")) ciclo();
+  }, 3000);
+
+  firebaseTurnosListo().then(function(x){
+    x.auth.onAuthStateChanged(function(){
+      setTimeout(ciclo, 200);
+      setTimeout(ciclo, 1000);
+    });
+  }).catch(function(error){
+    console.warn("Firebase todavía no está listo para turnos:", error);
+  });
+})();
+</script>
+
 </body></html>
