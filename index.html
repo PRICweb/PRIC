@@ -294,27 +294,20 @@ document.addEventListener("DOMContentLoaded", conectarAuth);
 })();
 </script><div id="app-content" style="display: none; width: 100%; flex-direction: column; align-items: center;"><aside aria-label="Navegación del panel" id="sidebar-admin-club"><div class="sidebar-brand-club"><h2>Panel<br/>Administración</h2><span class="sidebar-club-id">(ID: <span id="sidebar-club-id">---</span>)</span></div><nav class="sidebar-menu-club"><button class="sidebar-item-club active" data-sidebar-target="turnero" onclick="window.abrirSeccionPanelClub('turnero')" type="button"><span class="sidebar-icon-club"><svg viewBox="0 0 24 24"><path d="M3 9.5 12 3l9 6.5"></path><path d="M5 10v10h14V10"></path><path d="M9 20v-6h6v6"></path></svg></span><span>Turnero</span></button><button class="sidebar-item-club" data-sidebar-target="profes" onclick="window.abrirSeccionPanelClub('profes')" type="button"><span class="sidebar-icon-club"><svg viewBox="0 0 24 24"><path d="M4 19h16"></path><path d="M7 16V9"></path><path d="M12 16V5"></path><path d="M17 16v-3"></path></svg></span><span>Profesores</span></button><button class="sidebar-item-club" data-sidebar-target="inventario" onclick="window.abrirSeccionPanelClub('inventario')" type="button"><span class="sidebar-icon-club"><svg viewBox="0 0 24 24"><path d="M3 9.5 12 3l9 6.5"></path><path d="M5 10v10h14V10"></path><path d="M9 20v-6h6v6"></path></svg></span><span>Inventario</span></button><button class="sidebar-item-club" data-sidebar-target="finanzas" onclick="window.abrirSeccionPanelClub('finanzas')" type="button"><span class="sidebar-icon-club"><svg viewBox="0 0 24 24"><path d="M4 19h16"></path><path d="M7 16V9"></path><path d="M12 16V5"></path><path d="M17 16v-3"></path></svg></span><span>Finanzas</span></button><button class="sidebar-item-club" data-sidebar-target="movimientos" onclick="window.abrirSeccionPanelClub('movimientos')" type="button"><span class="sidebar-icon-club"><svg viewBox="0 0 24 24"><path d="M7 7h11l-3-3"></path><path d="M17 17H6l3 3"></path><path d="M18 7l-3 3"></path><path d="M6 17l3-3"></path></svg></span><span>Movimientos</span></button><button class="sidebar-item-club" data-sidebar-target="metricas" onclick="window.abrirSeccionPanelClub('metricas')" type="button"><span class="sidebar-icon-club"><svg viewBox="0 0 24 24"><path d="M4 19V5"></path><path d="M4 19h16"></path><path d="M8 15l3-3 3 2 4-6"></path></svg></span><span>Métricas</span></button><button class="sidebar-item-club" data-sidebar-target="config" onclick="window.abrirSeccionPanelClub('config')" type="button"><span class="sidebar-icon-club"><svg viewBox="0 0 24 24"><path d="M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5z"></path><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2 3.4-.2-.1a1.7 1.7 0 0 0-2 .4l-.1.1-4-.1-.1-.2a1.7 1.7 0 0 0-1.7-1.1h-.2l-2-3.5.1-.1a1.7 1.7 0 0 0 .3-1.9l-.1-.2 2-3.4.2.1a1.7 1.7 0 0 0 2-.4l.1-.1h4l.1.1a1.7 1.7 0 0 0 2 .4l.2-.1 2 3.5z"></path></svg></span><span>Configuración</span></button><button class="sidebar-item-club" data-sidebar-target="torneos" onclick="window.abrirSeccionPanelClub('torneos')" type="button"><span class="sidebar-icon-club"><svg viewBox="0 0 24 24"><path d="M8 21h8"></path><path d="M12 17v4"></path><path d="M7 4h10v4a5 5 0 0 1-10 0z"></path><path d="M5 5H3v2a4 4 0 0 0 4 4"></path><path d="M19 5h2v2a4 4 0 0 1-4 4"></path></svg></span><span>Torneos</span></button></nav><button class="sidebar-item-club sidebar-logout-club" onclick="window.logoutClub()" type="button"><span class="sidebar-icon-club"><svg viewBox="0 0 24 24"><path d="M10 17l5-5-5-5"></path><path d="M15 12H3"></path><path d="M21 5v14"></path></svg></span><span>Cerrar sesión</span></button></aside><div class="vista-club" id="pantalla-club" style="display: block;"><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; width: 100%;"><h2 id="titulo-turnero-panel">Turnero <span style="font-weight:400; color:#07152b;">/</span><span id="lbl-nombre-club" style="color: #07152b; text-transform: capitalize;">Admin</span></h2><button class="btn-modal btn-cerrar" onclick="window.logoutClub()" style="width:auto; padding: 8px 12px; font-size:.85em;">Cerrar sesión</button><div class="header-panel-botones" style="display: flex; gap: 20px; align-items: center; justify-content: center; width: 100%; border: none; background: transparent; padding: 10px 0;"><button onclick="window.abrirModalProfesores()" onmouseout="this.style.transform='scale(1)'" onmouseover="this.style.transform='scale(1.1)'" style="background: none; border: none; font-size: 1.8em; cursor: pointer; color: #d1d5db; transition: 0.2s;" title="Gestión de Profesores">🧑‍🏫</button><button onclick="window.abrirModalFinanzas()" onmouseout="this.style.transform='scale(1)'" onmouseover="this.style.transform='scale(1.1)'" style="background: none; border: none; font-size: 1.8em; cursor: pointer; color: #d1d5db; transition: 0.2s;" title="Finanzas">💰</button><button onclick="window.abrirModalMetricas()" onmouseout="this.style.transform='scale(1)'" onmouseover="this.style.transform='scale(1.1)'" style="background: none; border: none; font-size: 1.8em; cursor: pointer; color: #d1d5db; transition: 0.2s;" title="Métricas">📊</button><button onclick="window.abrirModalConfig()" onmouseout="this.style.transform='scale(1)'" onmouseover="this.style.transform='scale(1.1)'" style="background: none; border: none; font-size: 1.8em; cursor: pointer; color: #d1d5db; transition: 0.2s;" title="Configuración del Club">⚙️</button></div></div><div id="controles-fecha-club" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: #242c36; padding: 10px 15px; border-radius: 8px; border: 1px solid #2c3540;"><div style="display: flex; align-items: center; gap: 15px; justify-content: center; flex: 1;"><button onclick="window.cambiarDiaClub(-1)" style="background: transparent; border: none; font-size: 1.8em; color: #9ca3af; cursor: pointer; padding: 0 10px;">❮</button><span id="lbl-fecha-club" style="font-size: 1.2em; font-weight: bold; color: #ffffff; min-width: 100px; text-align: center; text-transform: uppercase;">HOY</span><button onclick="window.cambiarDiaClub(1)" style="background: transparent; border: none; font-size: 1.8em; color: #9ca3af; cursor: pointer; padding: 0 10px;">❯</button></div><div style="display: flex; gap: 10px; justify-content: center; flex: 1; flex-wrap: wrap;"><button class="btn-modal btn-guardar" onclick="window.irAHoyClub()" style="width: auto; padding: 8px 15px; font-size: 0.85em; background-color: #3b82f6; margin: 0;">Hoy</button><div style="position: relative; display: flex; align-items: center;"><button class="btn-modal btn-gasto" onclick="try{ document.getElementById('picker-fecha-club').showPicker(); } catch(e) { document.getElementById('picker-fecha-club').focus(); }" style="width: auto; padding: 8px 15px; font-size: 0.85em; margin: 0;">📅 Calendario</button><input id="picker-fecha-club" onchange="if(this.value) window.seleccionarFecha(this.value)" style="position: absolute; width: 1px; height: 1px; border: none; padding: 0; margin: 0; opacity: 0; bottom: 0; right: 0; pointer-events: none;" type="date"/></div></div></div><div id="lista-reservas-club"></div></div><section class="panel-seccion-club" data-panel-section="inventario" id="panel-inventario-club">
 <div class="panel-header-club"><h2>Inventario</h2><p>Gestión de productos, stock y precios de venta.</p></div>
-<div class="panel-card-club">
-<h3>Agregar producto</h3>
-<div class="panel-grid-form">
-<input class="input-form" id="inv-nombre" placeholder="Nombre de producto" type="text"/>
-<select class="input-form" id="inv-categoria">
-<option disabled="" selected="" value="">Categoría...</option>
-<option value="Bebidas">Bebidas</option>
-<option value="Comida">Comida</option>
-<option value="Padel/Tenis">Padel/Tenis</option>
-</select>
-<input class="input-form" id="inv-stock" min="0" placeholder="Stock inicial" type="number"/>
-<input class="input-form" id="inv-costo" min="0" placeholder="Costo unitario $" type="number"/>
-<input class="input-form" id="inv-precio" min="0" placeholder="Precio venta $" type="number"/>
-<button class="btn-modal btn-gasto panel-btn-fit" onclick="window.agregarInventario()" type="button">Añadir al inventario</button>
+<div class="panel-card-club" id="card-categorias-inventario">
+<div class="panel-card-title-row"><h3>Categorías de productos</h3></div>
+<p class="panel-muted">Creá o borrá las categorías que después vas a usar al cargar productos.</p>
+<div class="panel-grid-form panel-grid-categorias-inv">
+<input class="input-form" id="input-nueva-categoria-inv" placeholder="Nueva categoría. Ej: Bebidas" type="text"/>
+<button class="btn-modal btn-gasto panel-btn-fit" onclick="window.crearCategoriaInventario()" type="button">Crear categoría</button>
 </div>
+<div class="lista-categorias-inv" id="lista-categorias-inventario"></div>
 </div>
 <div class="panel-card-club">
-<div class="panel-card-title-row"><h3>Stock actual</h3><button class="btn-modal btn-cerrar panel-btn-auto" onclick="window.renderizarInventario()" type="button">Actualizar</button></div>
+<div class="panel-card-title-row"><h3>Stock actual</h3><button class="btn-modal btn-gasto panel-btn-auto" onclick="window.abrirModalAgregarProducto()" type="button">Agregar producto</button></div>
 <div class="tabla-panel-scroll"><table><thead><tr><th>Producto</th><th style="text-align:center;">Stock</th><th style="text-align:right;">Precio</th><th style="text-align:center;">Acciones</th></tr></thead><tbody id="tabla-inventario"></tbody></table></div>
 </div>
-</section><section class="panel-seccion-club" data-panel-section="finanzas" id="panel-finanzas-club">
+</section><div class="modal-overlay" id="modal-agregar-producto" style="z-index: 1100;"><div class="modal-content" style="max-width: 720px; text-align: left;"><h3 style="margin: 0; border-bottom: 1px solid #e5eaf2; padding-bottom: 12px;">Agregar producto</h3><div class="panel-grid-form panel-grid-3" style="margin-top: 12px;"><input class="input-form" id="inv-nombre" placeholder="Nombre de producto" type="text"/><select class="input-form" id="inv-categoria"><option disabled="" selected="" value="">Categoría...</option></select><input class="input-form" id="inv-stock" min="0" placeholder="Stock inicial" type="number"/><input class="input-form" id="inv-costo" min="0" placeholder="Costo unitario $" type="number"/><input class="input-form" id="inv-precio" min="0" placeholder="Precio venta $" type="number"/></div><div class="panel-actions-row"><button class="btn-modal btn-gasto" onclick="window.agregarInventario()" type="button">Añadir al inventario</button><button class="btn-modal btn-cerrar" onclick="window.cerrarModalAgregarProducto()" type="button">Cancelar</button></div></div></div><section class="panel-seccion-club" data-panel-section="finanzas" id="panel-finanzas-club">
 <div class="panel-header-club"><h2>Finanzas</h2><p>Balance, exportación y registro financiero del club.</p></div>
 <div class="panel-resumen-finanzas">
 <div class="panel-stat-card"><span>Ingresos</span><strong id="fin-total-ingresos">$0</strong></div>
@@ -2735,4 +2728,265 @@ body.panel-activo #modal-profesores.panel-view-active .btn-cobrar-clase{
 })();
 </script>
 
+
+<style id="inventario-categorias-actualizado-css">
+body.panel-activo #panel-inventario-club .panel-card-title-row{align-items:center!important;}
+body.panel-activo #panel-inventario-club #card-categorias-inventario{margin-bottom:18px!important;}
+body.panel-activo .panel-grid-categorias-inv{grid-template-columns:minmax(240px,1fr) minmax(160px,220px)!important;}
+.lista-categorias-inv{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;min-height:38px;align-items:center;}
+.categoria-chip-inv{display:inline-flex;align-items:center;gap:8px;border:1px solid #dbe1ea;background:#f8fafc;color:#07152b;border-radius:999px;padding:8px 10px;font-size:.9rem;font-weight:650;}
+.categoria-chip-inv button{border:0;background:transparent;color:#ef4444;cursor:pointer;font-weight:900;font-size:1rem;line-height:1;padding:0 2px;}
+.categoria-chip-inv button:hover{transform:scale(1.08);}
+.categorias-empty-inv{color:#52627a;font-size:.9rem;margin:0;}
+body.panel-activo #modal-agregar-producto{background:rgba(15,23,42,.25)!important;backdrop-filter:blur(6px);}
+body.panel-activo #modal-agregar-producto .modal-content{background:#fff!important;border:1px solid #dbe1ea!important;border-radius:22px!important;box-shadow:0 26px 55px rgba(15,23,42,.16)!important;color:#07152b!important;}
+body.panel-activo #modal-agregar-producto h3{color:#07152b!important;}
+body.panel-activo #modal-agregar-producto .input-form{background:#eaf1fb!important;color:#07152b!important;border:1px solid #d6deea!important;border-radius:12px!important;color-scheme:light!important;}
+@media(max-width:760px){body.panel-activo .panel-grid-categorias-inv{grid-template-columns:1fr!important;}body.panel-activo #modal-agregar-producto .modal-content{width:calc(100% - 24px)!important;margin:12px!important;}}
+</style>
+
+<script id="inventario-categorias-actualizado-js">
+(function(){
+  'use strict';
+  if(window.__INVENTARIO_CATEGORIAS_ACTUALIZADO__) return;
+  window.__INVENTARIO_CATEGORIAS_ACTUALIZADO__ = true;
+
+  const DEFAULT_CATEGORIAS = ['Bebidas','Comida','Padel/Tenis'];
+  let categoriasListenerInstalado = false;
+  let unsubCategorias = null;
+  let categoriasGuardando = false;
+  window.categoriasInventarioGlobal = Array.isArray(window.categoriasInventarioGlobal) ? window.categoriasInventarioGlobal : DEFAULT_CATEGORIAS.slice();
+
+  function $(id){ return document.getElementById(id); }
+  function getGlobal(nombre, fallback){
+    try { const v = eval(nombre); return v === undefined ? fallback : v; }
+    catch(e){ return window[nombre] !== undefined ? window[nombre] : fallback; }
+  }
+  function normalizarTexto(v){ return String(v || '').trim().replace(/\s+/g, ' '); }
+  function categoriasBase(){
+    const guardadas = Array.isArray(window.categoriasInventarioGlobal) ? window.categoriasInventarioGlobal : [];
+    const inventario = getGlobal('inventarioGlobal', []);
+    const usadas = Array.isArray(inventario) ? inventario.map(function(p){ return p && p.categoria; }) : [];
+    const unicas = [];
+    guardadas.concat(usadas).forEach(function(cat){
+      cat = normalizarTexto(cat);
+      if(cat && !unicas.some(function(x){ return x.toLowerCase() === cat.toLowerCase(); })) unicas.push(cat);
+    });
+    if(!unicas.length) DEFAULT_CATEGORIAS.forEach(function(cat){ unicas.push(cat); });
+    return unicas.sort(function(a,b){ return a.localeCompare(b, 'es'); });
+  }
+  function fijarCategorias(categorias){
+    const unicas = [];
+    (Array.isArray(categorias) ? categorias : []).forEach(function(cat){
+      cat = normalizarTexto(cat);
+      if(cat && !unicas.some(function(x){ return x.toLowerCase() === cat.toLowerCase(); })) unicas.push(cat);
+    });
+    if(!unicas.length) unicas.push.apply(unicas, DEFAULT_CATEGORIAS);
+    window.categoriasInventarioGlobal = unicas.sort(function(a,b){ return a.localeCompare(b, 'es'); });
+    renderizarCategoriasInventario();
+  }
+  function obtenerClubId(){
+    const directo = window.CLUB_DOC_ID_ACTUAL || (window.CLUB_DATA_ACTUAL && (window.CLUB_DATA_ACTUAL.id || window.CLUB_DATA_ACTUAL.nombre));
+    const side = $('sidebar-club-id');
+    const desdeSidebar = side && side.textContent && side.textContent.trim() !== '---' ? side.textContent.trim() : '';
+    return normalizarTexto(directo || desdeSidebar).replace(/[\/#[\]?]/g, '_');
+  }
+  async function firebaseListo(){
+    if(!window.firebase || !firebase.firestore) return null;
+    return firebase.firestore();
+  }
+  async function guardarCategoriasInventario(){
+    if(categoriasGuardando) return;
+    categoriasGuardando = true;
+    try{
+      const db = await firebaseListo();
+      const clubId = obtenerClubId();
+      if(db && clubId){
+        const payload = { datosClub: { categoriasInventario: categoriasBase() } };
+        if(window.firebase && firebase.firestore && firebase.firestore.FieldValue) payload.actualizadoEn = firebase.firestore.FieldValue.serverTimestamp();
+        await db.collection('clubs').doc(clubId).set(payload, { merge: true });
+      }
+    }catch(e){ console.warn('No se pudieron guardar las categorías de inventario:', e); }
+    finally{ categoriasGuardando = false; }
+  }
+  async function instalarListenerCategorias(){
+    if(categoriasListenerInstalado) return;
+    categoriasListenerInstalado = true;
+    try{
+      const db = await firebaseListo();
+      const clubId = obtenerClubId();
+      if(!db || !clubId){ categoriasListenerInstalado = false; return; }
+      if(unsubCategorias) unsubCategorias();
+      unsubCategorias = db.collection('clubs').doc(clubId).onSnapshot(function(snap){
+        if(!snap.exists) return;
+        const data = snap.data() || {};
+        const dc = data.datosClub && typeof data.datosClub === 'object' ? data.datosClub : {};
+        const cats = Array.isArray(dc.categoriasInventario) ? dc.categoriasInventario : window.categoriasInventarioGlobal;
+        fijarCategorias(cats);
+      });
+    }catch(e){ categoriasListenerInstalado = false; console.warn('Listener de categorías no iniciado:', e); }
+  }
+  function renderizarCategoriasInventario(){
+    const categorias = categoriasBase();
+    window.categoriasInventarioGlobal = categorias;
+
+    const lista = $('lista-categorias-inventario');
+    if(lista){
+      lista.innerHTML = '';
+      if(!categorias.length){
+        lista.innerHTML = '<p class="categorias-empty-inv">Todavía no hay categorías creadas.</p>';
+      }else{
+        categorias.forEach(function(cat){
+          const chip = document.createElement('span');
+          chip.className = 'categoria-chip-inv';
+          const nombre = document.createElement('span');
+          nombre.textContent = cat;
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.title = 'Borrar categoría';
+          btn.textContent = '×';
+          btn.onclick = function(){ window.eliminarCategoriaInventario(cat); };
+          chip.appendChild(nombre);
+          chip.appendChild(btn);
+          lista.appendChild(chip);
+        });
+      }
+    }
+
+    const select = $('inv-categoria');
+    if(select){
+      const valorActual = select.value;
+      select.innerHTML = '<option disabled selected value="">Categoría...</option>';
+      categorias.forEach(function(cat){
+        const opt = document.createElement('option');
+        opt.value = cat;
+        opt.textContent = cat;
+        select.appendChild(opt);
+      });
+      if(valorActual && categorias.includes(valorActual)) select.value = valorActual;
+    }
+  }
+
+  window.renderizarCategoriasInventario = renderizarCategoriasInventario;
+  window.abrirModalAgregarProducto = function(){
+    renderizarCategoriasInventario();
+    const modal = $('modal-agregar-producto');
+    if(modal) modal.style.display = 'flex';
+    const input = $('inv-nombre');
+    setTimeout(function(){ if(input) input.focus(); }, 40);
+  };
+  window.cerrarModalAgregarProducto = function(){
+    const modal = $('modal-agregar-producto');
+    if(modal) modal.style.display = 'none';
+  };
+  window.crearCategoriaInventario = function(){
+    const input = $('input-nueva-categoria-inv');
+    const nueva = normalizarTexto(input && input.value);
+    if(!nueva){ alert('Escribí el nombre de la categoría.'); return; }
+    const cats = categoriasBase();
+    if(cats.some(function(x){ return x.toLowerCase() === nueva.toLowerCase(); })){
+      alert('Esa categoría ya existe.');
+      return;
+    }
+    cats.push(nueva);
+    if(input) input.value = '';
+    fijarCategorias(cats);
+    guardarCategoriasInventario();
+  };
+  window.eliminarCategoriaInventario = function(cat){
+    cat = normalizarTexto(cat);
+    if(!cat) return;
+    const inventario = getGlobal('inventarioGlobal', []);
+    const enUso = Array.isArray(inventario) && inventario.some(function(p){ return normalizarTexto(p && p.categoria).toLowerCase() === cat.toLowerCase(); });
+    if(enUso){
+      alert('No se puede borrar esta categoría porque tiene productos cargados. Primero cambiá o eliminá esos productos.');
+      return;
+    }
+    if(!confirm('¿Borrar la categoría "' + cat + '"?')) return;
+    fijarCategorias(categoriasBase().filter(function(x){ return x.toLowerCase() !== cat.toLowerCase(); }));
+    guardarCategoriasInventario();
+  };
+
+  const renderOriginal = window.renderizarInventario;
+  if(typeof renderOriginal === 'function' && !renderOriginal.__inventarioCategoriasWrapped){
+    const renderEnvuelto = function(){
+      const r = renderOriginal.apply(this, arguments);
+      renderizarCategoriasInventario();
+      return r;
+    };
+    renderEnvuelto.__inventarioCategoriasWrapped = true;
+    window.renderizarInventario = renderEnvuelto;
+  }
+
+  const agregarOriginal = window.agregarInventario;
+  if(typeof agregarOriginal === 'function' && !agregarOriginal.__inventarioCategoriasWrapped){
+    const agregarEnvuelto = function(){
+      const inventarioAntes = getGlobal('inventarioGlobal', []);
+      const antes = Array.isArray(inventarioAntes) ? inventarioAntes.length : 0;
+      const r = agregarOriginal.apply(this, arguments);
+      const inventarioDespues = getGlobal('inventarioGlobal', []);
+      const despues = Array.isArray(inventarioDespues) ? inventarioDespues.length : antes;
+      if(despues > antes){
+        const cat = normalizarTexto($('inv-categoria') && $('inv-categoria').value);
+        if(cat && !categoriasBase().some(function(x){ return x.toLowerCase() === cat.toLowerCase(); })) fijarCategorias(categoriasBase().concat([cat]));
+        window.cerrarModalAgregarProducto();
+      }
+      setTimeout(function(){
+        if(typeof window.renderizarInventario === 'function') window.renderizarInventario();
+        if(typeof window.actualizarResumenFinanzasClub === 'function') window.actualizarResumenFinanzasClub();
+      }, 120);
+      return r;
+    };
+    agregarEnvuelto.__inventarioCategoriasWrapped = true;
+    window.agregarInventario = agregarEnvuelto;
+  }
+
+  const accionesInventario = ['eliminarInventario','agregarStockGasto','venderProductoMostradorMov','confirmarReposicionStock','confirmarEditarPrecio'];
+  accionesInventario.forEach(function(nombre){
+    const fn = window[nombre];
+    if(typeof fn !== 'function' || fn.__inventarioAutoRenderWrapped) return;
+    const envuelta = function(){
+      const r = fn.apply(this, arguments);
+      setTimeout(function(){
+        if(typeof window.renderizarInventario === 'function') window.renderizarInventario();
+        if(typeof window.actualizarResumenFinanzasClub === 'function') window.actualizarResumenFinanzasClub();
+      }, 120);
+      return r;
+    };
+    envuelta.__inventarioAutoRenderWrapped = true;
+    window[nombre] = envuelta;
+  });
+
+  const abrirSeccionOriginal = window.abrirSeccionPanelClub;
+  if(typeof abrirSeccionOriginal === 'function' && !abrirSeccionOriginal.__inventarioCategoriasWrapped){
+    const abrirEnvuelta = function(seccion){
+      const r = abrirSeccionOriginal.apply(this, arguments);
+      if(seccion === 'inventario'){
+        instalarListenerCategorias();
+        setTimeout(function(){ if(typeof window.renderizarInventario === 'function') window.renderizarInventario(); }, 80);
+      }
+      return r;
+    };
+    abrirEnvuelta.__inventarioCategoriasWrapped = true;
+    window.abrirSeccionPanelClub = abrirEnvuelta;
+  }
+
+  document.addEventListener('DOMContentLoaded', function(){
+    renderizarCategoriasInventario();
+    setTimeout(function(){ instalarListenerCategorias(); }, 600);
+    const input = $('input-nueva-categoria-inv');
+    if(input && !input.__categoriaEnterBound){
+      input.__categoriaEnterBound = true;
+      input.addEventListener('keydown', function(ev){ if(ev.key === 'Enter'){ ev.preventDefault(); window.crearCategoriaInventario(); } });
+    }
+  });
+  window.addEventListener('focus', function(){
+    if(typeof window.renderizarInventario === 'function') window.renderizarInventario();
+  });
+  setTimeout(function(){
+    renderizarCategoriasInventario();
+    instalarListenerCategorias();
+  }, 1200);
+})();
+</script>
 </body></html>
