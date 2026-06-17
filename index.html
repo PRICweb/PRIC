@@ -710,12 +710,12 @@ res.pagoTransferencia = parseFloat(document.getElementById('pago-transferencia')
 res.descuento = parseFloat(document.getElementById('pago-descuento').value) || 0;
 window.cerrarModalAcciones();
 }
-window.hacerTurnoFijo = function() {
+window.hacerTurnoFijo = async function() {
 if(!reservaSeleccionadaId) return;
 const resO = reservasGlobales.find(r => r.id === reservaSeleccionadaId);
 if(!resO) return;
 if (resO.fijo) {
-if(confirm("¿Quitar la propiedad de TURNO FIJO?")) { resO.fijo = false; window.cerrarModalAcciones(); } return;
+if(await window.turneroConfirm("¿Quitar la propiedad de TURNO FIJO?")) { resO.fijo = false; window.cerrarModalAcciones(); } return;
 }
 const dowO = window.getDayOfWeekFromDate(resO.fecha);
 const minInicioO = window.aMinutos(resO.hora);
@@ -728,18 +728,18 @@ const minFinR = minInicioR + (r.duracion || duracionGlobal);
 return (minInicioO < minFinR && minFinO > minInicioR);
 });
 if (conflicto) { alert(`❌ No puedes hacer fijo este turno.`); return; }
-if (confirm("¿Convertir en TURNO FIJO INDEFINIDAMENTE?")) { resO.fijo = true; window.cerrarModalAcciones(); alert("Turno fijo creado."); }
+if (await window.turneroConfirm("¿Convertir en TURNO FIJO INDEFINIDAMENTE?")) { resO.fijo = true; window.cerrarModalAcciones(); alert("Turno fijo creado."); }
 };
 window.toggleConfirmarTurno = function() {
 if(!reservaSeleccionadaId) return;
 const res = reservasGlobales.find(r => r.id === reservaSeleccionadaId); if(!res) return;
 res.asistencia = !res.asistencia; window.cerrarModalAcciones();
 };
-window.accionEliminar = function() {
+window.accionEliminar = async function() {
 if(!reservaSeleccionadaId) return;
 const index = reservasGlobales.findIndex(r => r.id === reservaSeleccionadaId);
 if(index === -1) return;
-if (confirm("¿Seguro que deseas eliminar este turno?")) { reservasGlobales.splice(index, 1); window.cerrarModalAcciones(); }
+if (await window.turneroConfirm("¿Seguro que deseas eliminar este turno?")) { reservasGlobales.splice(index, 1); window.cerrarModalAcciones(); }
 };
 window.accionWhatsApp = function() {
 if(reservaSeleccionadaId) {
@@ -752,10 +752,10 @@ window.open(`https://wa.me/${r.telefono.replace(/\D/g,'')}?text=${encodeURICompo
 }
 }
 }
-window.accionCancelarExcepcion = function() {
+window.accionCancelarExcepcion = async function() {
 if(!reservaSeleccionadaId) return;
 const res = reservasGlobales.find(r => r.id === reservaSeleccionadaId);
-if(confirm(`¿Deseas cancelar el turno fijo ÚNICAMENTE para la fecha ${fechaSeleccionada}?`)) {
+if(await window.turneroConfirm(`¿Deseas cancelar el turno fijo ÚNICAMENTE para la fecha ${fechaSeleccionada}?`)) {
 if(!res.fechasCanceladas) res.fechasCanceladas = [];
 if (!res.fechasCanceladas.includes(fechaSeleccionada)) res.fechasCanceladas.push(fechaSeleccionada);
 window.cerrarModalAcciones();
@@ -765,7 +765,7 @@ window.cerrarModalAcciones();
 window.abrirModalProfesores = function() { document.getElementById('modal-profesores').style.display = 'flex'; renderizarProfesores(); renderizarClasesPendientes(); }
 window.cerrarModalProfesores = function() { document.getElementById('modal-profesores').style.display = 'none'; }
 window.agregarProfe = function() { let n = document.getElementById('input-nuevo-profe').value.trim(); if(!n) return; profesoresGlobal.push({id: Date.now().toString(), nombre: n }); document.getElementById('input-nuevo-profe').value = ''; renderizarProfesores(); }
-window.eliminarProfe = function(id) { if(confirm("¿Eliminar?")) { profesoresGlobal = profesoresGlobal.filter(p => p.id !== id); renderizarProfesores(); } }
+window.eliminarProfe = async function(id) { if(await window.turneroConfirm("¿Eliminar profesor?")) { profesoresGlobal = profesoresGlobal.filter(p => p.id !== id); renderizarProfesores(); } }
 window.renderizarProfesores = function() {
 const tb = document.getElementById('lista-profesores'); const sel = document.getElementById('admin-select-profe');
 if(tb) tb.innerHTML = ''; if(sel) sel.innerHTML = '<option value="" disabled selected>Selecciona un profe...</option>';
@@ -810,7 +810,7 @@ inventarioGlobal.push({ id: Date.now().toString(), nombre: n, categoria: cat, pr
 document.getElementById('inv-nombre').value = ''; document.getElementById('inv-categoria').value = ''; document.getElementById('inv-precio').value = ''; document.getElementById('inv-stock').value = ''; document.getElementById('inv-costo').value = '';
 renderizarInventario();
 }
-window.eliminarInventario = function(id) { if(confirm("¿Borrar?")) { inventarioGlobal = inventarioGlobal.filter(x => x.id !== id); renderizarInventario(); } }
+window.eliminarInventario = async function(id) { if(await window.turneroConfirm("¿Borrar producto?")) { inventarioGlobal = inventarioGlobal.filter(x => x.id !== id); renderizarInventario(); } }
 // Agregar Stock y Guardar como Gasto
 window.agregarStockGasto = function() {
 const id = document.getElementById('mov-select-prod').value;
@@ -2880,7 +2880,7 @@ body.panel-activo #modal-agregar-producto .input-form{background:#eaf1fb!importa
     fijarCategorias(cats);
     guardarCategoriasInventario();
   };
-  window.eliminarCategoriaInventario = function(cat){
+  window.eliminarCategoriaInventario = async function(cat){
     cat = normalizarTexto(cat);
     if(!cat) return;
     const enUso = Array.isArray(window.inventarioGlobal) && window.inventarioGlobal.some(function(p){ return normalizarTexto(p && p.categoria).toLowerCase() === cat.toLowerCase(); });
@@ -2888,7 +2888,7 @@ body.panel-activo #modal-agregar-producto .input-form{background:#eaf1fb!importa
       alert('No se puede borrar esta categoría porque tiene productos cargados. Primero cambiá o eliminá esos productos.');
       return;
     }
-    if(!confirm('¿Borrar la categoría "' + cat + '"?')) return;
+    if(!(await window.turneroConfirm('¿Borrar la categoría "' + cat + '"?'))) return;
     fijarCategorias(categoriasBase().filter(function(x){ return x.toLowerCase() !== cat.toLowerCase(); }));
     guardarCategoriasInventario();
   };
@@ -3477,7 +3477,7 @@ body.panel-activo .categorias-empty-inv{color:#52627a!important;font-size:.9rem!
     setCategorias(cats, true);
     guardarParcialDatosClub({ categoriasInventario: categoriasActuales() }, 'crear-categoria-inventario').then(renderTodoPronto);
   };
-  window.eliminarCategoriaInventario = function(cat){
+  window.eliminarCategoriaInventario = async function(cat){
     cat = normalizarTexto(cat);
     if(!cat) return;
     const enUso = arr('inventarioGlobal').some(function(p){ return normalizarTexto(p && p.categoria).toLowerCase() === cat.toLowerCase(); });
@@ -3485,7 +3485,7 @@ body.panel-activo .categorias-empty-inv{color:#52627a!important;font-size:.9rem!
       alert('No se puede borrar esta categoría porque tiene productos cargados. Primero cambiá o eliminá esos productos.');
       return;
     }
-    if(!confirm('¿Borrar la categoría "' + cat + '"?')) return;
+    if(!(await window.turneroConfirm('¿Borrar la categoría "' + cat + '"?'))) return;
     const nuevas = categoriasActuales().filter(function(x){ return x.toLowerCase() !== cat.toLowerCase(); });
     setCategorias(nuevas, true);
     guardarParcialDatosClub({ categoriasInventario: nuevas }, 'borrar-categoria-inventario').then(renderTodoPronto);
@@ -3506,8 +3506,8 @@ body.panel-activo .categorias-empty-inv{color:#52627a!important;font-size:.9rem!
     if(typeof window.renderizarProfesores === 'function') window.renderizarProfesores();
     guardarParcialDatosClub({ profesores: profesores }, 'agregar-profesor').then(renderTodoPronto);
   };
-  window.eliminarProfe = function(id){
-    if(!confirm('¿Eliminar profesor?')) return;
+  window.eliminarProfe = async function(id){
+    if(!(await window.turneroConfirm('¿Eliminar profesor?'))) return;
     const profesores = arr('profesoresGlobal').filter(function(p){ return String(p && p.id) !== String(id); });
     setArr('profesoresGlobal', profesores);
     if(typeof window.renderizarProfesores === 'function') window.renderizarProfesores();
@@ -3765,8 +3765,8 @@ body.panel-activo .categorias-empty-inv{color:#52627a!important;font-size:.9rem!
     renderTodoPronto();
     guardarParcialDatosClub({ inventario:inventario, categoriasInventario:categoriasActuales() }, 'agregar-producto').then(renderTodoPronto);
   };
-  window.eliminarInventario = function(id){
-    if(!confirm('¿Borrar producto?')) return;
+  window.eliminarInventario = async function(id){
+    if(!(await window.turneroConfirm('¿Borrar producto?'))) return;
     const inventario = arr('inventarioGlobal').filter(function(p){ return String(p && p.id) !== String(id); });
     setArr('inventarioGlobal', inventario);
     renderTodoPronto();
@@ -4312,4 +4312,136 @@ body.panel-activo .categorias-empty-inv{color:#52627a!important;font-size:.9rem!
 })();
 </script>
 
+
+<script id="turnero-mensajes-estilizados">
+(function(){
+  if (window.__turneroMensajesEstilizados) return;
+  window.__turneroMensajesEstilizados = true;
+
+  function asegurarUI(){
+    if(!document.getElementById('turnero-mensajes-css')){
+      var style = document.createElement('style');
+      style.id = 'turnero-mensajes-css';
+      style.textContent = `
+        .turnero-toast-stack{position:fixed;right:22px;top:22px;z-index:99999;display:flex;flex-direction:column;gap:10px;pointer-events:none;max-width:min(420px,calc(100vw - 28px));}
+        .turnero-toast{pointer-events:auto;background:#ffffff;color:#07152b;border:1px solid #dbe1ea;border-radius:16px;box-shadow:0 22px 50px rgba(15,23,42,.18);padding:14px 15px;display:flex;align-items:flex-start;gap:12px;animation:turneroToastIn .18s ease-out;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;}
+        .turnero-toast-icon{width:32px;height:32px;min-width:32px;border-radius:10px;background:#0f172a;color:#ffffff;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;}
+        .turnero-toast-body{flex:1;min-width:0;}
+        .turnero-toast-title{font-size:.86rem;font-weight:800;margin:0 0 3px 0;color:#07152b;}
+        .turnero-toast-msg{font-size:.92rem;line-height:1.35;color:#52627a;margin:0;white-space:pre-wrap;word-break:break-word;}
+        .turnero-toast-close{border:0;background:transparent;color:#52627a;font-size:20px;line-height:1;cursor:pointer;padding:0 2px;margin-left:4px;}
+        .turnero-toast.ok .turnero-toast-icon{background:#10b981;}
+        .turnero-toast.error .turnero-toast-icon{background:#ef4444;}
+        .turnero-toast.warn .turnero-toast-icon{background:#f59e0b;color:#07152b;}
+        .turnero-dialog-overlay{position:fixed;inset:0;background:rgba(15,23,42,.35);backdrop-filter:blur(6px);z-index:100000;display:none;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;}
+        .turnero-dialog-card{width:min(420px,100%);background:#ffffff;color:#07152b;border:1px solid #dbe1ea;border-radius:22px;box-shadow:0 26px 55px rgba(15,23,42,.22);padding:22px;box-sizing:border-box;text-align:left;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;animation:turneroDialogIn .16s ease-out;}
+        .turnero-dialog-card h3{margin:0 0 8px 0;color:#07152b!important;font-size:1.15rem;font-weight:800;letter-spacing:-.02em;}
+        .turnero-dialog-card p{margin:0;color:#52627a;line-height:1.45;white-space:pre-wrap;word-break:break-word;font-size:.95rem;}
+        .turnero-dialog-actions{display:flex;gap:10px;margin-top:18px;justify-content:flex-end;flex-wrap:wrap;}
+        .turnero-dialog-actions button{border:0;border-radius:12px;padding:11px 15px;font-weight:800;cursor:pointer;font-family:inherit;font-size:.92rem;min-width:120px;}
+        .turnero-dialog-cancel{background:#eaf1fb;color:#07152b;}
+        .turnero-dialog-confirm{background:#0f172a;color:#ffffff;}
+        .turnero-dialog-confirm.danger{background:#ef4444;color:#ffffff;}
+        body:not(.panel-activo) .turnero-toast, body:not(.panel-activo) .turnero-dialog-card{background:#1e252d;color:#ffffff;border-color:#44505d;box-shadow:0 26px 55px rgba(0,0,0,.35);}
+        body:not(.panel-activo) .turnero-toast-title, body:not(.panel-activo) .turnero-dialog-card h3{color:#ffffff!important;}
+        body:not(.panel-activo) .turnero-toast-msg, body:not(.panel-activo) .turnero-dialog-card p{color:#d1d5db;}
+        body:not(.panel-activo) .turnero-dialog-cancel{background:#4b5563;color:#ffffff;}
+        @keyframes turneroToastIn{from{opacity:0;transform:translateY(-8px) scale(.98);}to{opacity:1;transform:translateY(0) scale(1);}}
+        @keyframes turneroDialogIn{from{opacity:0;transform:translateY(8px) scale(.98);}to{opacity:1;transform:translateY(0) scale(1);}}
+        @media(max-width:600px){.turnero-toast-stack{left:14px;right:14px;top:14px;}.turnero-dialog-actions button{width:100%;}.turnero-dialog-actions{flex-direction:column-reverse;}}
+      `;
+      document.head.appendChild(style);
+    }
+    if(!document.getElementById('turnero-toast-stack')){
+      var stack = document.createElement('div');
+      stack.id = 'turnero-toast-stack';
+      stack.className = 'turnero-toast-stack';
+      document.body.appendChild(stack);
+    }
+    if(!document.getElementById('turnero-dialog-overlay')){
+      var overlay = document.createElement('div');
+      overlay.id = 'turnero-dialog-overlay';
+      overlay.className = 'turnero-dialog-overlay';
+      overlay.innerHTML = '<div class="turnero-dialog-card" role="dialog" aria-modal="true" aria-labelledby="turnero-dialog-title"><h3 id="turnero-dialog-title">Confirmar acción</h3><p id="turnero-dialog-message"></p><div class="turnero-dialog-actions"><button class="turnero-dialog-cancel" id="turnero-dialog-cancel" type="button">Cancelar</button><button class="turnero-dialog-confirm" id="turnero-dialog-confirm" type="button">Confirmar</button></div></div>';
+      document.body.appendChild(overlay);
+    }
+  }
+
+  function iconoPorTipo(tipo){
+    if(tipo === 'ok') return '✓';
+    if(tipo === 'error') return '!';
+    if(tipo === 'warn') return '⚠';
+    return 'i';
+  }
+  function tituloPorTipo(tipo){
+    if(tipo === 'ok') return 'Listo';
+    if(tipo === 'error') return 'Error';
+    if(tipo === 'warn') return 'Atención';
+    return 'Mensaje';
+  }
+  function tipoDesdeMensaje(mensaje){
+    var m = String(mensaje || '').toLowerCase();
+    if(m.includes('error') || m.includes('no se pudo') || m.includes('revisá') || m.includes('fall')) return 'error';
+    if(m.includes('no puedes') || m.includes('no se puede') || m.includes('completá') || m.includes('selecciona') || m.includes('ingresa') || m.includes('stock insuficiente') || m.includes('ya existe')) return 'warn';
+    if(m.includes('exitos') || m.includes('guardad') || m.includes('registrad') || m.includes('creado') || m.includes('listo')) return 'ok';
+    return 'info';
+  }
+
+  window.turneroAlert = function(mensaje, tipo){
+    asegurarUI();
+    tipo = tipo || tipoDesdeMensaje(mensaje);
+    var stack = document.getElementById('turnero-toast-stack');
+    var toast = document.createElement('div');
+    toast.className = 'turnero-toast ' + tipo;
+    toast.innerHTML = '<div class="turnero-toast-icon">' + iconoPorTipo(tipo) + '</div><div class="turnero-toast-body"><div class="turnero-toast-title">' + tituloPorTipo(tipo) + '</div><p class="turnero-toast-msg"></p></div><button class="turnero-toast-close" type="button" aria-label="Cerrar">×</button>';
+    toast.querySelector('.turnero-toast-msg').textContent = String(mensaje || '');
+    var cerrar = function(){ if(toast && toast.parentNode) toast.parentNode.removeChild(toast); };
+    toast.querySelector('.turnero-toast-close').addEventListener('click', cerrar);
+    stack.appendChild(toast);
+    setTimeout(cerrar, tipo === 'error' ? 6500 : 4200);
+    return undefined;
+  };
+
+  window.turneroConfirm = function(mensaje, opciones){
+    asegurarUI();
+    opciones = opciones || {};
+    return new Promise(function(resolve){
+      var overlay = document.getElementById('turnero-dialog-overlay');
+      var titulo = document.getElementById('turnero-dialog-title');
+      var msg = document.getElementById('turnero-dialog-message');
+      var btnCancel = document.getElementById('turnero-dialog-cancel');
+      var btnConfirm = document.getElementById('turnero-dialog-confirm');
+      titulo.textContent = opciones.titulo || 'Confirmar acción';
+      msg.textContent = String(mensaje || '');
+      btnCancel.textContent = opciones.cancelar || 'Cancelar';
+      btnConfirm.textContent = opciones.confirmar || 'Confirmar';
+      btnConfirm.classList.toggle('danger', !!opciones.peligro || /borrar|eliminar|cancelar/i.test(String(mensaje || '')));
+      overlay.style.display = 'flex';
+      setTimeout(function(){ btnConfirm.focus(); }, 30);
+      function cerrar(valor){
+        overlay.style.display = 'none';
+        btnCancel.removeEventListener('click', onCancel);
+        btnConfirm.removeEventListener('click', onConfirm);
+        overlay.removeEventListener('click', onOverlay);
+        document.removeEventListener('keydown', onKey);
+        resolve(valor);
+      }
+      function onCancel(){ cerrar(false); }
+      function onConfirm(){ cerrar(true); }
+      function onOverlay(e){ if(e.target === overlay) cerrar(false); }
+      function onKey(e){ if(e.key === 'Escape') cerrar(false); if(e.key === 'Enter') cerrar(true); }
+      btnCancel.addEventListener('click', onCancel);
+      btnConfirm.addEventListener('click', onConfirm);
+      overlay.addEventListener('click', onOverlay);
+      document.addEventListener('keydown', onKey);
+    });
+  };
+
+  window.alert = function(mensaje){ return window.turneroAlert(mensaje); };
+  window.confirm = function(mensaje){
+    window.turneroAlert('Esta confirmación fue convertida al estilo del turnero. Usá window.turneroConfirm para acciones nuevas.\n\n' + String(mensaje || ''), 'warn');
+    return false;
+  };
+})();
+</script>
 </body></html>
