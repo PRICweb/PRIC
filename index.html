@@ -2939,4 +2939,246 @@ body.panel-activo #pantalla-club.panel-vista #lista-reservas-club .contenedor-gr
       .observe(document.body, {attributes:true, attributeFilter:['class']});
   }catch(e){}
 })();
-</script></body></html>
+</script><script id="patch-turnero-modalidad-fechas-30dias">
+(function(){
+  'use strict';
+  var MS_DIA = 24 * 60 * 60 * 1000;
+
+  function pad(n){ return String(n).padStart(2, '0'); }
+  function hoyISO(){
+    var h = new Date();
+    return h.getFullYear() + '-' + pad(h.getMonth() + 1) + '-' + pad(h.getDate());
+  }
+  function parseISO(fechaISO){
+    var p = String(fechaISO || hoyISO()).split('-').map(Number);
+    return new Date(p[0] || new Date().getFullYear(), (p[1] || 1) - 1, p[2] || 1);
+  }
+  function toISO(d){ return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+  function sumarDiasISO(fechaISO, delta){
+    var d = parseISO(fechaISO);
+    d.setDate(d.getDate() + Number(delta || 0));
+    return toISO(d);
+  }
+  function limitePasadoISO(){ return sumarDiasISO(hoyISO(), -30); }
+  function minutos(hora){
+    if (typeof window.aMinutos === 'function') return window.aMinutos(hora);
+    var p = String(hora || '00:00').split(':').map(Number);
+    return (p[0] || 0) * 60 + (p[1] || 0);
+  }
+  function leerFechaSeleccionada(){
+    try { if (typeof fechaSeleccionada !== 'undefined' && fechaSeleccionada) return fechaSeleccionada; } catch(e) {}
+    var picker = document.getElementById('picker-fecha-club');
+    return (picker && picker.value) || hoyISO();
+  }
+  function setFechaSeleccionada(fechaISO){
+    try { fechaSeleccionada = fechaISO; } catch(e) { window.fechaSeleccionada = fechaISO; }
+  }
+  function llamar(fn){ try { if (typeof fn === 'function') fn(); } catch(e) { console.warn(e); } }
+
+  function esHoraPasadaFlexible(a, b){
+    var fecha = b === undefined ? leerFechaSeleccionada() : (a || leerFechaSeleccionada());
+    var hora = b === undefined ? a : b;
+    if (!fecha || !hora) return false;
+    var hoy = hoyISO();
+    if (fecha < hoy) return true;
+    if (fecha > hoy) return false;
+    var ahora = new Date();
+    return minutos(hora) < ((ahora.getHours() * 60) + ahora.getMinutes());
+  }
+
+  window.obtenerFechaHoy = hoyISO;
+  window.validarEsHoraPasada = esHoraPasadaFlexible;
+  try { validarEsHoraPasada = esHoraPasadaFlexible; } catch(e) {}
+
+  window.renderizarCalendarios = function(){
+    var fecha = leerFechaSeleccionada();
+    var lblClub = document.getElementById('lbl-fecha-club');
+    var diasCortos = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+    if (lblClub) {
+      if (fecha === hoyISO()) lblClub.innerText = 'HOY';
+      else {
+        var fObj = parseISO(fecha);
+        lblClub.innerText = diasCortos[fObj.getDay()] + ' ' + fObj.getDate() + '/' + (fObj.getMonth() + 1);
+      }
+    }
+    var picker = document.getElementById('picker-fecha-club');
+    if (picker) {
+      picker.value = fecha;
+      picker.min = limitePasadoISO();
+      picker.max = sumarDiasISO(hoyISO(), 365);
+    }
+  };
+  try { renderizarCalendarios = window.renderizarCalendarios; } catch(e) {}
+
+  window.seleccionarFecha = function(fechaISO){
+    if (!fechaISO) return;
+    var min = limitePasadoISO();
+    var max = sumarDiasISO(hoyISO(), 365);
+    if (fechaISO < min) {
+      alert('Solo se puede volver hasta 30 días para atrás.');
+      fechaISO = min;
+    }
+    if (fechaISO > max) {
+      alert('Límite de 1 año alcanzado.');
+      fechaISO = max;
+    }
+    setFechaSeleccionada(fechaISO);
+    window.renderizarCalendarios();
+    llamar(window.renderizarPantallas);
+    llamar(window.renderizarReservasClub);
+    setTimeout(function(){
+      asegurarSelectorModalidadTurnero();
+      aplicarFiltroModalidadTurnero();
+      habilitarCeldasFuturasTurnero();
+    }, 30);
+  };
+
+  window.cambiarDiaClub = function(delta){
+    window.seleccionarFecha(sumarDiasISO(leerFechaSeleccionada(), Number(delta || 0)));
+  };
+  window.cambiarDia = window.cambiarDiaClub;
+  window.irAHoyClub = function(){ window.seleccionarFecha(hoyISO()); };
+
+  function obtenerModalidadPorHeader(col){
+    var txt = ((col && col.firstElementChild && col.firstElementChild.textContent) || '').toLowerCase();
+    if (txt.indexOf('tenis') !== -1) return 'tenis';
+    if (txt.indexOf('outdoor') !== -1) return 'outdoor';
+    if (txt.indexOf('indoor') !== -1) return 'indoor';
+    return '';
+  }
+
+  function columnasCanchas(){
+    var cont = document.querySelector('#lista-reservas-club .contenedor-grilla');
+    if (!cont) return [];
+    return Array.prototype.slice.call(cont.children).filter(function(col){
+      if (!col || col.id === 'linea-tiempo-actual') return false;
+      var header = col.firstElementChild;
+      var txt = (header && header.textContent) || '';
+      return /Cancha\s+/i.test(txt) && /(Indoor|Outdoor|Tenis)/i.test(txt);
+    });
+  }
+
+  function modalidadesExistentes(){
+    var set = {};
+    columnasCanchas().forEach(function(col){
+      var m = obtenerModalidadPorHeader(col);
+      if (m) set[m] = true;
+    });
+    var orden = [];
+    if (set.indoor) orden.push(['indoor', 'Pádel Indoor']);
+    if (set.outdoor) orden.push(['outdoor', 'Pádel Outdoor']);
+    if (set.tenis) orden.push(['tenis', 'Tenis']);
+    return orden.length ? orden : [['indoor', 'Pádel Indoor'], ['outdoor', 'Pádel Outdoor'], ['tenis', 'Tenis']];
+  }
+
+  function asegurarSelectorModalidadTurnero(){
+    var controles = document.getElementById('controles-fecha-club');
+    if (!controles) return;
+    var sel = document.getElementById('select-modalidad-turnero');
+    if (!sel) {
+      var box = document.createElement('div');
+      box.className = 'turnero-modalidad-router';
+      box.innerHTML = '<label for="select-modalidad-turnero">Modalidad</label><select id="select-modalidad-turnero"></select>';
+      controles.appendChild(box);
+      sel = document.getElementById('select-modalidad-turnero');
+      sel.addEventListener('change', function(){
+        window.modalidadTurneroActual = this.value;
+        try { localStorage.setItem('modalidadTurneroActual', this.value); } catch(e) {}
+        aplicarFiltroModalidadTurnero();
+      });
+    }
+    var opciones = modalidadesExistentes();
+    var actual = window.modalidadTurneroActual || (localStorage && localStorage.getItem('modalidadTurneroActual')) || (opciones[0] && opciones[0][0]) || 'indoor';
+    if (!opciones.some(function(o){ return o[0] === actual; })) actual = opciones[0][0];
+    sel.innerHTML = opciones.map(function(o){ return '<option value="' + o[0] + '">' + o[1] + '</option>'; }).join('');
+    sel.value = actual;
+    window.modalidadTurneroActual = actual;
+  }
+
+  function aplicarFiltroModalidadTurnero(){
+    var modalidad = window.modalidadTurneroActual || 'indoor';
+    columnasCanchas().forEach(function(col){
+      var tipo = obtenerModalidadPorHeader(col);
+      col.dataset.modalidadTurnero = tipo;
+      col.style.display = (tipo === modalidad) ? '' : 'none';
+    });
+  }
+
+  function habilitarCeldasFuturasTurnero(){
+    var fecha = leerFechaSeleccionada();
+    if (fecha !== hoyISO()) return;
+    columnasCanchas().forEach(function(col){
+      var canchaTxt = ((col.firstElementChild && col.firstElementChild.textContent) || '').match(/Cancha\s+([^\n\r]+)/i);
+      var cancha = canchaTxt ? canchaTxt[1].trim().split(/\s+/)[0] : '';
+      var celdas = Array.prototype.slice.call(col.children).slice(1);
+      celdas.forEach(function(celda, idx){
+        if (celda.children && celda.children.length) return;
+        var primer = (typeof primerTurno !== 'undefined' && primerTurno) ? primerTurno : '09:00';
+        var hora = sumarDiasHora(primer, idx * 30);
+        if (!esHoraPasadaFlexible(fecha, hora) && (!celda.getAttribute('onclick') || celda.style.cursor === 'not-allowed')) {
+          celda.classList.add('celda-vacia-hover');
+          celda.style.opacity = '';
+          celda.style.cursor = 'pointer';
+          celda.style.background = '';
+          celda.onclick = function(){ window.abrirModalReservaAdmin(hora, cancha); };
+        }
+      });
+    });
+  }
+
+  function sumarDiasHora(hora, mins){
+    var total = minutos(hora) + Number(mins || 0);
+    total = ((total % 1440) + 1440) % 1440;
+    return pad(Math.floor(total / 60)) + ':' + pad(total % 60);
+  }
+
+  var abrirReservaOriginal = window.abrirModalReservaAdmin;
+  window.abrirModalReservaAdmin = function(hora, cancha){
+    if (esHoraPasadaFlexible(leerFechaSeleccionada(), hora)) {
+      alert('No puedes reservar un horario pasado. Para turnos vencidos, abrí el bloque existente desde la grilla.');
+      return;
+    }
+    return abrirReservaOriginal.apply(this, arguments);
+  };
+
+  var renderOriginal = window.renderizarPantallas;
+  if (typeof renderOriginal === 'function' && !renderOriginal.__turneroFiltro30Patch) {
+    var renderParcheado = function(){
+      var r = renderOriginal.apply(this, arguments);
+      setTimeout(function(){
+        window.renderizarCalendarios();
+        asegurarSelectorModalidadTurnero();
+        aplicarFiltroModalidadTurnero();
+        habilitarCeldasFuturasTurnero();
+      }, 20);
+      setTimeout(function(){ asegurarSelectorModalidadTurnero(); aplicarFiltroModalidadTurnero(); habilitarCeldasFuturasTurnero(); }, 110);
+      setTimeout(function(){ asegurarSelectorModalidadTurnero(); aplicarFiltroModalidadTurnero(); habilitarCeldasFuturasTurnero(); }, 220);
+      return r;
+    };
+    renderParcheado.__turneroFiltro30Patch = true;
+    window.renderizarPantallas = renderParcheado;
+  }
+
+  window.applyModalidadFilter = aplicarFiltroModalidadTurnero;
+  window.asegurarSelectorModalidadTurnero = asegurarSelectorModalidadTurnero;
+  window.aplicarFiltroModalidadTurnero = aplicarFiltroModalidadTurnero;
+
+  document.addEventListener('DOMContentLoaded', function(){
+    [120,260,500].forEach(function(t){ setTimeout(function(){
+      window.renderizarCalendarios();
+      asegurarSelectorModalidadTurnero();
+      aplicarFiltroModalidadTurnero();
+      habilitarCeldasFuturasTurnero();
+    }, t); });
+  });
+  window.addEventListener('load', function(){
+    [350,650,1000].forEach(function(t){ setTimeout(function(){
+      window.renderizarCalendarios();
+      asegurarSelectorModalidadTurnero();
+      aplicarFiltroModalidadTurnero();
+      habilitarCeldasFuturasTurnero();
+    }, t); });
+  });
+})();
+</script>
+</body></html>
