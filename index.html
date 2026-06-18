@@ -2998,12 +2998,323 @@ function wrapOpeners(){
     window.cargarConfiguracionGuardadaFirebase.__configFinalCerrada=true;
   }
 }
-function bindSaveClose(){if(window.__CONFIG_FINAL_SAVE_CLOSE_BOUND__)return;window.__CONFIG_FINAL_SAVE_CLOSE_BOUND__=true;document.addEventListener('click',function(ev){var panel=$('panel-config-club');if(!panel||!panel.contains(ev.target))return;var btn=ev.target.closest&&ev.target.closest('button');if(btn&&/guardar/i.test(btn.textContent||'')){[250,800,1600].forEach(function(ms){setTimeout(cerrarAcordeonesConfig,ms)})}},true)}
+function bindSaveClose(){document.addEventListener('click',function(ev){var panel=$('panel-config-club');if(!panel||!panel.contains(ev.target))return;var btn=ev.target.closest&&ev.target.closest('button');if(btn&&/guardar/i.test(btn.textContent||'')){[250,800,1600].forEach(function(ms){setTimeout(cerrarAcordeonesConfig,ms)})}},true)}
 function install(){wrapOpeners();ocultarTituloConfig();cerrarAcordeonesConfig();bindSaveClose()}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(install,80);setTimeout(install,600);setTimeout(install,1500)});else{setTimeout(install,80);setTimeout(install,600);setTimeout(install,1500)}
 window.addEventListener('load',function(){setTimeout(install,300);setTimeout(install,1200)});
 window.cerrarAcordeonesConfigFinal=cerrarAcordeonesConfig;
 window.cargarConfigExistenteFinal=cargarConfigExistenteFinal;
+})();
+</script>
+
+
+<style id="parche-config-firebase-merge-seguro-v5-css">
+/* V5: configuración segura contra reinicios de datos */
+body.panel-activo #panel-config-club.vista-activa-final{
+  overflow:hidden!important;
+}
+body.panel-activo #panel-config-club.vista-activa-final .modal-content{
+  width:100%!important;
+  max-width:none!important;
+  height:100%!important;
+  max-height:calc(100vh - 48px)!important;
+  overflow:hidden!important;
+  box-sizing:border-box!important;
+}
+body.panel-activo #panel-config-club.vista-activa-final .scroll-interno{
+  flex:1 1 auto!important;
+  min-height:0!important;
+  max-height:none!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  padding-right:8px!important;
+}
+body.panel-activo #panel-config-club.vista-activa-final .contenido-acordeon:not(.abierto){
+  display:none!important;
+}
+body.panel-activo #panel-config-club.vista-activa-final .contenido-acordeon.abierto{
+  display:block!important;
+}
+body.panel-activo #panel-config-club.vista-activa-final .config-merge-status-v5{
+  display:block!important;
+  margin:0 0 12px 0!important;
+  padding:10px 12px!important;
+  border:1px solid #dbe1ea!important;
+  border-radius:12px!important;
+  background:#f8fafc!important;
+  color:#52627a!important;
+  font-size:.88rem!important;
+  font-weight:700!important;
+}
+</style>
+<script id="parche-config-firebase-merge-seguro-v5-js">
+(function(){
+'use strict';
+if(window.__PATCH_CONFIG_FIREBASE_MERGE_SEGURO_V5__)return;
+window.__PATCH_CONFIG_FIREBASE_MERGE_SEGURO_V5__=true;
+
+var $=function(id){return document.getElementById(id)};
+var CONFIG_INPUT_KEYS=[
+  'primerTurno','ultimoTurno','diasAbiertos','telefono','ubicacion','fotoClub',
+  'canchasIndoor','precioIndoor','profeIndoor','senaIndoor','nombresIndoor','duracionIndoor',
+  'canchasOutdoor','precioOutdoor','profeOutdoor','senaOutdoor','nombresOutdoor','duracionOutdoor',
+  'canchasTenis','precioTenis','profeTenis','senaTenis','nombresTenis','duracionTenis',
+  'duracionDefault','nombresCanchas'
+];
+var INPUT_MAP={
+  primerTurno:'input-primer-turno',ultimoTurno:'input-ultimo-turno',telefono:'input-telefono-club',ubicacion:'input-ubicacion-club',fotoClub:'input-foto-club',
+  canchasIndoor:'input-canchas-in',precioIndoor:'input-precio-in',profeIndoor:'input-profe-in',senaIndoor:'input-sena-in',nombresIndoor:'input-nombres-in',duracionIndoor:'input-duracion-in',
+  canchasOutdoor:'input-canchas-out',precioOutdoor:'input-precio-out',profeOutdoor:'input-profe-out',senaOutdoor:'input-sena-out',nombresOutdoor:'input-nombres-out',duracionOutdoor:'input-duracion-out',
+  canchasTenis:'input-canchas-tenis',precioTenis:'input-precio-tenis',profeTenis:'input-profe-tenis',senaTenis:'input-sena-tenis',nombresTenis:'input-nombres-tenis',duracionTenis:'input-duracion-tenis'
+};
+var GLOBAL_MAP={
+  primerTurno:'primerTurno',ultimoTurno:'ultimoTurno',diasAbiertos:'diasAbiertosGlobal',telefono:'telefonoClubGlobal',ubicacion:'ubicacionClubGlobal',fotoClub:'fotoClubGlobal',
+  canchasIndoor:'canchasIndoorGlobal',precioIndoor:'precioIndoorGlobal',profeIndoor:'profeIndoorGlobal',senaIndoor:'senaIndoorGlobal',nombresIndoor:'nombresIndoorGlobal',duracionIndoor:'duracionIndoorGlobal',
+  canchasOutdoor:'canchasOutdoorGlobal',precioOutdoor:'precioOutdoorGlobal',profeOutdoor:'profeOutdoorGlobal',senaOutdoor:'senaOutdoorGlobal',nombresOutdoor:'nombresOutdoorGlobal',duracionOutdoor:'duracionOutdoorGlobal',
+  canchasTenis:'canchasTenisGlobal',precioTenis:'precioTenisGlobal',profeTenis:'profeTenisGlobal',senaTenis:'senaTenisGlobal',nombresTenis:'nombresTenisGlobal',duracionTenis:'duracionTenisGlobal',
+  nombresCanchas:'nombresCanchasGlobal'
+};
+var DEFAULTS={
+  primerTurno:'08:00',ultimoTurno:'21:30',diasAbiertos:[0,1,2,3,4,5,6],telefono:'',ubicacion:'',fotoClub:'',
+  canchasIndoor:0,precioIndoor:'0',profeIndoor:'0',senaIndoor:'0',nombresIndoor:[],duracionIndoor:90,
+  canchasOutdoor:0,precioOutdoor:'0',profeOutdoor:'0',senaOutdoor:'0',nombresOutdoor:[],duracionOutdoor:90,
+  canchasTenis:0,precioTenis:'0',profeTenis:'0',senaTenis:'0',nombresTenis:[],duracionTenis:90,
+  duracionDefault:90,nombresCanchas:[]
+};
+var cargando=false;
+var configActivaAntes=false;
+
+function esObj(v){return v&&typeof v==='object'&&!Array.isArray(v)}
+function arr(v,def){if(Array.isArray(v))return v.slice();if(typeof v==='string'&&v.trim())return v.split(',').map(function(x){return x.trim()}).filter(Boolean);return Array.isArray(def)?def.slice():[]}
+function num(v,def){var n=Number(v);return Number.isFinite(n)?n:Number(def||0)}
+function txt(v,def){return v===undefined||v===null?String(def==null?'':def):String(v)}
+function setWindow(name,val){try{window[name]=val}catch(e){}}
+function setInput(id,val){var el=$(id);if(!el)return;if(Array.isArray(val))val=val.join(', ');el.value=val==null?'':String(val)}
+function getInput(id,def){var el=$(id);return el?String(el.value==null?'':el.value).trim():def}
+function namesFromInput(id){var v=getInput(id,'');return v?v.split(',').map(function(s){return s.trim()}).filter(Boolean):[]}
+function firebaseReady(){return !!(window.firebase&&firebase.apps&&firebase.apps.length&&firebase.firestore)}
+function serverTimestamp(){try{return firebase.firestore.FieldValue.serverTimestamp()}catch(e){return new Date().toISOString()}}
+function getClubId(){
+  var id=window.CLUB_DOC_ID_ACTUAL||(window.CLUB_DATA_ACTUAL&&(window.CLUB_DATA_ACTUAL.id||window.CLUB_DATA_ACTUAL.nombre));
+  var side=$('sidebar-club-id');
+  if((!id||id==='---')&&side)id=String(side.textContent||'').trim();
+  try{if(!id){var p=new URLSearchParams(location.search);id=p.get('club')||p.get('clubId')}}catch(e){}
+  return(!id||id==='---')?null:String(id).trim();
+}
+function ensureConfigPanel(){
+  var panel=$('panel-config-club');
+  var modal=$('modal-config');
+  if(!panel&&modal){
+    panel=document.createElement('section');
+    panel.id='panel-config-club';
+    panel.className='panel-seccion-club';
+    panel.setAttribute('data-panel-section','config');
+    var content=modal.querySelector('.modal-content');
+    if(content)panel.appendChild(content);
+    var ref=$('panel-metricas-club')||$('panel-movimientos-club')||$('panel-finanzas-club')||$('pantalla-club');
+    if(ref&&ref.parentNode)ref.parentNode.insertBefore(panel,ref.nextSibling);else($('app-content')||document.body).appendChild(panel);
+    modal.style.display='none';modal.style.visibility='hidden';modal.style.pointerEvents='none';modal.setAttribute('aria-hidden','true');
+  }
+  return panel||modal;
+}
+function ocultarTitulo(){
+  var panel=ensureConfigPanel();if(!panel)return;
+  var h=panel.querySelector('.modal-content>h3:first-child,.panel-header-club h2');
+  if(h){h.textContent='';h.style.display='none';h.setAttribute('aria-hidden','true')}
+}
+function cerrarAcordeones(){
+  ['ac-config-info','ac-config-indoor','ac-config-outdoor','ac-config-tenis'].forEach(function(id){
+    var c=$(id);if(c){c.classList.remove('abierto');c.style.display='none'}
+    var f=$('flecha-'+id);if(f)f.textContent='🔽';
+  });
+  ocultarTitulo();
+}
+function status(msg){
+  var panel=ensureConfigPanel();if(!panel)return;
+  var old=$('config-merge-status-v5');
+  if(!msg){if(old)old.remove();return}
+  if(!old){old=document.createElement('div');old.id='config-merge-status-v5';old.className='config-merge-status-v5';var cont=panel.querySelector('.modal-content')||panel;cont.insertBefore(old,cont.firstChild)}
+  old.textContent=msg;
+}
+function normalizar(data){
+  data=data||{};
+  var dc=esObj(data.datosClub)?data.datosClub:{};
+  var base=Object.assign({},data,dc);
+  var cfg={};
+  Object.keys(DEFAULTS).forEach(function(k){cfg[k]=Array.isArray(DEFAULTS[k])?DEFAULTS[k].slice():DEFAULTS[k]});
+  CONFIG_INPUT_KEYS.forEach(function(k){if(base[k]!==undefined&&base[k]!==null)cfg[k]=base[k]});
+  cfg.primerTurno=txt(cfg.primerTurno,'08:00');
+  cfg.ultimoTurno=txt(cfg.ultimoTurno,'21:30');
+  cfg.diasAbiertos=arr(cfg.diasAbiertos,[0,1,2,3,4,5,6]).map(Number).filter(function(n){return Number.isFinite(n)});
+  if(!cfg.diasAbiertos.length)cfg.diasAbiertos=[0,1,2,3,4,5,6];
+  cfg.canchasIndoor=num(cfg.canchasIndoor,0);cfg.canchasOutdoor=num(cfg.canchasOutdoor,0);cfg.canchasTenis=num(cfg.canchasTenis,0);
+  cfg.precioIndoor=txt(cfg.precioIndoor,'0');cfg.precioOutdoor=txt(cfg.precioOutdoor,'0');cfg.precioTenis=txt(cfg.precioTenis,'0');
+  cfg.profeIndoor=txt(cfg.profeIndoor,'0');cfg.profeOutdoor=txt(cfg.profeOutdoor,'0');cfg.profeTenis=txt(cfg.profeTenis,'0');
+  cfg.senaIndoor=txt(cfg.senaIndoor,'0');cfg.senaOutdoor=txt(cfg.senaOutdoor,'0');cfg.senaTenis=txt(cfg.senaTenis,'0');
+  cfg.nombresIndoor=arr(cfg.nombresIndoor,[]);cfg.nombresOutdoor=arr(cfg.nombresOutdoor,[]);cfg.nombresTenis=arr(cfg.nombresTenis,[]);
+  cfg.duracionIndoor=num(cfg.duracionIndoor,cfg.duracionDefault||90);cfg.duracionOutdoor=num(cfg.duracionOutdoor,cfg.duracionDefault||90);cfg.duracionTenis=num(cfg.duracionTenis,cfg.duracionDefault||90);
+  cfg.duracionDefault=num(cfg.duracionDefault,cfg.duracionIndoor||90);
+  cfg.telefono=txt(cfg.telefono,'');cfg.ubicacion=txt(cfg.ubicacion,'');cfg.fotoClub=txt(cfg.fotoClub,'');
+  cfg.nombresCanchas=[].concat(cfg.nombresIndoor||[],cfg.nombresOutdoor||[],cfg.nombresTenis||[]);
+  return cfg;
+}
+function aplicarGlobals(cfg){
+  Object.keys(GLOBAL_MAP).forEach(function(k){setWindow(GLOBAL_MAP[k],cfg[k])});
+  setWindow('duracionGlobal',cfg.duracionDefault||cfg.duracionIndoor||90);
+}
+function rellenarFormulario(cfg){
+  if(!cfg)return;
+  cfg=normalizar({datosClub:cfg});
+  Object.keys(INPUT_MAP).forEach(function(k){setInput(INPUT_MAP[k],cfg[k])});
+  [0,1,2,3,4,5,6].forEach(function(d){var el=$('dia-'+d);if(el)el.checked=cfg.diasAbiertos.indexOf(d)>-1});
+  aplicarGlobals(cfg);
+}
+function leerInputsConfiguracion(){
+  var cfg={
+    primerTurno:getInput('input-primer-turno','08:00')||'08:00',
+    ultimoTurno:getInput('input-ultimo-turno','21:30')||'21:30',
+    diasAbiertos:[0,1,2,3,4,5,6].filter(function(d){var el=$('dia-'+d);return !!(el&&el.checked)}),
+    telefono:getInput('input-telefono-club',''),ubicacion:getInput('input-ubicacion-club',''),fotoClub:getInput('input-foto-club',''),
+    canchasIndoor:num(getInput('input-canchas-in','0'),0),precioIndoor:getInput('input-precio-in','0')||'0',profeIndoor:getInput('input-profe-in','0')||'0',senaIndoor:getInput('input-sena-in','0')||'0',nombresIndoor:namesFromInput('input-nombres-in'),duracionIndoor:num(getInput('input-duracion-in','90'),90),
+    canchasOutdoor:num(getInput('input-canchas-out','0'),0),precioOutdoor:getInput('input-precio-out','0')||'0',profeOutdoor:getInput('input-profe-out','0')||'0',senaOutdoor:getInput('input-sena-out','0')||'0',nombresOutdoor:namesFromInput('input-nombres-out'),duracionOutdoor:num(getInput('input-duracion-out','90'),90),
+    canchasTenis:num(getInput('input-canchas-tenis','0'),0),precioTenis:getInput('input-precio-tenis','0')||'0',profeTenis:getInput('input-profe-tenis','0')||'0',senaTenis:getInput('input-sena-tenis','0')||'0',nombresTenis:namesFromInput('input-nombres-tenis'),duracionTenis:num(getInput('input-duracion-tenis','90'),90)
+  };
+  if(!cfg.diasAbiertos.length)cfg.diasAbiertos=[0,1,2,3,4,5,6];
+  cfg.duracionDefault=cfg.duracionIndoor||cfg.duracionOutdoor||cfg.duracionTenis||90;
+  cfg.nombresCanchas=[].concat(cfg.nombresIndoor,cfg.nombresOutdoor,cfg.nombresTenis);
+  return cfg;
+}
+function setBotones(cargando,txt){
+  var panel=ensureConfigPanel();if(!panel)return;
+  Array.prototype.slice.call(panel.querySelectorAll('button')).forEach(function(btn){
+    if(!/guardar/i.test(btn.textContent||'')&&!btn.__configMergeBtn)return;
+    btn.__configMergeBtn=true;
+    if(!btn.dataset.normalText)btn.dataset.normalText=btn.textContent||'Guardar Todo';
+    btn.disabled=!!cargando;
+    btn.textContent=cargando?(txt||'Guardando...'):(btn.dataset.normalText||'Guardar Todo');
+  });
+}
+function notificar(msg,ok){
+  if(typeof window.mostrarMensajeTurnero==='function')window.mostrarMensajeTurnero(msg,!!ok);
+  else if(typeof window.alertaTurnero==='function')window.alertaTurnero(msg);
+  else alert(msg);
+}
+function renderizarTodo(){
+  ['renderizarPantallas','renderizarReservasClub','renderizarInventario','renderizarHistorial','actualizarResumenFinanzasClub','actualizarResumenFinanzas','renderizarProfesores','renderizarClasesPendientes'].forEach(function(n){try{if(typeof window[n]==='function')window[n]()}catch(e){}});
+}
+async function cargarConfigMergeSeguro(){
+  ensureConfigPanel();ocultarTitulo();cerrarAcordeones();
+  if(cargando)return;
+  var id=getClubId();
+  if(window.CLUB_DATA_ACTUAL)rellenarFormulario(normalizar(window.CLUB_DATA_ACTUAL));
+  if(!id||!firebaseReady()){status('No se pudo leer Firebase todavía. Se muestran los datos cargados localmente.');return false;}
+  cargando=true;setBotones(true,'Cargando...');status('Leyendo configuración guardada en Firebase...');
+  try{
+    var snap=await firebase.firestore().collection('clubs').doc(id).get();
+    var data=snap.exists?(snap.data()||{}):{};
+    var cfg=normalizar(data);
+    window.CLUB_DATA_ACTUAL=Object.assign({id:id},data,{datosClub:Object.assign({},(data.datosClub&&typeof data.datosClub==='object'?data.datosClub:{}),cfg)});
+    rellenarFormulario(cfg);
+    window.__CONFIG_FIREBASE_LOADED_SAFE_V5__=true;
+    status('Configuración cargada desde Firebase. Podés abrir un acordeón y modificar solo lo necesario.');
+    setTimeout(function(){status('')},1400);
+    return true;
+  }catch(e){
+    console.warn('No se pudo cargar configuración segura:',e);
+    status('No se pudo leer Firebase: '+(e.message||e));
+    return false;
+  }finally{
+    cargando=false;setBotones(false);cerrarAcordeones();
+  }
+}
+async function guardarConfigMergeSeguro(){
+  ensureConfigPanel();ocultarTitulo();
+  var id=getClubId();
+  if(!id){notificar('No se detectó el club logueado. Cerrá sesión y volvé a entrar.',false);return false;}
+  if(!firebaseReady()){notificar('Firebase todavía no está listo. Esperá unos segundos y volvé a guardar.',false);return false;}
+  var cfg=leerInputsConfiguracion();
+  var ref=firebase.firestore().collection('clubs').doc(id);
+  cargando=true;setBotones(true,'Guardando...');status('Guardando solo los campos modificables de Configuración...');
+  try{
+    var snap=await ref.get();
+    var data=snap.exists?(snap.data()||{}):{};
+    var prevDatos=(data.datosClub&&typeof data.datosClub==='object')?data.datosClub:{};
+    var mergedDatos=Object.assign({},prevDatos,cfg);
+    var meta={guardadoPorPanel:true,ultimoMotivoGuardado:'guardar-configuracion-merge-seguro-v5',actualizadoEn:serverTimestamp()};
+    if(!snap.exists){
+      await ref.set(Object.assign({nombre:id,datosClub:mergedDatos},meta),{merge:true});
+    }else{
+      var updates=Object.assign({},meta);
+      Object.keys(cfg).forEach(function(k){updates['datosClub.'+k]=cfg[k]});
+      try{await ref.update(updates)}
+      catch(e){await ref.set(Object.assign({datosClub:mergedDatos},meta),{merge:true})}
+    }
+    window.CLUB_DATA_ACTUAL=Object.assign({id:id},data,{datosClub:mergedDatos});
+    rellenarFormulario(mergedDatos);
+    renderizarTodo();
+    status('Configuración guardada. No se tocaron inventario, movimientos, finanzas, profesores ni reservas.');
+    notificar('Configuración guardada sin reiniciar los otros datos.',true);
+    setTimeout(function(){status('')},1800);
+    cerrarAcordeones();
+    return true;
+  }catch(e){
+    console.error('Guardar configuración merge seguro:',e);
+    status('Error al guardar: '+(e.message||e));
+    notificar(e.message||'No se pudo guardar la configuración.',false);
+    return false;
+  }finally{
+    cargando=false;setBotones(false);
+  }
+}
+function configActiva(){
+  var p=$('panel-config-club');
+  if(!p)return false;
+  var st=window.getComputedStyle?getComputedStyle(p):null;
+  return p.classList.contains('vista-activa-final')||p.classList.contains('panel-seccion-activa')||(p.style.display&&p.style.display!=='none'&&(!st||st.display!=='none'));
+}
+function revisarActivacion(){
+  var activa=configActiva();
+  if(activa&&!configActivaAntes){
+    configActivaAntes=true;
+    setTimeout(cargarConfigMergeSeguro,30);
+    setTimeout(cerrarAcordeones,240);
+  }else if(!activa){
+    configActivaAntes=false;
+    window.__CONFIG_FIREBASE_LOADED_SAFE_V5__=false;
+  }
+}
+function bind(){
+  ensureConfigPanel();ocultarTitulo();cerrarAcordeones();
+  window.guardarConfiguracion=guardarConfigMergeSeguro;
+  window.guardarConfiguracionSeguro=guardarConfigMergeSeguro;
+  window.guardarConfiguracionCompartida=window.guardarConfiguracionCompartida||guardarConfigMergeSeguro;
+  window.cargarConfigExistenteFinal=cargarConfigMergeSeguro;
+  window.cargarConfiguracionGuardadaFirebase=cargarConfigMergeSeguro;
+  var panel=ensureConfigPanel();
+  if(panel){Array.prototype.slice.call(panel.querySelectorAll('button')).forEach(function(btn){if(/guardar/i.test(btn.textContent||''))btn.onclick=null})}
+  revisarActivacion();
+}
+
+document.addEventListener('click',function(ev){
+  var btn=ev.target&&ev.target.closest&&ev.target.closest('#panel-config-club button,#modal-config button');
+  if(btn&&/guardar/i.test(btn.textContent||'')){
+    ev.preventDefault();ev.stopPropagation();ev.stopImmediatePropagation();
+    guardarConfigMergeSeguro();
+  }
+},true);
+
+try{
+  var obs=new MutationObserver(function(){revisarActivacion()});
+  obs.observe(document.body,{subtree:true,attributes:true,attributeFilter:['class','style']});
+}catch(e){}
+
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(bind,80);setTimeout(bind,700);setTimeout(bind,1600)});
+else{setTimeout(bind,80);setTimeout(bind,700);setTimeout(bind,1600)}
+window.addEventListener('load',function(){setTimeout(bind,350);setTimeout(bind,1400)});
+setInterval(revisarActivacion,900);
+
+window.guardarConfigMergeSeguroV5=guardarConfigMergeSeguro;
+window.cargarConfigMergeSeguroV5=cargarConfigMergeSeguro;
 })();
 </script>
 
