@@ -2950,4 +2950,776 @@ body.panel-activo #pantalla-club.panel-vista #lista-reservas-club .contenedor-gr
       .observe(document.body, {attributes:true, attributeFilter:['class']});
   }catch(e){}
 })();
-</script></body></html>
+</script>
+<script id="core-funciones-directas-corregidas-js">
+(function(){
+  'use strict';
+  if (window.__CORE_FUNCIONES_DIRECTAS_CORREGIDAS__) return;
+  window.__CORE_FUNCIONES_DIRECTAS_CORREGIDAS__ = true;
+
+  const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyDqWKo3ZtPChbtf38osMiKwQpCRNvsN7ak",
+    authDomain: "pric-60f50.firebaseapp.com",
+    projectId: "pric-60f50",
+    storageBucket: "pric-60f50.firebasestorage.app",
+    messagingSenderId: "475470852361",
+    appId: "1:475470852361:web:8acfa8b1e2963426ef23d8",
+    measurementId: "G-ZXLT15L9JR"
+  };
+
+  function $(id){ return document.getElementById(id); }
+  function qsa(sel){ return Array.prototype.slice.call(document.querySelectorAll(sel)); }
+  function txt(v){ return String(v == null ? '' : v).trim(); }
+  function num(v, fallback){ const n = Number(v); return Number.isFinite(n) ? n : Number(fallback || 0); }
+  function money(n){ return '$' + num(n).toLocaleString('es-AR', { maximumFractionDigits: 0 }); }
+  function esc(v){ return String(v == null ? '' : v).replace(/[&<>"']/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[c]; }); }
+  function normId(v){ return txt(v).replace(/[\/\\#[\]?]/g, '_').replace(/\s+/g, ' ') || 'Club Central'; }
+
+  function getG(name, fallback){
+    try { return Function('fallback', 'return (typeof '+name+' !== "undefined") ? '+name+' : fallback;')(fallback); }
+    catch(e){ return Object.prototype.hasOwnProperty.call(window, name) ? window[name] : fallback; }
+  }
+  function setG(name, value){
+    try { Function('value', name + ' = value;')(value); } catch(e){}
+    try { window[name] = value; } catch(e){}
+    return value;
+  }
+  function arrG(name){
+    const v = getG(name, []);
+    return Array.isArray(v) ? v : [];
+  }
+  function setArrG(name, value){
+    const limpio = Array.isArray(value) ? value : [];
+    return setG(name, limpio);
+  }
+  function mirrorGlobals(){
+    ['reservasGlobales','inventarioGlobal','gastosGlobal','ingresosGlobal','profesoresGlobal','categoriasInventarioGlobal'].forEach(function(k){
+      const v = getG(k, []);
+      if (Array.isArray(v)) window[k] = v;
+    });
+  }
+
+  function fechaISO(date){
+    return date.getFullYear() + '-' + String(date.getMonth()+1).padStart(2,'0') + '-' + String(date.getDate()).padStart(2,'0');
+  }
+  function hoyISO(){ return fechaISO(new Date()); }
+  function fechaDelta(dias){ const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate() + Number(dias || 0)); return fechaISO(d); }
+  function aMinutos(h){
+    const p = String(h || '00:00').split(':');
+    return (Number(p[0]) || 0) * 60 + (Number(p[1]) || 0);
+  }
+  window.aMinutos = window.aMinutos || aMinutos;
+
+  function fechaSeleccionadaActual(){ return getG('fechaSeleccionada', hoyISO()); }
+  function esHoraPasada(fecha, hora){
+    fecha = fecha || fechaSeleccionadaActual();
+    if (fecha < hoyISO()) return true;
+    if (fecha > hoyISO()) return false;
+    const ahora = new Date();
+    return aMinutos(hora) <= (ahora.getHours() * 60 + ahora.getMinutes());
+  }
+  window.validarEsHoraPasada = esHoraPasada;
+
+  function getConfiguracion(){
+    return {
+      primerTurno: getG('primerTurno','08:00'),
+      ultimoTurno: getG('ultimoTurno','21:30'),
+      duracionGlobal: num(getG('duracionGlobal',90),90),
+      canchasIndoor: num(getG('canchasIndoorGlobal',1),1),
+      canchasOutdoor: num(getG('canchasOutdoorGlobal',0),0),
+      canchasTenis: num(getG('canchasTenisGlobal',0),0),
+      precioIndoor: num(getG('precioIndoorGlobal',0),0),
+      precioOutdoor: num(getG('precioOutdoorGlobal',0),0),
+      precioTenis: num(getG('precioTenisGlobal',0),0),
+      profeIndoor: num(getG('profeIndoorGlobal',0),0),
+      profeOutdoor: num(getG('profeOutdoorGlobal',0),0),
+      profeTenis: num(getG('profeTenisGlobal',0),0),
+      senaIndoor: num(getG('senaIndoorGlobal',0),0),
+      senaOutdoor: num(getG('senaOutdoorGlobal',0),0),
+      senaTenis: num(getG('senaTenisGlobal',0),0),
+      nombres: Array.isArray(getG('nombresCanchasGlobal',[])) ? getG('nombresCanchasGlobal',[]) : []
+    };
+  }
+
+  function tipoCancha(cancha){
+    const c = getConfiguracion();
+    const n = Number(cancha) || 1;
+    if (n <= c.canchasIndoor) return 'indoor';
+    if (n <= c.canchasIndoor + c.canchasOutdoor) return 'outdoor';
+    return 'tenis';
+  }
+  function labelTipo(tipo){
+    if (tipo === 'outdoor') return 'Pádel Outdoor';
+    if (tipo === 'tenis') return 'Tenis';
+    return 'Pádel Indoor';
+  }
+  function precioCancha(cancha, esClase){
+    const c = getConfiguracion();
+    const tipo = tipoCancha(cancha);
+    if (esClase) return tipo === 'indoor' ? c.profeIndoor : (tipo === 'outdoor' ? c.profeOutdoor : c.profeTenis);
+    return tipo === 'indoor' ? c.precioIndoor : (tipo === 'outdoor' ? c.precioOutdoor : c.precioTenis);
+  }
+  function senaCancha(cancha){
+    const c = getConfiguracion();
+    const tipo = tipoCancha(cancha);
+    return tipo === 'indoor' ? c.senaIndoor : (tipo === 'outdoor' ? c.senaOutdoor : c.senaTenis);
+  }
+  function canchasVisibles(){
+    const c = getConfiguracion();
+    const total = Math.max(1, c.canchasIndoor + c.canchasOutdoor + c.canchasTenis);
+    let modalidad = getG('modalidadTurneroActual', localStorage.getItem('modalidadTurneroActual') || 'indoor');
+    const out = [];
+    for (let i = 1; i <= total; i++){
+      const tipo = tipoCancha(i);
+      if (modalidad === 'todas' || modalidad === tipo) out.push({id:i, tipo:tipo});
+    }
+    if (out.length) return out;
+    for (let i = 1; i <= total; i++) out.push({id:i, tipo:tipoCancha(i)});
+    return out;
+  }
+
+  async function cargarScript(url){
+    return new Promise(function(resolve, reject){
+      const existe = document.querySelector('script[src="'+url+'"]');
+      if (existe){
+        if (existe.dataset.loaded === '1' || window.firebase) return resolve();
+        existe.addEventListener('load', resolve, { once:true });
+        existe.addEventListener('error', function(){ reject(new Error('No se pudo cargar '+url)); }, { once:true });
+        return;
+      }
+      const s = document.createElement('script');
+      s.src = url;
+      s.async = false;
+      s.onload = function(){ s.dataset.loaded = '1'; resolve(); };
+      s.onerror = function(){ reject(new Error('No se pudo cargar '+url)); };
+      document.head.appendChild(s);
+    });
+  }
+
+  async function firebaseReady(){
+    if (!window.firebase || !firebase.auth || !firebase.firestore){
+      const v = '8.10.1';
+      await cargarScript('https://www.gstatic.com/firebasejs/'+v+'/firebase-app.js');
+      await cargarScript('https://www.gstatic.com/firebasejs/'+v+'/firebase-auth.js');
+      await cargarScript('https://www.gstatic.com/firebasejs/'+v+'/firebase-firestore.js');
+    }
+    if (!firebase.apps || !firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+    return { auth: firebase.auth(), db: firebase.firestore() };
+  }
+
+  async function clubIdActual(){
+    if (window.CLUB_DOC_ID_ACTUAL) return normId(window.CLUB_DOC_ID_ACTUAL);
+    if (window.CLUB_DATA_ACTUAL && (window.CLUB_DATA_ACTUAL.id || window.CLUB_DATA_ACTUAL.nombre)) return normId(window.CLUB_DATA_ACTUAL.id || window.CLUB_DATA_ACTUAL.nombre);
+    try{
+      const fb = await firebaseReady();
+      const user = fb.auth.currentUser;
+      if (!user || !user.email) return '';
+      const email = user.email.toLowerCase();
+      const snap = await fb.db.collection('clubs').where('emailAdmin','in',[user.email,email]).limit(1).get();
+      if (!snap.empty){
+        const d = snap.docs[0];
+        window.CLUB_DOC_ID_ACTUAL = d.id;
+        window.CLUB_DATA_ACTUAL = Object.assign({ id:d.id }, d.data() || {});
+        return normId(d.id);
+      }
+    }catch(e){}
+    return '';
+  }
+
+  function limpiar(valor){
+    if (valor === undefined || typeof valor === 'function') return undefined;
+    if (valor === null) return null;
+    if (valor instanceof Date) return valor.toISOString();
+    if (Array.isArray(valor)) return valor.map(limpiar).filter(function(x){ return x !== undefined; });
+    if (typeof valor === 'object'){
+      if (typeof valor.toDate === 'function') return valor.toDate().toISOString();
+      if (typeof valor.seconds === 'number') return new Date(valor.seconds * 1000).toISOString();
+      const o = {};
+      Object.keys(valor).forEach(function(k){
+        if (k.indexOf('__') === 0) return;
+        const v = limpiar(valor[k]);
+        if (v !== undefined) o[k] = v;
+      });
+      return o;
+    }
+    return valor;
+  }
+
+  let saveQueue = Promise.resolve();
+  function guardarDatosClub(parcial){
+    saveQueue = saveQueue.then(async function(){
+      const idClub = await clubIdActual();
+      if (!idClub) return;
+      const fb = await firebaseReady();
+      const payload = {};
+      Object.keys(parcial || {}).forEach(function(k){ payload['datosClub.'+k] = limpiar(parcial[k]); });
+      payload.actualizadoEn = firebase.firestore.FieldValue.serverTimestamp();
+      await fb.db.collection('clubs').doc(idClub).set(payload, { merge:true });
+    }).catch(function(e){
+      console.error('Error guardando datosClub:', e);
+      alert('No se pudo guardar en Firebase. Revisá las reglas/permisos de Firestore.');
+    });
+    return saveQueue;
+  }
+  async function guardarReserva(reserva){
+    const idClub = await clubIdActual();
+    if (!idClub || !reserva || !reserva.id) return guardarDatosClub({ reservas: arrG('reservasGlobales') });
+    const fb = await firebaseReady();
+    const limpia = limpiar(Object.assign({}, reserva, { clubId:idClub }));
+    await fb.db.collection('clubs').doc(idClub).collection('reservas').doc(String(reserva.id)).set(
+      Object.assign({}, limpia, { actualizadoEn: firebase.firestore.FieldValue.serverTimestamp() }),
+      { merge:true }
+    );
+    await guardarDatosClub({ reservas: arrG('reservasGlobales') });
+  }
+  async function borrarReservaFirebase(idReserva){
+    const idClub = await clubIdActual();
+    if (!idClub || !idReserva) return;
+    const fb = await firebaseReady();
+    await fb.db.collection('clubs').doc(idClub).collection('reservas').doc(String(idReserva)).delete();
+    await guardarDatosClub({ reservas: arrG('reservasGlobales') });
+  }
+
+  function mostrarModal(id){
+    const m = $(id);
+    if (!m) return;
+    m.style.display = 'flex';
+    m.style.visibility = 'visible';
+    m.style.pointerEvents = 'auto';
+    m.removeAttribute('aria-hidden');
+  }
+  function ocultarModal(id){
+    const m = $(id);
+    if (!m) return;
+    m.style.display = 'none';
+    m.style.visibility = 'hidden';
+    m.style.pointerEvents = 'none';
+    m.setAttribute('aria-hidden','true');
+  }
+
+  function renderizarSelectorModalidad(){
+    const controles = $('controles-fecha-club');
+    if (!controles) return;
+    let box = $('box-modalidad-turnero');
+    if (!box){
+      box = document.createElement('div');
+      box.id = 'box-modalidad-turnero';
+      box.className = 'turnero-modalidad-router';
+      box.innerHTML = '<label for="select-modalidad-turnero" style="font-size:.8em;font-weight:700;color:#52627a;margin-right:8px;">Modalidad</label><select class="input-form" id="select-modalidad-turnero" style="width:auto;min-width:145px;"></select>';
+      controles.appendChild(box);
+    }
+    const c = getConfiguracion();
+    const opciones = [];
+    if (c.canchasIndoor > 0) opciones.push(['indoor','Pádel Indoor']);
+    if (c.canchasOutdoor > 0) opciones.push(['outdoor','Pádel Outdoor']);
+    if (c.canchasTenis > 0) opciones.push(['tenis','Tenis']);
+    if (opciones.length > 1) opciones.unshift(['todas','Todas']);
+    if (!opciones.length) opciones.push(['indoor','Pádel Indoor']);
+
+    const sel = $('select-modalidad-turnero');
+    const html = opciones.map(function(o){ return '<option value="'+o[0]+'">'+o[1]+'</option>'; }).join('');
+    if (sel.innerHTML !== html) sel.innerHTML = html;
+    let actual = getG('modalidadTurneroActual', localStorage.getItem('modalidadTurneroActual') || opciones[0][0]);
+    if (!opciones.some(function(o){ return o[0] === actual; })) actual = opciones[0][0];
+    setG('modalidadTurneroActual', actual);
+    sel.value = actual;
+    if (sel.dataset.boundCore !== '1'){
+      sel.dataset.boundCore = '1';
+      sel.addEventListener('change', function(){
+        setG('modalidadTurneroActual', this.value);
+        localStorage.setItem('modalidadTurneroActual', this.value);
+        window.renderizarPantallas();
+      });
+    }
+  }
+
+  window.seleccionarFecha = function(fecha){
+    const min = fechaDelta(-30);
+    const max = fechaDelta(360);
+    if (fecha < min) { alert('Solo puedes volver hasta 30 días para atrás.'); return; }
+    if (fecha > max) { alert('Límite de 1 año alcanzado.'); return; }
+    setG('fechaSeleccionada', fecha);
+    window.renderizarPantallas();
+  };
+  window.cambiarDiaClub = function(delta){
+    const base = new Date(fechaSeleccionadaActual() + 'T00:00:00');
+    base.setDate(base.getDate() + Number(delta || 0));
+    window.seleccionarFecha(fechaISO(base));
+  };
+  window.irAHoyClub = function(){ window.seleccionarFecha(hoyISO()); };
+
+  function actualizarFechaUI(){
+    const fecha = fechaSeleccionadaActual();
+    const lbl = $('lbl-fecha-club');
+    if (lbl){
+      if (fecha === hoyISO()) lbl.textContent = 'HOY';
+      else {
+        const p = fecha.split('-');
+        const d = new Date(Number(p[0]), Number(p[1])-1, Number(p[2]));
+        const dias = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+        lbl.textContent = dias[d.getDay()] + ' ' + d.getDate() + '/' + (d.getMonth()+1);
+      }
+    }
+    const picker = $('picker-fecha-club');
+    if (picker){
+      picker.value = fecha;
+      picker.min = fechaDelta(-30);
+      picker.max = fechaDelta(360);
+    }
+  }
+
+  function reservasDelDia(fecha){
+    const dow = new Date(fecha + 'T00:00:00').getDay();
+    return arrG('reservasGlobales').filter(function(r){
+      if (!r) return false;
+      const canceladas = Array.isArray(r.fechasCanceladas) ? r.fechasCanceladas : [];
+      if (canceladas.indexOf(fecha) >= 0) return false;
+      if (r.fecha === fecha) return true;
+      if (r.fijo === true && r.fecha && fecha > r.fecha){
+        return new Date(String(r.fecha) + 'T00:00:00').getDay() === dow;
+      }
+      return false;
+    });
+  }
+
+  window.renderizarPantallas = function(){
+    mirrorGlobals();
+    actualizarFechaUI();
+    renderizarSelectorModalidad();
+
+    const cont = $('lista-reservas-club');
+    if (!cont) return;
+
+    const fecha = fechaSeleccionadaActual();
+    const conf = getConfiguracion();
+    let inicio = aMinutos(conf.primerTurno);
+    let fin = aMinutos(conf.ultimoTurno) + conf.duracionGlobal;
+    if (fin <= inicio) fin += 1440;
+    const celdaH = 40;
+    const visibles = canchasVisibles();
+    const reservas = reservasDelDia(fecha);
+
+    let html = '<div class="contenedor-grilla">';
+    html += '<div id="linea-tiempo-actual"></div>';
+    html += '<div style="width:55px;flex-shrink:0;border-right:1px solid #e5eaf2;background:#f8fafc;">';
+    html += '<div style="height:50px;border-bottom:1px solid #e5eaf2;background:#f8fafc;"></div>';
+    for (let m = inicio; m < fin; m += 30){
+      const h = Math.floor(m/60) % 24;
+      const mm = m % 60;
+      const esHora = mm === 0;
+      html += '<div style="height:'+celdaH+'px;border-bottom:'+(esHora?'1px dashed #dbe1ea':'1px solid #e5eaf2')+';text-align:center;color:#52627a;font-size:.78em;padding-top:3px;box-sizing:border-box;">'+(esHora ? String(h).padStart(2,'0')+':00' : '')+'</div>';
+    }
+    html += '</div>';
+
+    visibles.forEach(function(cv){
+      const cancha = cv.id;
+      const nombreCancha = conf.nombres[cancha-1] || cancha;
+      const resCancha = reservas.filter(function(r){ return String(r.cancha) === String(cancha); });
+      html += '<div style="flex:1;min-width:145px;border-right:1px solid #e5eaf2;position:relative;background:#ffffff;">';
+      html += '<div style="height:50px;border-bottom:1px solid #e5eaf2;background:#f8fafc;color:#07152b;font-weight:800;text-align:center;padding:8px 4px;box-sizing:border-box;">Cancha '+esc(nombreCancha)+'<br><small style="color:#52627a;font-weight:600;">'+labelTipo(cv.tipo)+'</small></div>';
+
+      const ocupados = new Set();
+      resCancha.forEach(function(r){
+        const ini = aMinutos(r.hora);
+        const dur = parseInt(r.duracion,10) || conf.duracionGlobal;
+        for (let x = ini; x < ini + dur; x += 30){
+          ocupados.add(String(Math.floor(x/60)%24).padStart(2,'0') + ':' + String(x%60).padStart(2,'0'));
+        }
+      });
+
+      for (let m = inicio; m < fin; m += 30){
+        const hora = String(Math.floor(m/60)%24).padStart(2,'0') + ':' + String(m%60).padStart(2,'0');
+        const border = (m % 60 === 0) ? '1px dashed #dbe1ea' : '1px solid #e5eaf2';
+        if (ocupados.has(hora)){
+          html += '<div style="height:'+celdaH+'px;border-bottom:'+border+';box-sizing:border-box;"></div>';
+        } else if (esHoraPasada(fecha, hora)){
+          html += '<div style="height:'+celdaH+'px;border-bottom:'+border+';box-sizing:border-box;opacity:.26;background:#eef2f7;cursor:not-allowed;"></div>';
+        } else {
+          html += '<div class="celda-vacia-hover" style="height:'+celdaH+'px;border-bottom:'+border+';box-sizing:border-box;cursor:pointer;" onclick="window.abrirModalReservaAdmin(\''+hora+'\', \''+cancha+'\')"></div>';
+        }
+      }
+
+      resCancha.forEach(function(r){
+        let minRes = aMinutos(r.hora);
+        if (minRes < inicio && fin > 1440) minRes += 1440;
+        const dur = parseInt(r.duracion,10) || conf.duracionGlobal;
+        const top = Math.max(50, ((minRes - inicio) / 30) * celdaH + 50);
+        const height = Math.max(22, (dur / 30) * celdaH - 2);
+        const totalConsumos = (Array.isArray(r.consumos) ? r.consumos : []).reduce(function(a,c){ return a + num(c.precio); },0);
+        const base = precioCancha(cancha, r.esClase) * (dur/30);
+        const total = Math.max(0, base + totalConsumos - num(r.descuento));
+        const pago = num(r.pagoEfectivo) + num(r.pagoTransferencia);
+        let bg = '#f6a74b', borde = '#d97706', color = '#171d24';
+        if (r.asistencia){ bg = '#34d399'; borde = '#059669'; color = '#064e3b'; }
+        else if (r.fijo){ bg = '#c4b5fd'; borde = '#8b5cf6'; color = '#2e1065'; }
+        const icono = r.tipoEvento === 'Especial' ? '⭐ ' : (r.esClase ? '🧑‍🏫 ' : '');
+        html += '<div onclick="window.abrirModal(\''+esc(r.id)+'\')" style="position:absolute;top:'+(top+1)+'px;left:4px;right:4px;height:'+height+'px;background:'+bg+';border-left:5px solid '+borde+';color:'+color+';padding:6px;font-size:.84em;overflow:hidden;border-radius:7px;cursor:pointer;box-shadow:0 2px 5px rgba(15,23,42,.25);display:flex;flex-direction:column;z-index:10;box-sizing:border-box;">';
+        html += '<strong style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+icono+esc(r.jugador || 'Turno')+(r.fijo?' 📌':'')+'</strong>';
+        html += '<span style="margin-top:3px;font-weight:700;">'+esc(r.hora)+' hs</span>';
+        html += '<span style="margin-top:auto;font-weight:800;">Pago: '+(pago >= total && total > 0 ? '✅' : 'Pend')+'</span>';
+        html += '</div>';
+      });
+
+      html += '</div>';
+    });
+
+    html += '</div>';
+    cont.innerHTML = html;
+    if (typeof window.actualizarLineaDeTiempo === 'function') {
+      try { window.actualizarLineaDeTiempo(); } catch(e){}
+    }
+  };
+
+  window.abrirModalReservaAdmin = function(hora, cancha){
+    const fecha = fechaSeleccionadaActual();
+    const conf = getConfiguracion();
+    if (esHoraPasada(fecha, hora)){ alert('No puedes reservar un horario pasado.'); return; }
+    const inicio = aMinutos(hora);
+    let finClub = aMinutos(conf.ultimoTurno);
+    if (finClub < aMinutos(conf.primerTurno)) finClub += 1440;
+    if (inicio > finClub){ alert('Horario excede el límite del club.'); return; }
+
+    setG('reservaEnProcesoHora', hora);
+    if ($('admin-cancha-id')) $('admin-cancha-id').value = cancha;
+    const p = fecha.split('-');
+    if ($('admin-fecha-display')) $('admin-fecha-display').textContent = Number(p[2])+'/'+Number(p[1])+'/'+p[0];
+    if ($('admin-hora-display')) $('admin-hora-display').textContent = hora + ' hs';
+    if ($('admin-cancha-display')) $('admin-cancha-display').textContent = 'Cancha ' + (conf.nombres[Number(cancha)-1] || cancha) + ' (' + labelTipo(tipoCancha(cancha)) + ')';
+    if ($('admin-tipo-evento')) $('admin-tipo-evento').value = 'Normal';
+    if ($('admin-duracion')) $('admin-duracion').value = String(conf.duracionGlobal || 90);
+    if ($('admin-input-jugador')) $('admin-input-jugador').value = '';
+    if ($('admin-input-telefono')) $('admin-input-telefono').value = '';
+    if (typeof window.cambioTipoEvento === 'function') window.cambioTipoEvento();
+    mostrarModal('modal-reserva-admin');
+  };
+  window.cerrarModalReservaAdmin = function(){
+    setG('reservaEnProcesoHora', null);
+    ocultarModal('modal-reserva-admin');
+  };
+
+  window.confirmarReservaAdmin = async function(){
+    const fecha = fechaSeleccionadaActual();
+    const hora = getG('reservaEnProcesoHora', '');
+    const cancha = txt($('admin-cancha-id') && $('admin-cancha-id').value);
+    const jugador = txt($('admin-input-jugador') && $('admin-input-jugador').value);
+    const telefono = txt($('admin-input-telefono') && $('admin-input-telefono').value);
+    const tipoEvento = txt($('admin-tipo-evento') && $('admin-tipo-evento').value) || 'Normal';
+    const duracion = parseInt(($('admin-duracion') && $('admin-duracion').value) || getConfiguracion().duracionGlobal, 10) || getConfiguracion().duracionGlobal;
+    let profe = null;
+
+    if (!jugador){ alert('Ingresa el Nombre.'); return; }
+    if (!fecha || !hora || !cancha){ alert('Falta fecha, horario o cancha.'); return; }
+    if (esHoraPasada(fecha, hora)){ alert('No puedes reservar un horario pasado.'); return; }
+    if (tipoEvento === 'Clases'){
+      profe = txt($('admin-select-profe') && $('admin-select-profe').value);
+      if (!profe){ alert('Selecciona un profesor.'); return; }
+    }
+
+    const inicio = aMinutos(hora);
+    const fin = inicio + duracion;
+    const reservas = arrG('reservasGlobales').slice();
+    const colision = reservasDelDia(fecha).find(function(r){
+      if (String(r.cancha) !== String(cancha)) return false;
+      const ri = aMinutos(r.hora);
+      const rf = ri + (parseInt(r.duracion,10) || getConfiguracion().duracionGlobal);
+      return inicio < rf && fin > ri;
+    });
+    if (colision){ alert('❌ No se puede agendar aquí. Se pisa con "' + (colision.jugador || 'otro turno') + '".'); return; }
+
+    const nueva = {
+      id: (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()),
+      fecha: fecha,
+      hora: hora,
+      cancha: String(cancha),
+      jugador: jugador,
+      telefono: telefono,
+      duracion: duracion,
+      fechaRegistro: new Date().toISOString(),
+      asistencia: false,
+      fijo: false,
+      fechasCanceladas: [],
+      pagoEfectivo: 0,
+      pagoTransferencia: 0,
+      descuento: 0,
+      consumos: [],
+      tipoEvento: tipoEvento,
+      esClase: tipoEvento === 'Clases',
+      profe: profe,
+      origen: 'admin'
+    };
+
+    reservas.push(nueva);
+    setArrG('reservasGlobales', reservas);
+    window.renderizarPantallas();
+
+    const btn = $('btn-guardar-reserva-admin');
+    if (btn){ btn.disabled = true; btn.textContent = 'Guardando...'; }
+    try{
+      await guardarReserva(nueva);
+      window.cerrarModalReservaAdmin();
+      window.renderizarPantallas();
+      if (typeof window.renderizarHistorial === 'function') window.renderizarHistorial();
+    }catch(e){
+      console.error(e);
+      setArrG('reservasGlobales', reservas.filter(function(r){ return String(r.id) !== String(nueva.id); }));
+      window.renderizarPantallas();
+      alert('No se pudo guardar el turno en Firebase. Detalle: ' + (e.message || e));
+    }finally{
+      if (btn){ btn.disabled = false; btn.textContent = 'Guardar Evento'; }
+    }
+  };
+
+  window.abrirModal = function(id){
+    mirrorGlobals();
+    const reservas = arrG('reservasGlobales');
+    const r = reservas.find(function(x){ return String(x && x.id) === String(id); });
+    if (!r){ alert('No se encontró el turno seleccionado.'); return; }
+    setG('reservaSeleccionadaId', r.id);
+    if ($('pago-efectivo')) $('pago-efectivo').value = r.pagoEfectivo || '';
+    if ($('pago-transferencia')) $('pago-transferencia').value = r.pagoTransferencia || '';
+    if ($('pago-descuento')) $('pago-descuento').value = r.descuento || '';
+    if (typeof window.renderizarModalTurnoAcciones === 'function') {
+      try { window.renderizarModalTurnoAcciones(); } catch(e){ console.warn(e); }
+    }
+    mostrarModal('modal-acciones');
+  };
+  window.cerrarModalAcciones = function(){
+    setG('reservaSeleccionadaId', null);
+    ocultarModal('modal-acciones');
+    window.renderizarPantallas();
+  };
+
+  function reservaActual(){
+    const id = getG('reservaSeleccionadaId', null);
+    return arrG('reservasGlobales').find(function(r){ return String(r && r.id) === String(id); });
+  }
+  function guardarReservaActual(){
+    const r = reservaActual();
+    if (!r) return Promise.resolve();
+    setArrG('reservasGlobales', arrG('reservasGlobales').map(function(x){ return String(x.id) === String(r.id) ? r : x; }));
+    window.renderizarPantallas();
+    return guardarReserva(r);
+  }
+
+  const wrapMutation = {
+    toggleConfirmarTurno: function(){
+      const r = reservaActual(); if (!r) return;
+      r.asistencia = !r.asistencia;
+      guardarReservaActual().then(function(){ if (typeof window.renderizarModalTurnoAcciones === 'function') window.renderizarModalTurnoAcciones(); });
+    },
+    guardarPagosTurno: function(){
+      const r = reservaActual(); if (!r) return;
+      r.pagoEfectivo = num($('pago-efectivo') && $('pago-efectivo').value);
+      r.pagoTransferencia = num($('pago-transferencia') && $('pago-transferencia').value);
+      r.descuento = num($('pago-descuento') && $('pago-descuento').value);
+      guardarReservaActual().then(function(){ if (typeof window.renderizarModalTurnoAcciones === 'function') window.renderizarModalTurnoAcciones(); });
+    },
+    hacerTurnoFijo: function(){
+      const r = reservaActual(); if (!r) return;
+      r.fijo = !r.fijo;
+      guardarReservaActual().then(function(){ if (typeof window.renderizarModalTurnoAcciones === 'function') window.renderizarModalTurnoAcciones(); });
+    },
+    eliminarTurno: async function(){
+      const r = reservaActual(); if (!r) return;
+      if (typeof window.turneroConfirm === 'function'){
+        if (!(await window.turneroConfirm('¿Eliminar este turno?'))) return;
+      } else if (!confirm('¿Eliminar este turno?')) return;
+      setArrG('reservasGlobales', arrG('reservasGlobales').filter(function(x){ return String(x.id) !== String(r.id); }));
+      await borrarReservaFirebase(r.id);
+      window.cerrarModalAcciones();
+    }
+  };
+  Object.keys(wrapMutation).forEach(function(k){ window[k] = wrapMutation[k]; });
+
+  function categoriasActuales(){
+    const out = [];
+    arrG('categoriasInventarioGlobal').concat(arrG('inventarioGlobal').map(function(p){ return p && p.categoria; })).forEach(function(c){
+      c = txt(c);
+      if (c && !out.some(function(x){ return x.toLowerCase() === c.toLowerCase(); })) out.push(c);
+    });
+    return out.sort(function(a,b){ return a.localeCompare(b,'es'); });
+  }
+  function setCategorias(cats){
+    const out = [];
+    (Array.isArray(cats) ? cats : []).forEach(function(c){
+      c = txt(c);
+      if (c && !out.some(function(x){ return x.toLowerCase() === c.toLowerCase(); })) out.push(c);
+    });
+    setArrG('categoriasInventarioGlobal', out.sort(function(a,b){ return a.localeCompare(b,'es'); }));
+    return arrG('categoriasInventarioGlobal');
+  }
+
+  window.renderizarCategoriasInventario = function(){
+    const lista = $('lista-categorias-inventario');
+    const sel = $('inv-categoria');
+    const cats = categoriasActuales();
+
+    if (sel){
+      const actual = sel.value;
+      sel.innerHTML = '<option value="" disabled selected>Categoría...</option>' + cats.map(function(c){ return '<option value="'+esc(c)+'">'+esc(c)+'</option>'; }).join('');
+      if (actual && cats.some(function(c){ return c === actual; })) sel.value = actual;
+    }
+
+    if (lista){
+      if (!cats.length){
+        lista.innerHTML = '<p class="panel-muted" style="margin-top:12px;">Todavía no hay categorías.</p>';
+      } else {
+        lista.innerHTML = '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">' + cats.map(function(c){
+          return '<span style="display:inline-flex;align-items:center;gap:8px;background:#f8fafc;border:1px solid #dbe1ea;border-radius:999px;padding:7px 10px;color:#07152b;font-size:.9em;">'+esc(c)+' <button type="button" onclick="window.eliminarCategoriaInventario(\''+esc(c).replace(/'/g,'&#039;')+'\')" style="border:0;background:transparent;cursor:pointer;color:#ef4444;font-weight:900;">×</button></span>';
+        }).join('') + '</div>';
+      }
+    }
+  };
+
+  window.abrirModalAgregarProducto = function(){
+    window.renderizarCategoriasInventario();
+    ['inv-nombre','inv-stock','inv-costo','inv-precio'].forEach(function(id){ if ($(id)) $(id).value = ''; });
+    if ($('inv-categoria')) $('inv-categoria').value = '';
+    mostrarModal('modal-agregar-producto');
+    setTimeout(function(){ if ($('inv-nombre')) $('inv-nombre').focus(); }, 50);
+  };
+  window.cerrarModalAgregarProducto = function(){ ocultarModal('modal-agregar-producto'); };
+
+  window.crearCategoriaInventario = function(){
+    const input = $('input-nueva-categoria-inv');
+    const nueva = txt(input && input.value);
+    if (!nueva){ alert('Escribí el nombre de la categoría.'); return; }
+    const cats = categoriasActuales();
+    if (cats.some(function(c){ return c.toLowerCase() === nueva.toLowerCase(); })){ alert('Esa categoría ya existe.'); return; }
+    cats.push(nueva);
+    if (input) input.value = '';
+    setCategorias(cats);
+    window.renderizarCategoriasInventario();
+    guardarDatosClub({ categoriasInventario: categoriasActuales() });
+  };
+
+  window.eliminarCategoriaInventario = async function(cat){
+    cat = txt(cat);
+    if (!cat) return;
+    const enUso = arrG('inventarioGlobal').some(function(p){ return txt(p && p.categoria).toLowerCase() === cat.toLowerCase(); });
+    if (enUso){ alert('No se puede borrar esta categoría porque tiene productos cargados.'); return; }
+    if (typeof window.turneroConfirm === 'function'){
+      if (!(await window.turneroConfirm('¿Borrar la categoría "'+cat+'"?'))) return;
+    } else if (!confirm('¿Borrar la categoría "'+cat+'"?')) return;
+    setCategorias(categoriasActuales().filter(function(c){ return c.toLowerCase() !== cat.toLowerCase(); }));
+    window.renderizarCategoriasInventario();
+    guardarDatosClub({ categoriasInventario: categoriasActuales() });
+  };
+
+  window.agregarInventario = async function(){
+    const nombre = txt($('inv-nombre') && $('inv-nombre').value);
+    const categoria = txt($('inv-categoria') && $('inv-categoria').value);
+    const stockVal = $('inv-stock') ? $('inv-stock').value : '';
+    const costoVal = $('inv-costo') ? $('inv-costo').value : '';
+    const precioVal = $('inv-precio') ? $('inv-precio').value : '';
+    const stock = parseInt(stockVal, 10);
+    const costo = num(costoVal);
+    const precio = num(precioVal);
+
+    if (!nombre || !categoria || stockVal === '' || costoVal === '' || precioVal === ''){
+      alert('Completá todos los datos del producto.');
+      return;
+    }
+    if (!Number.isFinite(stock) || stock < 0 || precio < 0 || costo < 0){
+      alert('Stock, costo y precio deben ser números válidos.');
+      return;
+    }
+
+    const inventario = arrG('inventarioGlobal').slice();
+    inventario.push({ id:(window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()), nombre:nombre, categoria:categoria, stock:stock, costo:costo, precio:precio, creadoEn:new Date().toISOString() });
+    setArrG('inventarioGlobal', inventario);
+
+    const cats = categoriasActuales();
+    if (!cats.some(function(c){ return c.toLowerCase() === categoria.toLowerCase(); })) cats.push(categoria);
+    setCategorias(cats);
+
+    ['inv-nombre','inv-stock','inv-costo','inv-precio'].forEach(function(id){ if ($(id)) $(id).value = ''; });
+    if ($('inv-categoria')) $('inv-categoria').value = '';
+    window.cerrarModalAgregarProducto();
+    window.renderizarInventario();
+
+    await guardarDatosClub({ inventario: arrG('inventarioGlobal'), categoriasInventario: categoriasActuales() });
+  };
+
+  window.renderizarInventario = function(){
+    mirrorGlobals();
+    const tb = $('tabla-inventario');
+    const inv = arrG('inventarioGlobal').slice().sort(function(a,b){ return txt(a.nombre).localeCompare(txt(b.nombre),'es'); });
+    if (tb){
+      if (!inv.length){
+        tb.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#52627a;padding:18px;">No hay productos cargados.</td></tr>';
+      } else {
+        tb.innerHTML = inv.map(function(p){
+          const stock = parseInt(p.stock,10) || 0;
+          return '<tr>'+
+            '<td><strong>'+esc(p.nombre)+'</strong><br><small>'+esc(p.categoria || '')+'</small></td>'+
+            '<td style="text-align:center;color:'+(stock <= 0 ? '#ef4444' : '#07152b')+';">'+stock+'</td>'+
+            '<td style="text-align:right;">'+money(p.precio)+'</td>'+
+            '<td><div style="display:flex;gap:15px;justify-content:center;align-items:center;">'+
+              '<span onclick="window.abrirModalReposicion(\''+esc(p.id)+'\', \''+esc(p.nombre).replace(/'/g,'&#039;')+'\', '+num(p.costo)+')" style="cursor:pointer;font-size:1.2em;" title="Reponer Stock">➕</span>'+
+              '<span onclick="window.abrirModalEditarPrecio(\''+esc(p.id)+'\', \''+esc(p.nombre).replace(/'/g,'&#039;')+'\', '+num(p.precio)+')" style="cursor:pointer;font-size:1.2em;" title="Editar Precio">✏️</span>'+
+              '<span onclick="window.eliminarInventario(\''+esc(p.id)+'\')" style="cursor:pointer;font-size:1.2em;" title="Eliminar Producto">🗑️</span>'+
+            '</div></td>'+
+          '</tr>';
+        }).join('');
+      }
+    }
+
+    const selMov = $('mov-select-prod');
+    if (selMov){
+      const actual = selMov.value;
+      selMov.innerHTML = '<option value="" disabled selected>Selecciona producto...</option>' + inv.map(function(p){
+        return '<option value="'+esc(p.id)+'">'+esc(p.nombre)+' - Stock: '+(parseInt(p.stock,10)||0)+'</option>';
+      }).join('');
+      if (actual && inv.some(function(p){ return String(p.id) === String(actual); })) selMov.value = actual;
+    }
+
+    window.renderizarCategoriasInventario();
+    if (typeof window.actualizarResumenFinanzasClub === 'function') window.actualizarResumenFinanzasClub();
+  };
+
+  window.eliminarInventario = async function(id){
+    if (typeof window.turneroConfirm === 'function'){
+      if (!(await window.turneroConfirm('¿Borrar producto?'))) return;
+    } else if (!confirm('¿Borrar producto?')) return;
+    setArrG('inventarioGlobal', arrG('inventarioGlobal').filter(function(p){ return String(p.id) !== String(id); }));
+    window.renderizarInventario();
+    await guardarDatosClub({ inventario: arrG('inventarioGlobal') });
+  };
+
+  function guardarInvFinanzas(){
+    return guardarDatosClub({
+      inventario: arrG('inventarioGlobal'),
+      gastos: arrG('gastosGlobal'),
+      ingresos: arrG('ingresosGlobal')
+    });
+  }
+
+  ['venderProductoMostradorMov','agregarStockGasto','confirmarReposicionStock','confirmarEditarPrecio','agregarGasto','agregarIngresoLibre'].forEach(function(nombre){
+    const original = window[nombre];
+    if (typeof original !== 'function') return;
+    window[nombre] = function(){
+      const r = original.apply(this, arguments);
+      setTimeout(function(){
+        mirrorGlobals();
+        if (typeof window.renderizarInventario === 'function') window.renderizarInventario();
+        if (typeof window.renderizarHistorial === 'function') window.renderizarHistorial();
+        guardarInvFinanzas();
+      }, 50);
+      return r;
+    };
+  });
+
+  function bootCore(){
+    mirrorGlobals();
+    window.renderizarCategoriasInventario();
+    window.renderizarInventario();
+    if (document.body.classList.contains('panel-activo')) window.renderizarPantallas();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function(){ setTimeout(bootCore, 80); });
+  else setTimeout(bootCore, 80);
+  window.addEventListener('load', function(){ setTimeout(bootCore, 220); });
+
+})();
+</script>
+</body></html>
