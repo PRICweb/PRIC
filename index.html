@@ -3045,8 +3045,8 @@ body.panel-activo #panel-config-club.vista-activa-final .config-merge-status-v5{
 }
 </style>
 
-<style id="login-turnero-visible-core-css">
-/* V6: router único y guardia anti-pantalla-blanca después del login */
+<style id="router-vistas-completas-core-css">
+/* Router único: cada botón del lateral abre una sola vista completa junto al sidebar. */
 body.panel-activo #app-content{
   display:flex!important;
   flex-direction:row!important;
@@ -3054,12 +3054,54 @@ body.panel-activo #app-content{
   justify-content:flex-start!important;
   width:100%!important;
   min-height:100vh!important;
+  padding:0!important;
+  margin:0!important;
   background:#f7f8fa!important;
   overflow:hidden!important;
+  box-sizing:border-box!important;
+}
+body.panel-activo #sidebar-admin-club{
+  display:flex!important;
+  flex:0 0 235px!important;
+  width:235px!important;
+  min-width:235px!important;
+  max-width:235px!important;
+  min-height:100vh!important;
+  z-index:10!important;
+}
+body.panel-activo #pantalla-club:not(.vista-activa-final),
+body.panel-activo #panel-inventario-club:not(.vista-activa-final),
+body.panel-activo #panel-finanzas-club:not(.vista-activa-final),
+body.panel-activo #panel-movimientos-club:not(.vista-activa-final),
+body.panel-activo #panel-metricas-club:not(.vista-activa-final),
+body.panel-activo #panel-config-club:not(.vista-activa-final),
+body.panel-activo #modal-profesores:not(.vista-activa-final),
+body.panel-activo #modal-torneos:not(.vista-activa-final),
+body.panel-activo #modal-config:not(.vista-activa-final){
+  display:none!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
+  flex:0 0 0!important;
+  width:0!important;
+  min-width:0!important;
+  max-width:0!important;
+  height:0!important;
+  min-height:0!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  overflow:hidden!important;
+  position:static!important;
+  z-index:0!important;
 }
 body.panel-activo #pantalla-club.vista-activa-final,
-body.panel-activo #pantalla-club.panel-view-active,
-body.panel-activo #pantalla-club.force-turnero-visible{
+body.panel-activo #panel-inventario-club.vista-activa-final,
+body.panel-activo #panel-finanzas-club.vista-activa-final,
+body.panel-activo #panel-movimientos-club.vista-activa-final,
+body.panel-activo #panel-metricas-club.vista-activa-final,
+body.panel-activo #panel-config-club.vista-activa-final,
+body.panel-activo #modal-profesores.vista-activa-final,
+body.panel-activo #modal-torneos.vista-activa-final{
   display:block!important;
   visibility:visible!important;
   pointer-events:auto!important;
@@ -3067,6 +3109,7 @@ body.panel-activo #pantalla-club.force-turnero-visible{
   width:auto!important;
   max-width:none!important;
   min-width:0!important;
+  height:auto!important;
   min-height:100vh!important;
   margin:0!important;
   padding:24px 28px!important;
@@ -3076,50 +3119,97 @@ body.panel-activo #pantalla-club.force-turnero-visible{
   border-radius:0!important;
   box-shadow:none!important;
   overflow:auto!important;
+  position:static!important;
+  z-index:1!important;
   box-sizing:border-box!important;
 }
-body.panel-activo #lista-reservas-club{
-  min-height:160px!important;
-  background:#ffffff!important;
+body.panel-activo #panel-config-club.vista-activa-final{
+  overflow:hidden!important;
 }
-.turnero-placeholder-v6{
-  margin-top:14px;
-  padding:22px;
-  border:1px solid #dbe1ea;
-  border-radius:16px;
-  background:#ffffff;
-  color:#52627a;
-  font-weight:700;
-  text-align:center;
+body.panel-activo #modal-profesores.vista-activa-final,
+body.panel-activo #modal-torneos.vista-activa-final{
+  inset:auto!important;
+  backdrop-filter:none!important;
+}
+body.panel-activo #modal-profesores.vista-activa-final .modal-content,
+body.panel-activo #modal-torneos.vista-activa-final .modal-content,
+body.panel-activo #panel-config-club.vista-activa-final .modal-content{
+  width:100%!important;
+  max-width:none!important;
+  min-height:auto!important;
+  max-height:none!important;
+  margin:0!important;
+  padding:0!important;
+  background:#ffffff!important;
+  color:#07152b!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  text-align:left!important;
+  box-sizing:border-box!important;
+}
+body.panel-activo #panel-movimientos-club.vista-activa-final .panel-movimientos-vertical,
+body.panel-activo #panel-movimientos-club.vista-activa-final .panel-grid-dos{
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  width:100%!important;
+  max-width:none!important;
+}
+body.panel-activo #panel-movimientos-club.vista-activa-final .panel-card-club{
+  width:100%!important;
+  max-width:none!important;
+}
+body.panel-activo #pantalla-club.vista-activa-final #lista-reservas-club{
+  width:100%!important;
+  max-width:none!important;
+}
+body.panel-activo #pantalla-club.vista-activa-final .contenedor-grilla{
+  width:100%!important;
+  max-width:none!important;
 }
 @media(max-width:760px){
-  body.panel-activo #app-content{flex-direction:column!important;overflow:auto!important}
+  body.panel-activo #app-content{flex-direction:column!important;overflow:auto!important;}
+  body.panel-activo #sidebar-admin-club{flex:0 0 auto!important;width:100%!important;min-width:0!important;max-width:none!important;min-height:auto!important;}
   body.panel-activo #pantalla-club.vista-activa-final,
-  body.panel-activo #pantalla-club.panel-view-active,
-  body.panel-activo #pantalla-club.force-turnero-visible{min-height:auto!important;padding:18px 14px!important}
+  body.panel-activo #panel-inventario-club.vista-activa-final,
+  body.panel-activo #panel-finanzas-club.vista-activa-final,
+  body.panel-activo #panel-movimientos-club.vista-activa-final,
+  body.panel-activo #panel-metricas-club.vista-activa-final,
+  body.panel-activo #panel-config-club.vista-activa-final,
+  body.panel-activo #modal-profesores.vista-activa-final,
+  body.panel-activo #modal-torneos.vista-activa-final{min-height:auto!important;padding:18px 14px!important;}
 }
 </style>
-<script id="login-turnero-visible-core-js">
+<script id="router-vistas-completas-core-js">
 (function(){
 'use strict';
-if(window.__MODULO_LOGIN_TURNERO_VISIBLE_V6__)return;
-window.__MODULO_LOGIN_TURNERO_VISIBLE_V6__=true;
+if(window.__ROUTER_VISTAS_COMPLETAS_CORE__)return;
+window.__ROUTER_VISTAS_COMPLETAS_CORE__=true;
 
 var $=function(id){return document.getElementById(id)};
 var qsa=function(sel){return Array.prototype.slice.call(document.querySelectorAll(sel))};
 var VISTAS=['turnero','profes','inventario','finanzas','movimientos','metricas','config','torneos'];
-var VIEW_IDS=['pantalla-club','panel-inventario-club','panel-finanzas-club','panel-movimientos-club','panel-metricas-club','panel-config-club','modal-profesores','modal-torneos','modal-config'];
-var FLOATING=['modal-reserva-admin','modal-acciones','modal-agregar-producto','modal-editar-precio','modal-reponer-stock','modal-cobrar-clase','modal-alerta-turnero','modal-confirm-turnero'];
-var cambiando=false;
-var panelActivoAnterior=false;
+var IDS={
+  turnero:'pantalla-club',
+  profes:'modal-profesores',
+  inventario:'panel-inventario-club',
+  finanzas:'panel-finanzas-club',
+  movimientos:'panel-movimientos-club',
+  metricas:'panel-metricas-club',
+  config:'panel-config-club',
+  torneos:'modal-torneos'
+};
+var FLOTANTES=['modal-reserva-admin','modal-acciones','modal-agregar-producto','modal-editar-precio','modal-reponer-stock','modal-cobrar-clase','modal-alerta-turnero','modal-confirm-turnero'];
+var vistaActual=VISTAS.indexOf(window.__vistaPanelClubActual)>-1?window.__vistaPanelClubActual:'turnero';
+var aplicando=false;
+var ultimoClick=0;
 
-function safe(fn,label){try{if(typeof fn==='function')return fn()}catch(e){console.warn('Error actualizando '+(label||'vista')+':',e)}}
-function esPanelActivo(){return !!(document.body&&document.body.classList&&document.body.classList.contains('panel-activo'))}
-function esVisible(el){if(!el)return false;var st=window.getComputedStyle?getComputedStyle(el):null;return !!(el.classList.contains('vista-activa-final')||el.classList.contains('panel-seccion-activa')||el.classList.contains('panel-view-active')||el.classList.contains('force-turnero-visible'))&&(!st||st.display!=='none')}
-function vistaVisible(){return VIEW_IDS.some(function(id){return esVisible($(id))})}
-function markSidebar(view){qsa('.sidebar-item-club[data-sidebar-target]').forEach(function(btn){btn.classList.toggle('active',btn.getAttribute('data-sidebar-target')===view)});var sid=$('sidebar-club-id');var club=window.CLUB_DOC_ID_ACTUAL||(window.CLUB_DATA_ACTUAL&&(window.CLUB_DATA_ACTUAL.id||window.CLUB_DATA_ACTUAL.nombre))||'---';if(sid)sid.textContent=club}
+function panelActivo(){return !!(document.body&&document.body.classList&&document.body.classList.contains('panel-activo'))}
+function safe(fn,label){try{if(typeof fn==='function')return fn()}catch(e){console.warn('No se pudo actualizar '+(label||'vista')+':',e)}}
+function nodoVista(view){if(view==='config')return asegurarPanelConfig();return $(IDS[view])}
+function activoSidebar(){var b=document.querySelector('.sidebar-item-club.active[data-sidebar-target]');var v=b&&b.getAttribute('data-sidebar-target');return VISTAS.indexOf(v)>-1?v:null}
 
-function ensureConfigPanel(){
+function asegurarPanelConfig(){
   var panel=$('panel-config-club');
   var modal=$('modal-config');
   if(!panel){
@@ -3128,147 +3218,200 @@ function ensureConfigPanel(){
     panel.className='panel-seccion-club';
     panel.setAttribute('data-panel-section','config');
     var content=modal&&modal.querySelector('.modal-content');
-    if(content)panel.appendChild(content);else panel.innerHTML='<div class="panel-header-club"><h2>Configuración</h2></div>';
+    if(content)panel.appendChild(content);
+    else panel.innerHTML='<div class="panel-header-club"><h2>Configuración</h2><p>Datos y reglas del club.</p></div>';
     var ref=$('panel-metricas-club')||$('panel-movimientos-club')||$('panel-finanzas-club')||$('pantalla-club');
-    if(ref&&ref.parentNode)ref.parentNode.insertBefore(panel,ref.nextSibling);else ($('app-content')||document.body).appendChild(panel);
+    if(ref&&ref.parentNode)ref.parentNode.insertBefore(panel,ref.nextSibling);
+    else ($('app-content')||document.body).appendChild(panel);
   }
-  if(modal){modal.classList.remove('vista-activa-final','panel-view-active','panel-seccion-activa');modal.style.display='none';modal.style.visibility='hidden';modal.style.pointerEvents='none';modal.setAttribute('aria-hidden','true')}
+  if(modal){
+    modal.classList.remove('vista-activa-final','panel-view-active','panel-seccion-activa','force-turnero-visible');
+    modal.style.display='none';
+    modal.style.visibility='hidden';
+    modal.style.pointerEvents='none';
+    modal.setAttribute('aria-hidden','true');
+  }
   return panel;
 }
 
-function resetViews(){
-  VIEW_IDS.forEach(function(id){var el=$(id);if(el){el.classList.remove('vista-activa-final','panel-view-active','panel-seccion-activa','force-turnero-visible');el.style.display='none';el.style.visibility='hidden';el.style.pointerEvents='none'}});
-  FLOATING.forEach(function(id){var el=$(id);if(el){el.classList.remove('vista-activa-final','panel-view-active','panel-seccion-activa');el.style.display='none'}});
+function vistasPrincipales(){
+  var ids=[];
+  Object.keys(IDS).forEach(function(k){var id=IDS[k];if(ids.indexOf(id)===-1)ids.push(id)});
+  qsa('.panel-seccion-club').forEach(function(el){if(el&&el.id&&ids.indexOf(el.id)===-1)ids.push(el.id)});
+  return ids.map($).filter(Boolean);
 }
-function showNode(el,extra){if(!el)return;el.classList.add('vista-activa-final','panel-view-active');if(extra)el.classList.add(extra);el.style.display='block';el.style.visibility='visible';el.style.pointerEvents='auto'}
+function ocultarNodo(el){
+  if(!el)return;
+  el.classList.remove('vista-activa-final','panel-view-active','panel-seccion-activa','force-turnero-visible');
+  el.style.display='none';
+  el.style.visibility='hidden';
+  el.style.pointerEvents='none';
+}
+function mostrarNodo(el,view){
+  if(!el)return;
+  el.classList.remove('force-turnero-visible');
+  el.classList.add('vista-activa-final');
+  if(el.classList.contains('panel-seccion-club'))el.classList.add('panel-seccion-activa');
+  else el.classList.add('panel-view-active');
+  el.style.display='block';
+  el.style.visibility='visible';
+  el.style.pointerEvents='auto';
+  el.style.width='';
+  el.style.maxWidth='';
+  el.style.minWidth='';
+  el.style.height='';
+  el.style.maxHeight='';
+  el.style.minHeight='';
+  el.style.margin='';
+  el.style.position='';
+  el.style.zIndex='';
+  el.removeAttribute('aria-hidden');
+}
+function cerrarFlotantes(){
+  FLOTANTES.forEach(function(id){var el=$(id);if(el){el.classList.remove('vista-activa-final','panel-view-active','panel-seccion-activa');el.style.display='none';el.style.visibility='hidden';el.style.pointerEvents='none'}});
+}
+function marcarSidebar(view){
+  qsa('.sidebar-item-club[data-sidebar-target]').forEach(function(btn){btn.classList.toggle('active',btn.getAttribute('data-sidebar-target')===view)});
+  var sid=$('sidebar-club-id');
+  var id=window.CLUB_DOC_ID_ACTUAL||(window.CLUB_DATA_ACTUAL&&(window.CLUB_DATA_ACTUAL.id||window.CLUB_DATA_ACTUAL.nombre))||'---';
+  if(sid)sid.textContent=id;
+}
 
-function renderTurnero(){
-  safe(window.renderizarCalendarios,'calendario');
-  safe(window.renderizarPantallas,'turnero');
-  safe(window.renderizarReservasClub,'reservas');
-  setTimeout(asegurarTurneroConContenido,120);
-  setTimeout(function(){safe(window.renderizarPantallas,'turnero');asegurarTurneroConContenido()},650);
-  setTimeout(function(){safe(window.renderizarPantallas,'turnero');asegurarTurneroConContenido()},1600);
-}
-function asegurarTurneroConContenido(){
-  if(!esPanelActivo()||window.__vistaPanelClubActual!=='turnero')return;
-  var p=$('pantalla-club');if(p&&!esVisible(p))showNode(p,'force-turnero-visible');
-  var lista=$('lista-reservas-club');if(!lista)return;
-  var tieneGrilla=!!lista.querySelector('.contenedor-grilla');
-  var texto=(lista.textContent||'').trim();
-  if(!tieneGrilla&&!texto){
-    lista.innerHTML='<div id="turnero-placeholder-v6" class="turnero-placeholder-v6">Cargando turnero...</div>';
+function renderizar(view){
+  if(view==='turnero'){
+    safe(window.renderizarCalendarios,'calendarios');
+    safe(window.renderizarPantallas,'turnero');
+    safe(window.renderizarReservasClub,'reservas');
+    setTimeout(function(){safe(window.renderizarPantallas,'turnero')},120);
+  }else if(view==='profes'){
+    safe(window.renderizarProfesores,'profesores');
+    safe(window.renderizarClasesPendientes,'clases pendientes');
+  }else if(view==='inventario'){
+    safe(window.renderizarInventario,'inventario');
+  }else if(view==='finanzas'){
+    safe(window.renderizarHistorial,'historial');
+    safe(window.actualizarResumenFinanzasClub||window.actualizarResumenFinanzas,'resumen finanzas');
+  }else if(view==='movimientos'){
+    safe(window.renderizarInventario,'inventario para movimientos');
+    safe(window.renderizarSelectMovimiento||window.renderizarMovimientos,'movimientos');
+  }else if(view==='metricas'){
+    setTimeout(function(){safe(window.actualizarGraficos,'metricas')},80);
+  }else if(view==='config'){
+    safe(window.cargarConfigMergeSeguroV5||window.cargarConfigExistenteFinal||window.cargarConfiguracionGuardadaFirebase||window.cargarConfiguracionClub,'configuración');
+  }else if(view==='torneos'){
+    safe(window.renderizarTorneosAdmin,'torneos');
   }
-  setTimeout(function(){
-    if(window.__vistaPanelClubActual!=='turnero')return;
-    var l=$('lista-reservas-club');if(!l)return;
-    if(!l.querySelector('.contenedor-grilla')&&(!l.textContent||/Cargando turnero/i.test(l.textContent))){
-      l.innerHTML='<div class="turnero-placeholder-v6">El turnero está activo. Si no aparecen canchas, revisá que la configuración tenga al menos una cancha cargada.</div>';
-    }
-  },1800);
 }
 
-function mostrar(view,opts){
+function aplicarVista(view,opts){
   opts=opts||{};
   view=VISTAS.indexOf(view)>-1?view:'turnero';
-  if(!esPanelActivo()&&!opts.forzar)return false;
-  cambiando=true;
+  if(!panelActivo()&&!opts.forzar)return false;
+  var node=nodoVista(view);
+  if(!node&&view!=='turnero')return aplicarVista('turnero',{forzar:true});
+  aplicando=true;
+  vistaActual=view;
+  window.__vistaPanelClubActual=view;
   try{
-    ensureConfigPanel();
-    resetViews();
-    var node=null;
-    if(view==='turnero'){
-      node=$('pantalla-club');showNode(node,'force-turnero-visible');window.__vistaPanelClubActual='turnero';markSidebar('turnero');renderTurnero();
-    }else if(view==='profes'){
-      node=$('modal-profesores');showNode(node);window.__vistaPanelClubActual='profes';markSidebar('profes');safe(window.renderizarProfesores,'profesores');safe(window.renderizarClasesPendientes,'clases pendientes');
-    }else if(view==='torneos'){
-      node=$('modal-torneos');showNode(node);window.__vistaPanelClubActual='torneos';markSidebar('torneos');safe(window.renderizarTorneosAdmin,'torneos');
-    }else if(view==='config'){
-      node=ensureConfigPanel();showNode(node);window.__vistaPanelClubActual='config';markSidebar('config');safe(window.cargarConfigMergeSeguroV5||window.cargarConfigExistenteFinal||window.cargarConfiguracionGuardadaFirebase,'config firebase');
-    }else{
-      node=$('panel-'+view+'-club');showNode(node);window.__vistaPanelClubActual=view;markSidebar(view);
-      if(view==='inventario')safe(window.renderizarInventario,'inventario');
-      if(view==='finanzas'){safe(window.renderizarHistorial,'historial');safe(window.actualizarResumenFinanzasClub||window.actualizarResumenFinanzas,'finanzas')}
-      if(view==='movimientos')safe(window.renderizarSelectMovimiento||window.renderizarMovimientos,'movimientos');
-      if(view==='metricas')setTimeout(function(){safe(window.actualizarGraficos,'metricas')},80);
-    }
-    if(!node&&view!=='turnero')return mostrar('turnero',{forzar:true});
+    asegurarPanelConfig();
+    vistasPrincipales().forEach(function(el){if(el!==node)ocultarNodo(el)});
+    cerrarFlotantes();
+    mostrarNodo(node,view);
+    marcarSidebar(view);
+    renderizar(view);
+    normalizarExclusividad(view);
     return true;
   }finally{
-    setTimeout(function(){cambiando=false},220);
+    setTimeout(function(){aplicando=false;normalizarExclusividad(vistaActual)},60);
   }
 }
 
-function instalarRouter(){
-  var router=function(view){return mostrar(view,{forzar:true})};
-  router.__routerFinalTurneroV6=true;
-  window.abrirSeccionPanelClub = router;
-  window.abrirModalConfig=function(){return mostrar('config',{forzar:true})};
-  window.cerrarModalConfig=function(){return mostrar('turnero',{forzar:true})};
-  window.abrirModalFinanzas=function(){return mostrar('finanzas',{forzar:true})};
-  window.abrirModalMetricas=function(){return mostrar('metricas',{forzar:true})};
-  window.abrirModalProfesores=function(){return mostrar('profes',{forzar:true})};
-  window.cerrarModalProfesores=function(){return mostrar('turnero',{forzar:true})};
-  window.abrirModalTorneos=function(){return mostrar('torneos',{forzar:true})};
-  window.cerrarModalTorneos=function(){return mostrar('turnero',{forzar:true})};
-  window.__mostrarVistaFinalClub=router;
+function visiblePorEstilo(el){
+  if(!el)return false;
+  var st=window.getComputedStyle?getComputedStyle(el):null;
+  return !st||st.display!=='none';
 }
-
-function forzarTurneroPostLogin(){
-  if(!esPanelActivo())return;
-  window.__vistaPanelClubActual='turnero';
-  instalarRouter();
-  mostrar('turnero',{forzar:true});
-}
-function revisarPantallaBlanca(){
-  var activo=esPanelActivo();
-  if(activo&&!panelActivoAnterior){
-    panelActivoAnterior=true;
-    setTimeout(forzarTurneroPostLogin,40);
-    setTimeout(forzarTurneroPostLogin,250);
-    setTimeout(forzarTurneroPostLogin,900);
-    setTimeout(forzarTurneroPostLogin,1800);
-  }else if(!activo){
-    panelActivoAnterior=false;
-    return;
-  }
-  if(activo&&!cambiando&&!vistaVisible())setTimeout(function(){if(esPanelActivo()&&!vistaVisible())forzarTurneroPostLogin()},80);
-}
-
-function envolverLogin(){
-  if(typeof window.loginClub==='function'&&!window.loginClub.__turneroPostLoginV6){
-    var original=window.loginClub;
-    var envuelta=function(){var r=original.apply(this,arguments);Promise.resolve(r).finally(function(){setTimeout(revisarPantallaBlanca,80);setTimeout(forzarTurneroPostLogin,350);setTimeout(forzarTurneroPostLogin,1200)});return r};
-    envuelta.__turneroPostLoginV6=true;
-    window.loginClub=envuelta;
+function normalizarExclusividad(view){
+  if(!panelActivo()||aplicando)return;
+  view=VISTAS.indexOf(view)>-1?view:vistaActual;
+  var node=nodoVista(view);
+  if(!node){view='turnero';node=nodoVista(view)}
+  aplicando=true;
+  try{
+    vistasPrincipales().forEach(function(el){if(el!==node)ocultarNodo(el)});
+    if(node&&!node.classList.contains('vista-activa-final'))mostrarNodo(node,view);
+    if(node&&!visiblePorEstilo(node))mostrarNodo(node,view);
+    marcarSidebar(view);
+  }finally{
+    setTimeout(function(){aplicando=false},20);
   }
 }
-
-function boot(){
-  instalarRouter();
-  envolverLogin();
-  revisarPantallaBlanca();
+function hayVistaActiva(){
+  return vistasPrincipales().some(function(el){return el.classList.contains('vista-activa-final')&&visiblePorEstilo(el)});
 }
 
-document.addEventListener('click',function(ev){
+function instalarOpeners(){
+  window.abrirSeccionPanelClub=function(view){return aplicarVista(view,{forzar:true})};
+  window.abrirModalProfesores=function(){return aplicarVista('profes',{forzar:true})};
+  window.cerrarModalProfesores=function(){return aplicarVista('turnero',{forzar:true})};
+  window.abrirModalFinanzas=function(){return aplicarVista('finanzas',{forzar:true})};
+  window.cerrarModalFinanzas=function(){return aplicarVista('turnero',{forzar:true})};
+  window.abrirModalMetricas=function(){return aplicarVista('metricas',{forzar:true})};
+  window.cerrarModalMetricas=function(){return aplicarVista('turnero',{forzar:true})};
+  window.abrirModalConfig=function(){return aplicarVista('config',{forzar:true})};
+  window.cerrarModalConfig=function(){return aplicarVista('turnero',{forzar:true})};
+  window.abrirModalTorneos=function(){return aplicarVista('torneos',{forzar:true})};
+  window.cerrarModalTorneos=function(){return aplicarVista('turnero',{forzar:true})};
+  window.__mostrarVistaFinalClub=function(view){return aplicarVista(view,{forzar:true})};
+}
+
+function revisarPanel(){
+  instalarOpeners();
+  asegurarPanelConfig();
+  if(!panelActivo())return;
+  if(!hayVistaActiva()){
+    var v=VISTAS.indexOf(window.__vistaPanelClubActual)>-1?window.__vistaPanelClubActual:(activoSidebar()||vistaActual||'turnero');
+    aplicarVista(v,{forzar:true});
+  }else{
+    normalizarExclusividad(vistaActual||activoSidebar()||'turnero');
+  }
+}
+
+function onSidebarClick(ev){
   var btn=ev.target&&ev.target.closest&&ev.target.closest('.sidebar-item-club[data-sidebar-target]');
   if(!btn)return;
-  var target=btn.getAttribute('data-sidebar-target')||'turnero';
-  ev.preventDefault();ev.stopPropagation();ev.stopImmediatePropagation();
-  instalarRouter();mostrar(target,{forzar:true});
-},true);
+  var view=btn.getAttribute('data-sidebar-target')||'turnero';
+  if(VISTAS.indexOf(view)===-1)view='turnero';
+  ultimoClick=Date.now();
+  ev.preventDefault();
+  ev.stopPropagation();
+  ev.stopImmediatePropagation();
+  instalarOpeners();
+  aplicarVista(view,{forzar:true});
+}
+
+document.addEventListener('click',onSidebarClick,true);
 
 try{
-  var obs=new MutationObserver(function(){revisarPantallaBlanca()});
-  obs.observe(document.body,{attributes:true,attributeFilter:['class','style']});
-  var app=$('app-content');if(app)obs.observe(app,{attributes:true,attributeFilter:['style','class']});
-}catch(e){}
+  var obsBody=new MutationObserver(function(){
+    if(aplicando)return;
+    setTimeout(revisarPanel,0);
+  });
+  obsBody.observe(document.body,{attributes:true,attributeFilter:['class','style']});
+  var app=$('app-content');
+  if(app)obsBody.observe(app,{childList:true,subtree:false,attributes:true,attributeFilter:['class','style']});
+  var obsViews=new MutationObserver(function(){
+    if(aplicando)return;
+    setTimeout(function(){normalizarExclusividad(vistaActual)},0);
+  });
+  vistasPrincipales().forEach(function(el){obsViews.observe(el,{attributes:true,attributeFilter:['class','style']})});
+}catch(e){console.warn('Router de vistas: observer no disponible',e)}
 
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(boot,40);setTimeout(boot,400);setTimeout(boot,1200)});
-else{setTimeout(boot,40);setTimeout(boot,400);setTimeout(boot,1200)}
-window.addEventListener('load',function(){setTimeout(boot,250);setTimeout(boot,1000);setTimeout(boot,2500)});
-setInterval(function(){envolverLogin();revisarPantallaBlanca()},1200);
-window.forzarTurneroPostLoginV6=forzarTurneroPostLogin;
+function boot(){instalarOpeners();revisarPanel()}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(boot,30);setTimeout(boot,250);setTimeout(boot,900)});
+else{setTimeout(boot,30);setTimeout(boot,250);setTimeout(boot,900)}
+window.addEventListener('load',function(){setTimeout(boot,150);setTimeout(boot,700);setTimeout(boot,1600)});
+setInterval(function(){instalarOpeners();if(panelActivo())normalizarExclusividad(vistaActual||'turnero')},1500);
 })();
 </script>
 <script id="configuracion-estructural-core-js">
