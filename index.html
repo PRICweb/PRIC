@@ -172,6 +172,7 @@ let ingresosGlobal = [];
 let profesoresGlobal = [];
 let reservaSeleccionadaId = null;
 let reservaEnProcesoHora = null;
+let modalidadTurneroActual = localStorage.getItem("modalidadTurneroActual") || "indoor";
 let metricasChart = null;
 window.onload = function () { if (!document.body.classList.contains('panel-activo'))
     return; const app = document.getElementById('app-content'); if (app)
@@ -184,9 +185,19 @@ window.sumarMinutos = function (horaStr, minutosAñadir) { if (!horaStr || typeo
 window.getDayOfWeekFromDate = function (dateString) { const partes = dateString.split('-'); return new Date(partes[0], partes[1] - 1, partes[2]).getDay(); };
 function obtenerFechaHoy() { let h = new Date(); return `${h.getFullYear()}-${(h.getMonth() + 1).toString().padStart(2, '0')}-${h.getDate().toString().padStart(2, '0')}`; }
 ;
-function validarEsHoraPasada(horaStr) { if (fechaSeleccionada !== obtenerFechaHoy()) {
-    return new Date(fechaSeleccionada + 'T00:00:00') < new Date(obtenerFechaHoy() + 'T00:00:00');
-} ; const ahora = new Date(); return window.aMinutos(horaStr) <= (ahora.getHours() * 60) + ahora.getMinutes(); }
+function validarEsHoraPasada(fechaISO, horaStr) {
+    if (horaStr === undefined) {
+        horaStr = fechaISO;
+        fechaISO = fechaSeleccionada;
+    }
+    const fecha = fechaISO || fechaSeleccionada;
+    const hoy = obtenerFechaHoy();
+    if (fecha < hoy) return true;
+    if (fecha > hoy) return false;
+    const ahora = new Date();
+    return window.aMinutos(horaStr) <= (ahora.getHours() * 60) + ahora.getMinutes();
+}
+window.validarEsHoraPasada = validarEsHoraPasada;
 ;
 window.cambiarVista = function (vista) { document.getElementById('pantalla-club').style.display = vista === 'club' ? 'block' : 'none'; if (vista === 'club')
     actualizarLineaDeTiempo(); };
@@ -198,6 +209,69 @@ else {
     contenido.classList.add('abierto');
     flecha.innerText = '🔼';
 } };
+function fechaISOConDelta(dias) {
+    const base = new Date();
+    base.setHours(0, 0, 0, 0);
+    base.setDate(base.getDate() + dias);
+    return `${base.getFullYear()}-${String(base.getMonth() + 1).padStart(2, '0')}-${String(base.getDate()).padStart(2, '0')}`;
+}
+function obtenerTipoCanchaPorNumero(numeroCancha) {
+    const n = Number(numeroCancha) || 1;
+    const indoor = Number(canchasIndoorGlobal) || 0;
+    const outdoor = Number(canchasOutdoorGlobal) || 0;
+    if (n <= indoor) return 'indoor';
+    if (n <= indoor + outdoor) return 'outdoor';
+    return 'tenis';
+}
+function obtenerLabelModalidad(tipo) {
+    if (tipo === 'outdoor') return 'Pádel Outdoor';
+    if (tipo === 'tenis') return 'Tenis';
+    return 'Pádel Indoor';
+}
+function obtenerCanchasVisiblesTurnero() {
+    const total = Math.max(1, (Number(canchasIndoorGlobal) || 0) + (Number(canchasOutdoorGlobal) || 0) + (Number(canchasTenisGlobal) || 0));
+    const modalidad = modalidadTurneroActual || 'indoor';
+    const canchas = [];
+    for (let c = 1; c <= total; c++) {
+        const tipo = obtenerTipoCanchaPorNumero(c);
+        if (modalidad === 'todas' || modalidad === tipo) canchas.push({ id: c, tipo });
+    }
+    if (canchas.length) return canchas;
+    for (let c = 1; c <= total; c++) canchas.push({ id: c, tipo: obtenerTipoCanchaPorNumero(c) });
+    return canchas;
+}
+function renderizarSelectorModalidadTurnero() {
+    const controles = document.getElementById('controles-fecha-club');
+    if (!controles) return;
+    let box = document.getElementById('box-modalidad-turnero');
+    if (!box) {
+        box = document.createElement('div');
+        box.id = 'box-modalidad-turnero';
+        box.className = 'turnero-modalidad-router';
+        box.innerHTML = '<label for="select-modalidad-turnero">Modalidad</label><select id="select-modalidad-turnero"></select>';
+        controles.appendChild(box);
+    }
+    const sel = document.getElementById('select-modalidad-turnero');
+    if (!sel) return;
+    const opciones = [];
+    if ((Number(canchasIndoorGlobal) || 0) > 0) opciones.push(['indoor', 'Pádel Indoor']);
+    if ((Number(canchasOutdoorGlobal) || 0) > 0) opciones.push(['outdoor', 'Pádel Outdoor']);
+    if ((Number(canchasTenisGlobal) || 0) > 0) opciones.push(['tenis', 'Tenis']);
+    if (opciones.length > 1) opciones.unshift(['todas', 'Todas']);
+    if (!opciones.length) opciones.push(['indoor', 'Pádel Indoor']);
+    const html = opciones.map(o => `<option value="${o[0]}">${o[1]}</option>`).join('');
+    if (sel.innerHTML !== html) sel.innerHTML = html;
+    if (!opciones.some(o => o[0] === modalidadTurneroActual)) modalidadTurneroActual = opciones[0][0];
+    sel.value = modalidadTurneroActual;
+    if (sel.dataset.bound !== '1') {
+        sel.dataset.bound = '1';
+        sel.addEventListener('change', function () {
+            modalidadTurneroActual = this.value;
+            localStorage.setItem('modalidadTurneroActual', modalidadTurneroActual);
+            renderizarPantallas();
+        });
+    }
+}
 function renderizarCalendarios() { const lblClub = document.getElementById('lbl-fecha-club'); const diasCortos = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']; if (lblClub) {
     if (fechaSeleccionada === obtenerFechaHoy()) {
         lblClub.innerText = "HOY";
@@ -209,24 +283,22 @@ function renderizarCalendarios() { const lblClub = document.getElementById('lbl-
     }
 } ; const picker = document.getElementById('picker-fecha-club'); if (picker) {
     picker.value = fechaSeleccionada;
-    picker.min = obtenerFechaHoy();
+    picker.min = fechaISOConDelta(-30);
     picker.max = fechasValidas[fechasValidas.length - 1];
-} }
+} ; renderizarSelectorModalidadTurnero(); }
 ;
-window.cambiarDiaClub = function (delta) { let idx = fechasValidas.indexOf(fechaSeleccionada); if (idx === -1) {
-    window.seleccionarFecha(obtenerFechaHoy());
-    return;
-} ; let newIdx = idx + delta; if (newIdx >= 0 && newIdx < fechasValidas.length) {
-    window.seleccionarFecha(fechasValidas[newIdx]);
-}
-else if (newIdx < 0) {
-    alert("No puedes navegar a fechas pasadas.");
-}
-else {
-    alert("Límite de 1 año alcanzado.");
-} };
+window.cambiarDiaClub = function (delta) {
+    const base = new Date(fechaSeleccionada + 'T00:00:00');
+    base.setDate(base.getDate() + Number(delta || 0));
+    const nueva = `${base.getFullYear()}-${String(base.getMonth() + 1).padStart(2, '0')}-${String(base.getDate()).padStart(2, '0')}`;
+    const min = fechaISOConDelta(-30);
+    const max = fechasValidas[fechasValidas.length - 1];
+    if (nueva < min) return alert("Solo puedes volver hasta 30 días para atrás.");
+    if (nueva > max) return alert("Límite de 1 año alcanzado.");
+    window.seleccionarFecha(nueva);
+};
 window.irAHoyClub = function () { window.seleccionarFecha(obtenerFechaHoy()); };
-window.seleccionarFecha = function (fechaISO) { fechaSeleccionada = fechaISO; renderizarCalendarios(); renderizarPantallas(); };
+window.seleccionarFecha = function (fechaISO) { const min = fechaISOConDelta(-30); const max = fechasValidas[fechasValidas.length - 1]; if (fechaISO < min) return alert('Solo puedes volver hasta 30 días para atrás.'); if (fechaISO > max) return alert('Límite de 1 año alcanzado.'); fechaSeleccionada = fechaISO; renderizarCalendarios(); renderizarPantallas(); };
 function actualizarLineaDeTiempo() { const linea = document.getElementById('linea-tiempo-actual'); if (!linea)
     return; if (fechaSeleccionada !== obtenerFechaHoy()) {
     linea.style.display = 'none';
@@ -239,9 +311,9 @@ function actualizarLineaDeTiempo() { const linea = document.getElementById('line
 ;
 setInterval(actualizarLineaDeTiempo, 60000);
 window.renderizarPantallas = function () { try {
-    let totalCanchas = (canchasIndoorGlobal || 0) + (canchasOutdoorGlobal || 0) + (canchasTenisGlobal || 0);
-    if (totalCanchas <= 0)
-        totalCanchas = 1;
+    renderizarSelectorModalidadTurnero();
+    const canchasVisiblesTurnero = obtenerCanchasVisiblesTurnero();
+    let totalCanchas = Math.max(1, (canchasIndoorGlobal || 0) + (canchasOutdoorGlobal || 0) + (canchasTenisGlobal || 0));
     const contenedorClub = document.getElementById('lista-reservas-club');
     if (!contenedorClub)
         return;
@@ -271,22 +343,11 @@ window.renderizarPantallas = function () { try {
     }
     htmlGrilla += `</div>`;
     let maxPadel = (canchasIndoorGlobal || 0) + (canchasOutdoorGlobal || 0);
-    for (let c = 1; c <= totalCanchas; c++) {
+    for (const canchaVisible of canchasVisiblesTurnero) {
+        let c = canchaVisible.id;
         htmlGrilla += `<div style="flex: 1; min-width: 140px; border-right: 1px solid #2c3540; position: relative;">`;
-        let tipoLabel = "";
-        let colorTipo = "";
-        if (c <= (canchasIndoorGlobal || 0)) {
-            tipoLabel = "Pádel Indoor";
-            colorTipo = "#d1d5db";
-        }
-        else if (c <= maxPadel) {
-            tipoLabel = "Pádel Outdoor";
-            colorTipo = "#9ca3af";
-        }
-        else {
-            tipoLabel = "Tenis";
-            colorTipo = "#f59e0b";
-        }
+        let tipoLabel = obtenerLabelModalidad(canchaVisible.tipo);
+        let colorTipo = canchaVisible.tipo === 'tenis' ? "#f59e0b" : (canchaVisible.tipo === 'outdoor' ? "#9ca3af" : "#d1d5db");
         ;
         let numeroPersonalizado = nombresCanchasGlobal[c - 1] || c;
         htmlGrilla += `<div style="height: 50px; border-bottom: 1px solid #2c3540; text-align: center; background: #242c36; font-size: 0.9em; display:flex; flex-direction:column; justify-content:center;"><span style="font-weight: bold;" class="text-neutral-main">Cancha ${numeroPersonalizado}</span><span style="font-size: 0.8em; color:${colorTipo};">${tipoLabel}</span></div>`;
@@ -305,7 +366,7 @@ window.renderizarPantallas = function () { try {
             let borderStyle = (m % 60 === 0) ? 'border-bottom: 1px dashed rgba(255,255,255,0.05);' : 'border-bottom: 1px solid #2c3540;';
             let htmlExtra = "";
             if (!bloquesOcupadosCancha.has(horaFormateada)) {
-                if (validarEsHoraPasada(horaFormateada)) {
+                if (validarEsHoraPasada(fechaSeleccionada, horaFormateada)) {
                     htmlExtra = `style="height: ${celdaH}px; ${borderStyle} box-sizing: border-box; opacity: 0.2; cursor: not-allowed; background: rgba(0,0,0,0.3);"`;
                 }
                 else {
@@ -342,10 +403,10 @@ window.cambioTipoEvento = function () { document.getElementById('admin-div-profe
 window.abrirModalReservaAdmin = function (hora, cancha) { let minInicio = window.aMinutos(hora); let minUltimo = window.aMinutos(ultimoTurno); if (minInicio > minUltimo) {
     alert("Horario excede el límite del club.");
     return;
-} if (validarEsHoraPasada(hora)) {
+} if (validarEsHoraPasada(fechaSeleccionada, hora)) {
     alert("No puedes reservar un horario pasado.");
     return;
-} reservaEnProcesoHora = hora; document.getElementById('admin-cancha-id').value = cancha; const f = new Date(fechaSeleccionada.split('-')[0], fechaSeleccionada.split('-')[1] - 1, fechaSeleccionada.split('-')[2]); document.getElementById('admin-fecha-display').innerText = `${f.getDate()}/${f.getMonth() + 1}/${f.getFullYear()}`; document.getElementById('admin-hora-display').innerText = `${hora} hs`; let cNum = parseInt(cancha); let tipoC = cNum <= canchasIndoorGlobal ? "Indoor" : (cNum <= (canchasIndoorGlobal + canchasOutdoorGlobal) ? "Outdoor" : "Tenis"); document.getElementById('admin-cancha-display').innerText = `Cancha ${cancha} (${tipoC})`; document.getElementById('admin-tipo-evento').value = "Normal"; window.cambioTipoEvento(); document.getElementById('admin-duracion').value = duracionGlobal.toString(); document.getElementById('admin-input-jugador').value = ""; document.getElementById('admin-input-telefono').value = ""; document.getElementById('modal-reserva-admin').style.display = 'flex'; };
+} reservaEnProcesoHora = hora; document.getElementById('admin-cancha-id').value = cancha; const f = new Date(fechaSeleccionada.split('-')[0], fechaSeleccionada.split('-')[1] - 1, fechaSeleccionada.split('-')[2]); document.getElementById('admin-fecha-display').innerText = `${f.getDate()}/${f.getMonth() + 1}/${f.getFullYear()}`; document.getElementById('admin-hora-display').innerText = `${hora} hs`; let cNum = parseInt(cancha); let tipoC = cNum <= canchasIndoorGlobal ? "Indoor" : (cNum <= (canchasIndoorGlobal + canchasOutdoorGlobal) ? "Outdoor" : "Tenis"); document.getElementById('admin-cancha-display').innerText = `Cancha ${nombresCanchasGlobal[cNum - 1] || cancha} (${tipoC})`; document.getElementById('admin-tipo-evento').value = "Normal"; window.cambioTipoEvento(); document.getElementById('admin-duracion').value = duracionGlobal.toString(); document.getElementById('admin-input-jugador').value = ""; document.getElementById('admin-input-telefono').value = ""; document.getElementById('modal-reserva-admin').style.display = 'flex'; };
 window.cerrarModalReservaAdmin = function () { reservaEnProcesoHora = null; document.getElementById('modal-reserva-admin').style.display = 'none'; };
 window.confirmarReservaAdmin = function () { const inputNombre = document.getElementById('admin-input-jugador').value; const inputTelefono = document.getElementById('admin-input-telefono').value; const canchaAsignada = document.getElementById('admin-cancha-id').value; const tipoEvento = document.getElementById('admin-tipo-evento').value; const duracionSel = parseInt(document.getElementById('admin-duracion').value) || duracionGlobal; let profeSel = null; if (tipoEvento === 'Clases') {
     profeSel = document.getElementById('admin-select-profe').value;
@@ -941,7 +1002,7 @@ finally {
     ignorarRenderSnapshot = false;
 } } ; window.obtenerFechaHoy = function () { const h = new Date(); return `${h.getFullYear()}-${String(h.getMonth() + 1).padStart(2, "0")}-${String(h.getDate()).padStart(2, "0")}`; }; window.aMinutos = function (horaStr) { if (!horaStr || typeof horaStr !== "string")
     return 0; const [h, m] = horaStr.split(":").map(Number); return (h || 0) * 60 + (m || 0); }; window.sumarMinutos = function (horaStr, minutosAnadir) { if (!horaStr || typeof horaStr !== "string")
-    return "00:00"; let total = window.aMinutos(horaStr) + (Number(minutosAnadir) || 0); total = ((total % 1440) + 1440) % 1440; return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`; }; window.getDayOfWeekFromDate = function (fechaISO) { const [y, m, d] = String(fechaISO).split("-").map(Number); return new Date(y, (m || 1) - 1, d || 1).getDay(); }; window.validarEsHoraPasada = function (fechaISO, horaStr) { const fecha = fechaISO || fechaSeleccionada; const hoyISO = window.obtenerFechaHoy(); if (fecha < hoyISO)
+    return "00:00"; let total = window.aMinutos(horaStr) + (Number(minutosAnadir) || 0); total = ((total % 1440) + 1440) % 1440; return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`; }; window.getDayOfWeekFromDate = function (fechaISO) { const [y, m, d] = String(fechaISO).split("-").map(Number); return new Date(y, (m || 1) - 1, d || 1).getDay(); }; window.validarEsHoraPasada = function (fechaISO, horaStr) { if (horaStr === undefined) { horaStr = fechaISO; fechaISO = fechaSeleccionada; } const fecha = fechaISO || fechaSeleccionada; const hoyISO = window.obtenerFechaHoy(); if (fecha < hoyISO)
     return true; if (fecha > hoyISO)
     return false; const ahora = new Date(); return window.aMinutos(horaStr) <= (ahora.getHours() * 60 + ahora.getMinutes()); }; window.obtenerConfiguracionClub = function () { return { clubId: CLUB_ID, primerTurno, ultimoTurno, duracionDefault: duracionGlobal, diasAbiertos: diasAbiertosGlobal, canchasIndoor: canchasIndoorGlobal, canchasOutdoor: canchasOutdoorGlobal, canchasTenis: canchasTenisGlobal, precioIndoor: precioIndoorGlobal, precioOutdoor: precioOutdoorGlobal, precioTenis: precioTenisGlobal, profeIndoor: profeIndoorGlobal, profeOutdoor: profeOutdoorGlobal, profeTenis: profeTenisGlobal, senaIndoor: senaIndoorGlobal, senaOutdoor: senaOutdoorGlobal, senaTenis: senaTenisGlobal, duracionIndoor: duracionIndoorGlobal, duracionOutdoor: duracionOutdoorGlobal, duracionTenis: duracionTenisGlobal, telefono: telefonoClubGlobal, ubicacion: ubicacionClubGlobal, fotoClub: fotoClubGlobal, nombresIndoor: nombresIndoorGlobal, nombresOutdoor: nombresOutdoorGlobal, nombresTenis: nombresTenisGlobal, inventario: limpiarArrayFirestore(inventarioGlobal), gastos: limpiarArrayFirestore(gastosGlobal), ingresos: limpiarArrayFirestore(ingresosGlobal), profesores: limpiarArrayFirestore(profesoresGlobal) }; }; function limpiarConfigPersistibleClub(config) { const limpio = {}; Object.entries(config || {}).forEach(([k, v]) => { if (v === undefined || v === null)
     return; if (typeof v === "string" && v.trim() === "")
@@ -973,12 +1034,7 @@ catch (error) {
     cancha = disponibles[0]; if (!disponibles.includes(String(cancha)))
     return { ok: false, error: "La cancha ya está ocupada en ese horario." }; const nueva = { id: datos.id || ((crypto === null || crypto === void 0 ? void 0 : crypto.randomUUID) ? crypto.randomUUID() : Date.now().toString()), clubId: CLUB_ID, fecha, hora, cancha, jugador: datos.jugador || datos.nombre || "Sin nombre", telefono: datos.telefono || "", duracion, fechaRegistro: datos.fechaRegistro || new Date().toISOString(), asistencia: false, fijo: false, fechasCanceladas: [], pagoEfectivo: 0, pagoTransferencia: 0, descuento: 0, consumos: [], tipoEvento: datos.tipoEvento || "Normal", esClase: datos.esClase || false, profe: datos.profe || null, origen: datos.origen || "admin" }; reservasGlobales.push(nueva); guardarReservaEnFirebase(nueva).catch(error => logFirebaseError("creación de reserva", error)); return { ok: true, reserva: nueva }; }; window.actualizarHorariosDisponibles = function () { if (typeof renderizarPantallasOriginal === "function")
     renderizarPantallasOriginal(); }; window.renderizarPantallas = function () { if (typeof renderizarPantallasOriginal === "function")
-    renderizarPantallasOriginal(); }; window.seleccionarFecha = function (fechaISO) { fechaSeleccionada = fechaISO; renderizarCalendarios(); window.renderizarPantallas(); }; window.cambiarDia = function (delta) { const idx = fechasValidas.indexOf(fechaSeleccionada); const nuevoIdx = idx + delta; if (nuevoIdx >= 0 && nuevoIdx < fechasValidas.length)
-    window.seleccionarFecha(fechasValidas[nuevoIdx]);
-else if (nuevoIdx < 0)
-    alert("No puedes navegar a fechas pasadas.");
-else
-    alert("Límite de 1 año alcanzado."); }; window.cambiarDiaClub = window.cambiarDia; window.irAHoyClub = function () { window.seleccionarFecha(window.obtenerFechaHoy()); }; window.seleccionarHora = function (hora, btnElement) { reservaEnProcesoHora = hora; if (btnElement) {
+    renderizarPantallasOriginal(); }; window.seleccionarFecha = function (fechaISO) { const min = fechaISOConDelta(-30); const max = fechasValidas[fechasValidas.length - 1]; if (fechaISO < min) return alert("Solo puedes volver hasta 30 días para atrás."); if (fechaISO > max) return alert("Límite de 1 año alcanzado."); fechaSeleccionada = fechaISO; renderizarCalendarios(); window.renderizarPantallas(); }; window.cambiarDia = function (delta) { window.cambiarDiaClub(delta); }; window.cambiarDiaClub = function (delta) { const base = new Date(fechaSeleccionada + "T00:00:00"); base.setDate(base.getDate() + Number(delta || 0)); const nueva = `${base.getFullYear()}-${String(base.getMonth() + 1).padStart(2, "0")}-${String(base.getDate()).padStart(2, "0")}`; const min = fechaISOConDelta(-30); const max = fechasValidas[fechasValidas.length - 1]; if (nueva < min) return alert("Solo puedes volver hasta 30 días para atrás."); if (nueva > max) return alert("Límite de 1 año alcanzado."); window.seleccionarFecha(nueva); }; window.irAHoyClub = function () { window.seleccionarFecha(window.obtenerFechaHoy()); }; window.seleccionarHora = function (hora, btnElement) { reservaEnProcesoHora = hora; if (btnElement) {
     document.querySelectorAll(".btn-horario").forEach(b => b.classList.remove("activo"));
     btnElement.classList.add("activo");
 } }; window.confirmarReservaAdmin = function () { const inputNombre = document.getElementById("admin-input-jugador").value.trim(); const inputTelefono = document.getElementById("admin-input-telefono").value.trim(); const canchaAsignada = document.getElementById("admin-cancha-id").value; const tipoEvento = document.getElementById("admin-tipo-evento").value; const duracionSel = parseInt(document.getElementById("admin-duracion").value) || duracionGlobal; let profeSel = null; if (tipoEvento === "Clases") {
@@ -2819,58 +2875,13 @@ body.panel-activo #pantalla-club.panel-vista #lista-reservas-club .contenedor-gr
   }
   window.actualizarResumenFinanzasClub = window.actualizarResumenFinanzasClub || actualizarResumenFinanzas;
 
-  function asegurarSelectorModalidad(){
-    var controles = $('controles-fecha-club');
-    if(!controles) return;
-    var sel = $('select-modalidad-turnero');
-    if(!sel){
-      var box = document.createElement('div');
-      box.className = 'turnero-modalidad-router';
-      box.innerHTML = '<label for="select-modalidad-turnero">Modalidad</label><select id="select-modalidad-turnero"></select>';
-      controles.appendChild(box);
-      sel = $('select-modalidad-turnero');
-      sel.addEventListener('change', function(){
-        window.modalidadTurneroActual = this.value;
-        localStorage.setItem('modalidadTurneroActual', this.value);
-        aplicarFiltroModalidad();
-      });
-    }
-    var indoor = Number(window.canchasIndoorGlobal || 0);
-    var outdoor = Number(window.canchasOutdoorGlobal || 0);
-    var tenis = Number(window.canchasTenisGlobal || 0);
-    var opciones = [['todas','Todas']];
-    if(indoor > 0) opciones.push(['indoor','Pádel Indoor']);
-    if(outdoor > 0) opciones.push(['outdoor','Pádel Outdoor']);
-    if(tenis > 0) opciones.push(['tenis','Tenis']);
-    sel.innerHTML = opciones.map(function(o){ return '<option value="'+o[0]+'">'+o[1]+'</option>'; }).join('');
-    var actual = localStorage.getItem('modalidadTurneroActual') || window.modalidadTurneroActual || 'todas';
-    if(!opciones.some(function(o){return o[0]===actual;})) actual='todas';
-    sel.value = actual;
-    window.modalidadTurneroActual = actual;
-  }
-
-  function aplicarFiltroModalidad(){
-    var cont = document.querySelector('#lista-reservas-club .contenedor-grilla');
-    if(!cont) return;
-    var modalidad = window.modalidadTurneroActual || 'todas';
-    var indoor = Number(window.canchasIndoorGlobal || 0);
-    var outdoor = Number(window.canchasOutdoorGlobal || 0);
-    var tenis = Number(window.canchasTenisGlobal || 0);
-    var columnas = Array.prototype.slice.call(cont.children).slice(1);
-    columnas.forEach(function(col, idx){
-      var tipo = 'indoor';
-      if(idx >= indoor && idx < indoor + outdoor) tipo = 'outdoor';
-      if(idx >= indoor + outdoor && idx < indoor + outdoor + tenis) tipo = 'tenis';
-      col.style.display = (modalidad === 'todas' || modalidad === tipo) ? '' : 'none';
-    });
-  }
+  function asegurarSelectorModalidad(){ /* selector integrado en renderizarCalendarios/renderizarPantallas */ }
+  function aplicarFiltroModalidad(){ /* no-op: el turnero ya renderiza filtrado por modalidad */ }
   window.applyModalidadFilter = aplicarFiltroModalidad;
 
   function renderizar(vista){
     if(vista === 'turnero'){
       safe(window.renderizarPantallas);
-      safe(window.renderizarReservasClub);
-      setTimeout(function(){ asegurarSelectorModalidad(); aplicarFiltroModalidad(); }, 80);
     }
     if(vista === 'profes'){
       safe(window.renderizarProfesores);
@@ -2939,465 +2950,4 @@ body.panel-activo #pantalla-club.panel-vista #lista-reservas-club .contenedor-gr
       .observe(document.body, {attributes:true, attributeFilter:['class']});
   }catch(e){}
 })();
-</script><script id="patch-turnero-modalidad-fechas-30dias">
-(function(){
-  'use strict';
-  var MS_DIA = 24 * 60 * 60 * 1000;
-
-  function pad(n){ return String(n).padStart(2, '0'); }
-  function hoyISO(){
-    var h = new Date();
-    return h.getFullYear() + '-' + pad(h.getMonth() + 1) + '-' + pad(h.getDate());
-  }
-  function parseISO(fechaISO){
-    var p = String(fechaISO || hoyISO()).split('-').map(Number);
-    return new Date(p[0] || new Date().getFullYear(), (p[1] || 1) - 1, p[2] || 1);
-  }
-  function toISO(d){ return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
-  function sumarDiasISO(fechaISO, delta){
-    var d = parseISO(fechaISO);
-    d.setDate(d.getDate() + Number(delta || 0));
-    return toISO(d);
-  }
-  function limitePasadoISO(){ return sumarDiasISO(hoyISO(), -30); }
-  function minutos(hora){
-    if (typeof window.aMinutos === 'function') return window.aMinutos(hora);
-    var p = String(hora || '00:00').split(':').map(Number);
-    return (p[0] || 0) * 60 + (p[1] || 0);
-  }
-  function leerFechaSeleccionada(){
-    try { if (typeof fechaSeleccionada !== 'undefined' && fechaSeleccionada) return fechaSeleccionada; } catch(e) {}
-    var picker = document.getElementById('picker-fecha-club');
-    return (picker && picker.value) || hoyISO();
-  }
-  function setFechaSeleccionada(fechaISO){
-    try { fechaSeleccionada = fechaISO; } catch(e) { window.fechaSeleccionada = fechaISO; }
-  }
-  function llamar(fn){ try { if (typeof fn === 'function') fn(); } catch(e) { console.warn(e); } }
-
-  function esHoraPasadaFlexible(a, b){
-    var fecha = b === undefined ? leerFechaSeleccionada() : (a || leerFechaSeleccionada());
-    var hora = b === undefined ? a : b;
-    if (!fecha || !hora) return false;
-    var hoy = hoyISO();
-    if (fecha < hoy) return true;
-    if (fecha > hoy) return false;
-    var ahora = new Date();
-    return minutos(hora) < ((ahora.getHours() * 60) + ahora.getMinutes());
-  }
-
-  window.obtenerFechaHoy = hoyISO;
-  window.validarEsHoraPasada = esHoraPasadaFlexible;
-  try { validarEsHoraPasada = esHoraPasadaFlexible; } catch(e) {}
-
-  window.renderizarCalendarios = function(){
-    var fecha = leerFechaSeleccionada();
-    var lblClub = document.getElementById('lbl-fecha-club');
-    var diasCortos = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-    if (lblClub) {
-      if (fecha === hoyISO()) lblClub.innerText = 'HOY';
-      else {
-        var fObj = parseISO(fecha);
-        lblClub.innerText = diasCortos[fObj.getDay()] + ' ' + fObj.getDate() + '/' + (fObj.getMonth() + 1);
-      }
-    }
-    var picker = document.getElementById('picker-fecha-club');
-    if (picker) {
-      picker.value = fecha;
-      picker.min = limitePasadoISO();
-      picker.max = sumarDiasISO(hoyISO(), 365);
-    }
-  };
-  try { renderizarCalendarios = window.renderizarCalendarios; } catch(e) {}
-
-  window.seleccionarFecha = function(fechaISO){
-    if (!fechaISO) return;
-    var min = limitePasadoISO();
-    var max = sumarDiasISO(hoyISO(), 365);
-    if (fechaISO < min) {
-      alert('Solo se puede volver hasta 30 días para atrás.');
-      fechaISO = min;
-    }
-    if (fechaISO > max) {
-      alert('Límite de 1 año alcanzado.');
-      fechaISO = max;
-    }
-    setFechaSeleccionada(fechaISO);
-    window.renderizarCalendarios();
-    llamar(window.renderizarPantallas);
-    llamar(window.renderizarReservasClub);
-    setTimeout(function(){
-      asegurarSelectorModalidadTurnero();
-      aplicarFiltroModalidadTurnero();
-      habilitarCeldasFuturasTurnero();
-    }, 30);
-  };
-
-  window.cambiarDiaClub = function(delta){
-    window.seleccionarFecha(sumarDiasISO(leerFechaSeleccionada(), Number(delta || 0)));
-  };
-  window.cambiarDia = window.cambiarDiaClub;
-  window.irAHoyClub = function(){ window.seleccionarFecha(hoyISO()); };
-
-  function obtenerModalidadPorHeader(col){
-    var txt = ((col && col.firstElementChild && col.firstElementChild.textContent) || '').toLowerCase();
-    if (txt.indexOf('tenis') !== -1) return 'tenis';
-    if (txt.indexOf('outdoor') !== -1) return 'outdoor';
-    if (txt.indexOf('indoor') !== -1) return 'indoor';
-    return '';
-  }
-
-  function columnasCanchas(){
-    var cont = document.querySelector('#lista-reservas-club .contenedor-grilla');
-    if (!cont) return [];
-    return Array.prototype.slice.call(cont.children).filter(function(col){
-      if (!col || col.id === 'linea-tiempo-actual') return false;
-      var header = col.firstElementChild;
-      var txt = (header && header.textContent) || '';
-      return /Cancha\s+/i.test(txt) && /(Indoor|Outdoor|Tenis)/i.test(txt);
-    });
-  }
-
-  function modalidadesExistentes(){
-    var set = {};
-    columnasCanchas().forEach(function(col){
-      var m = obtenerModalidadPorHeader(col);
-      if (m) set[m] = true;
-    });
-    var orden = [];
-    if (set.indoor) orden.push(['indoor', 'Pádel Indoor']);
-    if (set.outdoor) orden.push(['outdoor', 'Pádel Outdoor']);
-    if (set.tenis) orden.push(['tenis', 'Tenis']);
-    return orden.length ? orden : [['indoor', 'Pádel Indoor'], ['outdoor', 'Pádel Outdoor'], ['tenis', 'Tenis']];
-  }
-
-  function asegurarSelectorModalidadTurnero(){
-    var controles = document.getElementById('controles-fecha-club');
-    if (!controles) return;
-    var sel = document.getElementById('select-modalidad-turnero');
-    if (!sel) {
-      var box = document.createElement('div');
-      box.className = 'turnero-modalidad-router';
-      box.innerHTML = '<label for="select-modalidad-turnero">Modalidad</label><select id="select-modalidad-turnero"></select>';
-      controles.appendChild(box);
-      sel = document.getElementById('select-modalidad-turnero');
-      sel.addEventListener('change', function(){
-        window.modalidadTurneroActual = this.value;
-        try { localStorage.setItem('modalidadTurneroActual', this.value); } catch(e) {}
-        aplicarFiltroModalidadTurnero();
-      });
-    }
-    var opciones = modalidadesExistentes();
-    var actual = window.modalidadTurneroActual || (localStorage && localStorage.getItem('modalidadTurneroActual')) || (opciones[0] && opciones[0][0]) || 'indoor';
-    if (!opciones.some(function(o){ return o[0] === actual; })) actual = opciones[0][0];
-    sel.innerHTML = opciones.map(function(o){ return '<option value="' + o[0] + '">' + o[1] + '</option>'; }).join('');
-    sel.value = actual;
-    window.modalidadTurneroActual = actual;
-  }
-
-  function aplicarFiltroModalidadTurnero(){
-    var modalidad = window.modalidadTurneroActual || 'indoor';
-    columnasCanchas().forEach(function(col){
-      var tipo = obtenerModalidadPorHeader(col);
-      col.dataset.modalidadTurnero = tipo;
-      col.style.display = (tipo === modalidad) ? '' : 'none';
-    });
-  }
-
-  function habilitarCeldasFuturasTurnero(){
-    var fecha = leerFechaSeleccionada();
-    if (fecha !== hoyISO()) return;
-    columnasCanchas().forEach(function(col){
-      var canchaTxt = ((col.firstElementChild && col.firstElementChild.textContent) || '').match(/Cancha\s+([^\n\r]+)/i);
-      var cancha = canchaTxt ? canchaTxt[1].trim().split(/\s+/)[0] : '';
-      var celdas = Array.prototype.slice.call(col.children).slice(1);
-      celdas.forEach(function(celda, idx){
-        if (celda.children && celda.children.length) return;
-        var primer = (typeof primerTurno !== 'undefined' && primerTurno) ? primerTurno : '09:00';
-        var hora = sumarDiasHora(primer, idx * 30);
-        if (!esHoraPasadaFlexible(fecha, hora) && (!celda.getAttribute('onclick') || celda.style.cursor === 'not-allowed')) {
-          celda.classList.add('celda-vacia-hover');
-          celda.style.opacity = '';
-          celda.style.cursor = 'pointer';
-          celda.style.background = '';
-          celda.onclick = function(){ window.abrirModalReservaAdmin(hora, cancha); };
-        }
-      });
-    });
-  }
-
-  function sumarDiasHora(hora, mins){
-    var total = minutos(hora) + Number(mins || 0);
-    total = ((total % 1440) + 1440) % 1440;
-    return pad(Math.floor(total / 60)) + ':' + pad(total % 60);
-  }
-
-  var abrirReservaOriginal = window.abrirModalReservaAdmin;
-  window.abrirModalReservaAdmin = function(hora, cancha){
-    if (esHoraPasadaFlexible(leerFechaSeleccionada(), hora)) {
-      alert('No puedes reservar un horario pasado. Para turnos vencidos, abrí el bloque existente desde la grilla.');
-      return;
-    }
-    return abrirReservaOriginal.apply(this, arguments);
-  };
-
-  var renderOriginal = window.renderizarPantallas;
-  if (typeof renderOriginal === 'function' && !renderOriginal.__turneroFiltro30Patch) {
-    var renderParcheado = function(){
-      var r = renderOriginal.apply(this, arguments);
-      setTimeout(function(){
-        window.renderizarCalendarios();
-        asegurarSelectorModalidadTurnero();
-        aplicarFiltroModalidadTurnero();
-        habilitarCeldasFuturasTurnero();
-      }, 20);
-      return r;
-    };
-    renderParcheado.__turneroFiltro30Patch = true;
-    window.renderizarPantallas = renderParcheado;
-  }
-
-  window.applyModalidadFilter = aplicarFiltroModalidadTurnero;
-  window.asegurarSelectorModalidadTurnero = asegurarSelectorModalidadTurnero;
-  window.aplicarFiltroModalidadTurnero = aplicarFiltroModalidadTurnero;
-
-  document.addEventListener('DOMContentLoaded', function(){
-    setTimeout(function(){
-      window.renderizarCalendarios();
-      asegurarSelectorModalidadTurnero();
-      aplicarFiltroModalidadTurnero();
-      habilitarCeldasFuturasTurnero();
-    }, 120);
-  });
-  window.addEventListener('load', function(){
-    setTimeout(function(){
-      window.renderizarCalendarios();
-      asegurarSelectorModalidadTurnero();
-      aplicarFiltroModalidadTurnero();
-      habilitarCeldasFuturasTurnero();
-    }, 350);
-  });
-})();
-</script>
-<script id="hotfix-turnero-creacion-sin-flash">
-(function(){
-  'use strict';
-  var MS_DIA = 86400000;
-  function $(id){ return document.getElementById(id); }
-  function pad(n){ return String(n).padStart(2,'0'); }
-  function hoyISO(){ var d=new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
-  function parseISO(s){ var p=String(s||hoyISO()).split('-').map(Number); return new Date(p[0]||new Date().getFullYear(), (p[1]||1)-1, p[2]||1); }
-  function toISO(d){ return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
-  function addDays(iso,n){ var d=parseISO(iso); d.setDate(d.getDate()+Number(n||0)); return toISO(d); }
-  function minFecha(){ return addDays(hoyISO(), -30); }
-  function maxFecha(){ return addDays(hoyISO(), 365); }
-  function getVar(nombre, def){ try { var v = Function('try{return typeof '+nombre+'!=="undefined"?'+nombre+':undefined}catch(e){return undefined}')(); return v === undefined ? def : v; } catch(e){ return def; } }
-  function setVar(nombre, valor){ try { Function('v', nombre+'=v;')(valor); } catch(e){ window[nombre] = valor; } }
-  function arr(nombre){ var v=getVar(nombre, []); return Array.isArray(v) ? v : []; }
-  function num(nombre, def){ var v=Number(getVar(nombre, def)); return isFinite(v) ? v : def; }
-  function str(nombre, def){ var v=getVar(nombre, def); return (v===undefined || v===null || v==='') ? def : String(v); }
-  function aMin(h){ if(typeof window.aMinutos==='function') return window.aMinutos(h); var p=String(h||'00:00').split(':').map(Number); return (p[0]||0)*60+(p[1]||0); }
-  function horaDesdeMin(m){ m=((m%1440)+1440)%1440; return pad(Math.floor(m/60))+':'+pad(m%60); }
-  function fechaSel(){ return str('fechaSeleccionada', hoyISO()); }
-  function dow(iso){ var d=parseISO(iso); return d.getDay(); }
-  function fechaAplica(r, iso){
-    if(!r) return false;
-    if(Array.isArray(r.fechasCanceladas) && r.fechasCanceladas.indexOf(iso)>=0) return false;
-    if(String(r.fecha||'') === iso) return true;
-    return !!r.fijo && r.fecha && dow(r.fecha)===dow(iso) && iso > String(r.fecha);
-  }
-  function esPasado(fecha, hora){
-    fecha = fecha || fechaSel();
-    if(fecha < hoyISO()) return true;
-    if(fecha > hoyISO()) return false;
-    var ahora = new Date();
-    return aMin(hora) < (ahora.getHours()*60 + ahora.getMinutes());
-  }
-  window.obtenerFechaHoy = hoyISO;
-  window.validarEsHoraPasada = function(fecha, hora){
-    if(arguments.length === 1) return esPasado(fechaSel(), fecha);
-    return esPasado(fecha, hora);
-  };
-  try { validarEsHoraPasada = function(hora){ return esPasado(fechaSel(), hora); }; } catch(e) {}
-
-  function modalidadReal(){
-    var guardada = '';
-    try { guardada = localStorage.getItem('modalidadTurneroFiltroReal') || localStorage.getItem('modalidadTurneroActual') || ''; } catch(e) {}
-    var existentes = modalidadesDisponibles().map(function(o){return o[0];});
-    if(existentes.indexOf(guardada) === -1) guardada = existentes[0] || 'indoor';
-    return guardada;
-  }
-  function setModalidadReal(m){
-    try { localStorage.setItem('modalidadTurneroFiltroReal', m); } catch(e) {}
-    window.modalidadTurneroFiltroReal = m;
-    // Deja inofensivos los filtros viejos que se ejecutaban con delay y ocultaban columnas incorrectas.
-    window.modalidadTurneroActual = 'todas';
-  }
-  function modalidadesDisponibles(){
-    var res=[];
-    if(num('canchasIndoorGlobal',0)>0) res.push(['indoor','Pádel Indoor']);
-    if(num('canchasOutdoorGlobal',0)>0) res.push(['outdoor','Pádel Outdoor']);
-    if(num('canchasTenisGlobal',0)>0) res.push(['tenis','Tenis']);
-    return res.length ? res : [['indoor','Pádel Indoor'],['outdoor','Pádel Outdoor'],['tenis','Tenis']];
-  }
-  function nombreCanchaGlobal(indiceGlobal, tipo){
-    var nombres = arr('nombresCanchasGlobal');
-    var nombre = nombres[indiceGlobal-1];
-    if(!nombre){
-      if(tipo==='indoor') nombre = arr('nombresIndoorGlobal')[indiceGlobal-1];
-      if(tipo==='outdoor') nombre = arr('nombresOutdoorGlobal')[indiceGlobal-num('canchasIndoorGlobal',0)-1];
-      if(tipo==='tenis') nombre = arr('nombresTenisGlobal')[indiceGlobal-num('canchasIndoorGlobal',0)-num('canchasOutdoorGlobal',0)-1];
-    }
-    return nombre || indiceGlobal;
-  }
-  function canchasFiltradas(){
-    var indoor=num('canchasIndoorGlobal',0), outdoor=num('canchasOutdoorGlobal',0), tenis=num('canchasTenisGlobal',0);
-    var modalidad = modalidadReal();
-    var lista=[];
-    for(var i=1;i<=indoor;i++) if(modalidad==='indoor') lista.push({id:i,tipo:'indoor',label:'Pádel Indoor',color:'#d1d5db',nombre:nombreCanchaGlobal(i,'indoor')});
-    for(var o=1;o<=outdoor;o++){ var idO=indoor+o; if(modalidad==='outdoor') lista.push({id:idO,tipo:'outdoor',label:'Pádel Outdoor',color:'#9ca3af',nombre:nombreCanchaGlobal(idO,'outdoor')}); }
-    for(var t=1;t<=tenis;t++){ var idT=indoor+outdoor+t; if(modalidad==='tenis') lista.push({id:idT,tipo:'tenis',label:'Tenis',color:'#f59e0b',nombre:nombreCanchaGlobal(idT,'tenis')}); }
-    if(!lista.length && indoor+outdoor+tenis<=0) lista.push({id:1,tipo:'indoor',label:'Pádel Indoor',color:'#d1d5db',nombre:'1'});
-    return lista;
-  }
-  function asegurarSelector(){
-    var controles=$('controles-fecha-club'); if(!controles) return;
-    var box = controles.querySelector('.turnero-modalidad-router');
-    if(!box){ box=document.createElement('div'); box.className='turnero-modalidad-router'; controles.appendChild(box); }
-    box.innerHTML = '<label for="select-modalidad-turnero">Modalidad</label><select id="select-modalidad-turnero"></select>';
-    var sel=$('select-modalidad-turnero');
-    var opciones=modalidadesDisponibles();
-    var real=modalidadReal();
-    if(opciones.map(function(o){return o[0];}).indexOf(real)===-1) real=opciones[0][0];
-    sel.innerHTML = opciones.map(function(o){return '<option value="'+o[0]+'">'+o[1]+'</option>';}).join('');
-    sel.value=real;
-    setModalidadReal(real);
-    sel.onchange=function(){ setModalidadReal(this.value); window.renderizarPantallas(); };
-  }
-  function actualizarCalendario(){
-    var f=fechaSel();
-    var lbl=$('lbl-fecha-club');
-    if(lbl){
-      if(f===hoyISO()) lbl.textContent='HOY';
-      else { var d=parseISO(f); var dias=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb']; lbl.textContent=dias[d.getDay()]+' '+d.getDate()+'/'+(d.getMonth()+1); }
-    }
-    var picker=$('picker-fecha-club');
-    if(picker){ picker.min=minFecha(); picker.max=maxFecha(); picker.value=f; }
-  }
-  window.renderizarCalendarios = actualizarCalendario;
-  try { renderizarCalendarios = actualizarCalendario; } catch(e) {}
-
-  function precioCancha(c){
-    var indoor=num('canchasIndoorGlobal',0), outdoor=num('canchasOutdoorGlobal',0);
-    if(c<=indoor) return parseFloat(str('precioIndoorGlobal','0'))||0;
-    if(c<=indoor+outdoor) return parseFloat(str('precioOutdoorGlobal','0'))||0;
-    return parseFloat(str('precioTenisGlobal','0'))||0;
-  }
-  function reservasDelDia(){
-    var f=fechaSel();
-    return arr('reservasGlobales').filter(function(r){ return fechaAplica(r,f); });
-  }
-  function turnoHtml(res, minInicio, celdaH){
-    var dur=parseInt(res.duracion,10)||num('duracionGlobal',90);
-    var minRes=aMin(res.hora);
-    if(minRes < minInicio && (minInicio > aMin(str('ultimoTurno','23:30')))) minRes += 1440;
-    var top=((minRes-minInicio)/30)*celdaH+50;
-    var alto=Math.max(20,(dur/30)*celdaH-2);
-    var fijo=res.fijo===true?' 📌':'';
-    var icon=res.tipoEvento==='Especial'?'⭐ ':(res.esClase?'🧑‍🏫 ':'');
-    var sec=res.esClase?'<br><span style="font-size:0.85em;opacity:.8;">Profe: '+(res.profe||'')+'</span>':'';
-    var factor=dur/30;
-    var totalCancha=precioCancha(Number(res.cancha))*factor;
-    var totalCons=(res.consumos||[]).reduce(function(a,x){return a+(parseFloat(x.precio)||0);},0)-(parseFloat(res.descuento)||0);
-    var total=Math.max(0,totalCancha+totalCons);
-    var abonado=(parseFloat(res.pagoEfectivo)||0)+(parseFloat(res.pagoTransferencia)||0);
-    var saldo=(abonado>=total && total>0)?'✅':'Pend';
-    var bg='#f6a74b', border='#d97706', color='#171d24';
-    if(res.asistencia){ bg='#34d399'; border='#059669'; color='#064e3b'; }
-    else if(res.fijo){ bg='#c4b5fd'; border='#8b5cf6'; color='#2e1065'; }
-    return '<div onclick="window.abrirModal(\''+String(res.id).replace(/'/g,'&#39;')+'\')" style="position:absolute;top:'+(Math.max(50,top)+1)+'px;left:4px;right:4px;height:'+alto+'px;background-color:'+bg+';border-left:5px solid '+border+';color:'+color+';padding:6px;font-size:.85em;overflow:hidden;border-radius:6px;cursor:pointer;box-shadow:0 2px 5px rgba(0,0,0,.28);display:flex;flex-direction:column;z-index:10;box-sizing:border-box;"><div style="display:flex;justify-content:space-between;align-items:flex-start;line-height:1;"><span style="font-weight:900;font-size:1.1em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+icon+(res.jugador||'Sin nombre')+fijo+sec+'</span></div><span style="margin-top:4px;opacity:.9;font-weight:700;">'+(res.hora||'')+' hs</span><span style="margin-top:auto;font-weight:bold;">Pago: '+saldo+'</span></div>';
-  }
-  window.renderizarPantallas = function(){
-    try{
-      var cont=$('lista-reservas-club'); if(!cont) return;
-      setModalidadReal(modalidadReal());
-      asegurarSelector();
-      actualizarCalendario();
-      var primer=str('primerTurno','09:00'), ultimo=str('ultimoTurno','23:30'), durGlobal=num('duracionGlobal',90);
-      var minInicio=aMin(primer), minFin=aMin(ultimo)+durGlobal; if(minFin<=minInicio) minFin+=1440;
-      var celdaH=40, html='<div class="contenedor-grilla">';
-      html+='<div id="linea-tiempo-actual"></div>';
-      html+='<div class="columna-horas-turnero" style="width:55px;flex-shrink:0;border-right:1px solid #e5eaf2;background:#f8fafc;"><div style="height:50px;border-bottom:1px solid #e5eaf2;background:#f8fafc;"></div>';
-      for(var m=minInicio;m<minFin;m+=30){ var h=Math.floor(m/60)%24; var es=m%60===0; var borde=es?'border-bottom:1px dashed rgba(15,23,42,.08);':'border-bottom:1px solid #eef2f7;'; html+='<div style="height:'+celdaH+'px;'+borde+'text-align:center;color:#52627a;font-size:.8em;padding-top:3px;box-sizing:border-box;">'+(es?pad(h)+':00':'')+'</div>'; }
-      html+='</div>';
-      var reservas=reservasDelDia();
-      canchasFiltradas().forEach(function(cancha){
-        html+='<div data-cancha-id="'+cancha.id+'" data-modalidad-turnero="'+cancha.tipo+'" style="flex:1;min-width:140px;border-right:1px solid #e5eaf2;position:relative;background:#fff;">';
-        html+='<div style="height:50px;border-bottom:1px solid #e5eaf2;text-align:center;background:#f8fafc;font-size:.9em;display:flex;flex-direction:column;justify-content:center;"><span style="font-weight:bold;color:#07152b;">Cancha '+cancha.nombre+'</span><span style="font-size:.8em;color:'+cancha.color+';">'+cancha.label+'</span></div>';
-        var reservasCancha=reservas.filter(function(r){ return String(r.cancha||'1')===String(cancha.id); });
-        var ocupados={};
-        reservasCancha.forEach(function(r){ var ini=aMin(r.hora); var dur=parseInt(r.duracion,10)||durGlobal; for(var mm=ini;mm<ini+dur;mm+=30) ocupados[horaDesdeMin(mm)]=true; });
-        for(var x=minInicio;x<minFin;x+=30){
-          var hora=horaDesdeMin(x); var esHora=x%60===0; var border=esHora?'border-bottom:1px dashed rgba(15,23,42,.08);':'border-bottom:1px solid #eef2f7;';
-          if(ocupados[hora]) html+='<div style="height:'+celdaH+'px;'+border+'box-sizing:border-box;"></div>';
-          else if(!esPasado(fechaSel(), hora)) html+='<div class="celda-vacia-hover" onclick="window.abrirModalReservaAdmin(\''+hora+'\',\''+cancha.id+'\')" style="height:'+celdaH+'px;'+border+'box-sizing:border-box;cursor:pointer;"></div>';
-          else html+='<div style="height:'+celdaH+'px;'+border+'box-sizing:border-box;opacity:.22;cursor:not-allowed;background:rgba(15,23,42,.04);"></div>';
-        }
-        reservasCancha.forEach(function(r){ html+=turnoHtml(r,minInicio,celdaH); });
-        html+='</div>';
-      });
-      html+='</div>';
-      cont.innerHTML=html;
-      if(typeof actualizarLineaDeTiempo==='function') actualizarLineaDeTiempo();
-      setTimeout(repararPostFiltrosViejos, 90);
-      setTimeout(repararPostFiltrosViejos, 180);
-    }catch(e){ console.error('Error render turnero estable:', e); }
-  };
-  function repararPostFiltrosViejos(){
-    var horas=document.querySelector('#lista-reservas-club .columna-horas-turnero'); if(horas) horas.style.display='';
-    var real=modalidadReal();
-    document.querySelectorAll('#lista-reservas-club .contenedor-grilla [data-modalidad-turnero]').forEach(function(col){ col.style.display = (col.getAttribute('data-modalidad-turnero')===real)?'':'none'; });
-    asegurarSelector();
-  }
-  window.aplicarFiltroModalidadTurnero = repararPostFiltrosViejos;
-  window.applyModalidadFilter = repararPostFiltrosViejos;
-
-  window.seleccionarFecha = function(iso){
-    if(!iso) return;
-    if(iso < minFecha()){ alert('Solo se puede volver hasta 30 días para atrás.'); iso=minFecha(); }
-    if(iso > maxFecha()){ iso=maxFecha(); }
-    setVar('fechaSeleccionada', iso);
-    actualizarCalendario();
-    window.renderizarPantallas();
-  };
-  window.cambiarDiaClub = function(delta){ window.seleccionarFecha(addDays(fechaSel(), Number(delta||0))); };
-  window.cambiarDia = window.cambiarDiaClub;
-  window.irAHoyClub = function(){ window.seleccionarFecha(hoyISO()); };
-
-  window.abrirModalReservaAdmin = function(hora, cancha){
-    if(esPasado(fechaSel(), hora)){ alert('No puedes reservar un horario pasado. Para turnos vencidos, abrí el turno existente desde la grilla.'); return; }
-    var minInicio=aMin(hora), minUltimo=aMin(str('ultimoTurno','23:30'));
-    if(minInicio > minUltimo && minUltimo >= aMin(str('primerTurno','09:00'))){ alert('Horario excede el límite del club.'); return; }
-    setVar('reservaEnProcesoHora', hora);
-    var canchaId=$('admin-cancha-id'); if(canchaId) canchaId.value=cancha;
-    var f=parseISO(fechaSel());
-    if($('admin-fecha-display')) $('admin-fecha-display').textContent=f.getDate()+'/'+(f.getMonth()+1)+'/'+f.getFullYear();
-    if($('admin-hora-display')) $('admin-hora-display').textContent=hora+' hs';
-    var cNum=parseInt(cancha,10)||1, indoor=num('canchasIndoorGlobal',0), outdoor=num('canchasOutdoorGlobal',0);
-    var tipo=cNum<=indoor?'Indoor':(cNum<=indoor+outdoor?'Outdoor':'Tenis');
-    if($('admin-cancha-display')) $('admin-cancha-display').textContent='Cancha '+cancha+' ('+tipo+')';
-    if($('admin-tipo-evento')) $('admin-tipo-evento').value='Normal';
-    if(typeof window.cambioTipoEvento==='function') window.cambioTipoEvento();
-    var dur = tipo==='Indoor'?num('duracionIndoorGlobal',num('duracionGlobal',90)):(tipo==='Outdoor'?num('duracionOutdoorGlobal',num('duracionGlobal',90)):num('duracionTenisGlobal',num('duracionGlobal',90)));
-    if($('admin-duracion')) $('admin-duracion').value=String(dur || num('duracionGlobal',90));
-    if($('admin-input-jugador')) $('admin-input-jugador').value='';
-    if($('admin-input-telefono')) $('admin-input-telefono').value='';
-    if($('modal-reserva-admin')) $('modal-reserva-admin').style.display='flex';
-  };
-
-  document.addEventListener('DOMContentLoaded', function(){ setModalidadReal(modalidadReal()); actualizarCalendario(); setTimeout(function(){ if($('lista-reservas-club')) window.renderizarPantallas(); }, 120); });
-  window.addEventListener('load', function(){ setTimeout(function(){ if($('lista-reservas-club')) window.renderizarPantallas(); }, 260); });
-})();
-</script>
-
-</body></html>
+</script></body></html>
