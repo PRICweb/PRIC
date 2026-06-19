@@ -297,26 +297,6 @@ function normalizarFechaTurnero(fechaISO) {
     if (fechaISO > max) return max;
     return fechaISO;
 }
-
-function precioBaseTurneroPorCancha(cancha, esClase) {
-    const n = Number(cancha) || 1;
-    const maxPadel = (Number(canchasIndoorGlobal) || 0) + (Number(canchasOutdoorGlobal) || 0);
-    if (esClase) {
-        if (n <= (Number(canchasIndoorGlobal) || 0)) return Number(profeIndoorGlobal) || 0;
-        if (n <= maxPadel) return Number(profeOutdoorGlobal) || 0;
-        return Number(profeTenisGlobal) || 0;
-    }
-    if (n <= (Number(canchasIndoorGlobal) || 0)) return Number(precioIndoorGlobal) || 0;
-    if (n <= maxPadel) return Number(precioOutdoorGlobal) || 0;
-    return Number(precioTenisGlobal) || 0;
-}
-function totalTurnoTurnero(res) {
-    if (!res) return 0;
-    const dur = Number(res.duracion) || Number(duracionGlobal) || 90;
-    const base = precioBaseTurneroPorCancha(res.cancha, res.esClase || res.tipoEvento === 'Clases') * (dur / 30);
-    const consumos = Array.isArray(res.consumos) ? res.consumos.reduce((acc, c) => acc + (Number(c.precio) || 0), 0) : 0;
-    return Math.max(0, base + consumos - (Number(res.descuento) || 0));
-}
 function renderizarSelectorModalidadTurnero() {
     const controles = document.getElementById('controles-fecha-club');
     if (!controles) return;
@@ -456,7 +436,7 @@ window.renderizarPantallas = function () {
                 });
                 if (ocupada) html += `<div class="turnero-slot"></div>`;
                 else if (validarEsHoraPasada(fechaSeleccionada, hora)) html += `<div class="turnero-slot past" title="Horario pasado"></div>`;
-                else html += `<div class="turnero-slot future" onclick="window.abrirModalReservaAdmin('${hora}','${cancha.id}')"></div>`;
+                else html += `<div class="turnero-slot future" data-hora="${hora}" data-cancha="${cancha.id}" onclick="window.abrirModalReservaAdmin('${hora}','${cancha.id}')"></div>`;
             });
         });
         canchasVisibles.forEach((cancha, idx) => {
@@ -469,7 +449,7 @@ window.renderizarPantallas = function () {
                 const left = timeCol + (idx * colWidth) + 4;
                 const height = Math.max(24, (dur / 30) * celdaH - 2);
                 const width = Math.max(80, colWidth - 8);
-                const total = totalTurnoTurnero(res);
+                const total = (typeof totalTurno === 'function') ? totalTurno(res) : 0;
                 const pagado = (parseFloat(res.pagoEfectivo) || 0) + (parseFloat(res.pagoTransferencia) || 0);
                 const pagoTxt = (pagado >= total && total > 0) ? '✅' : 'Pend';
                 const clases = ['turnero-card'];
@@ -1522,4 +1502,132 @@ window.actualizarGraficos = function () { const periodo = document.getElementByI
 })();
 </script><script></script><script></script></div>
 <!-- MÓDULO FINAL: Configuración sin título, acordeones cerrados, datos precargados y scroll interno -->
+
+<script id="fix-clicks-turnero-config">
+(function(){
+  function $(id){ return document.getElementById(id); }
+  function showModal(id){
+    var el=$(id); if(!el) return false;
+    el.style.display='flex';
+    el.style.visibility='visible';
+    el.style.pointerEvents='auto';
+    el.removeAttribute('aria-hidden');
+    return true;
+  }
+  function hideModal(id){
+    var el=$(id); if(!el) return;
+    el.style.display='none';
+    el.style.visibility='hidden';
+    el.style.pointerEvents='none';
+    el.setAttribute('aria-hidden','true');
+  }
+  function toMin(h){
+    if (window.aMinutos) return window.aMinutos(h);
+    var p=String(h||'00:00').split(':');
+    return (parseInt(p[0],10)||0)*60+(parseInt(p[1],10)||0);
+  }
+  function fechaHoy(){
+    if (window.obtenerFechaHoy) return window.obtenerFechaHoy();
+    var d=new Date();
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+  function esPasado(fecha,hora){
+    if (typeof window.validarEsHoraPasada === 'function') return window.validarEsHoraPasada(fecha,hora);
+    var hoy=fechaHoy();
+    if (fecha<hoy) return true;
+    if (fecha>hoy) return false;
+    var n=new Date();
+    return toMin(hora) <= n.getHours()*60+n.getMinutes();
+  }
+  function tipoCancha(n){
+    n=parseInt(n,10)||1;
+    var indoor=Number(window.canchasIndoorGlobal || canchasIndoorGlobal || 0) || 0;
+    var outdoor=Number(window.canchasOutdoorGlobal || canchasOutdoorGlobal || 0) || 0;
+    if (n<=indoor) return 'Indoor';
+    if (n<=indoor+outdoor) return 'Outdoor';
+    return 'Tenis';
+  }
+  function duracionCancha(n){
+    n=parseInt(n,10)||1;
+    var indoor=Number(window.canchasIndoorGlobal || canchasIndoorGlobal || 0) || 0;
+    var outdoor=Number(window.canchasOutdoorGlobal || canchasOutdoorGlobal || 0) || 0;
+    if (n<=indoor) return Number(window.duracionIndoorGlobal || duracionIndoorGlobal || window.duracionGlobal || duracionGlobal || 90) || 90;
+    if (n<=indoor+outdoor) return Number(window.duracionOutdoorGlobal || duracionOutdoorGlobal || window.duracionGlobal || duracionGlobal || 90) || 90;
+    return Number(window.duracionTenisGlobal || duracionTenisGlobal || window.duracionGlobal || duracionGlobal || 90) || 90;
+  }
+  var abrirOriginal = window.abrirModalReservaAdmin;
+  window.abrirModalReservaAdmin = function(hora, cancha){
+    hora = String(hora || '');
+    cancha = String(cancha || '');
+    if (!hora || !cancha) return;
+    var fecha = window.fechaSeleccionada || (typeof fechaSeleccionada !== 'undefined' ? fechaSeleccionada : fechaHoy());
+    if (esPasado(fecha, hora)) { alert('No podés reservar un horario pasado.'); return; }
+    try {
+      if (typeof abrirOriginal === 'function') abrirOriginal.call(window, hora, cancha);
+    } catch(e) {
+      console.error('abrirModalReservaAdmin original:', e);
+    }
+    var modal=$('modal-reserva-admin');
+    if (!modal || modal.style.display === 'flex') return;
+    try { reservaEnProcesoHora = hora; } catch(e) {}
+    var canchaInput=$('admin-cancha-id'); if (canchaInput) canchaInput.value=cancha;
+    var fechaSel = fecha;
+    var partes=String(fechaSel).split('-');
+    var f=new Date(Number(partes[0]), Number(partes[1])-1, Number(partes[2]));
+    var fechaDisplay=$('admin-fecha-display'); if (fechaDisplay) fechaDisplay.innerText = f && !isNaN(f) ? (f.getDate()+'/'+(f.getMonth()+1)+'/'+f.getFullYear()) : fechaSel;
+    var horaDisplay=$('admin-hora-display'); if (horaDisplay) horaDisplay.innerText = hora+' hs';
+    var canchaDisplay=$('admin-cancha-display'); if (canchaDisplay) canchaDisplay.innerText = 'Cancha '+cancha+' ('+tipoCancha(cancha)+')';
+    var tipoEvento=$('admin-tipo-evento'); if (tipoEvento) tipoEvento.value='Normal';
+    var divProfe=$('admin-div-profe'); if (divProfe) divProfe.style.display='none';
+    var dur=$('admin-duracion'); if (dur) dur.value=String(duracionCancha(cancha));
+    var jugador=$('admin-input-jugador'); if (jugador) jugador.value='';
+    var tel=$('admin-input-telefono'); if (tel) tel.value='';
+    showModal('modal-reserva-admin');
+  };
+  window.cerrarModalReservaAdmin = function(){
+    try { reservaEnProcesoHora = null; } catch(e) {}
+    hideModal('modal-reserva-admin');
+  };
+  document.addEventListener('click', function(ev){
+    var slot = ev.target && ev.target.closest ? ev.target.closest('.turnero-slot.future') : null;
+    if (!slot) return;
+    var cont = slot.closest('#lista-reservas-club');
+    if (!cont) return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    if (ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+    var hora = slot.getAttribute('data-hora');
+    var cancha = slot.getAttribute('data-cancha');
+    if ((!hora || !cancha) && slot.getAttribute('onclick')) {
+      var m = slot.getAttribute('onclick').match(/abrirModalReservaAdmin\('([^']+)'\s*,\s*'([^']+)'\)/);
+      if (m) { hora=m[1]; cancha=m[2]; }
+    }
+    window.abrirModalReservaAdmin(hora, cancha);
+  }, true);
+  function toggleAcordeonSeguro(id){
+    var contenido=$(id); if(!contenido) return;
+    var abierto = contenido.classList.toggle('abierto');
+    contenido.style.display = abierto ? 'block' : 'none';
+    var flecha=$('flecha-'+id); if(flecha) flecha.innerText = abierto ? '🔼' : '🔽';
+  }
+  window.toggleAcordeon = toggleAcordeonSeguro;
+  document.addEventListener('click', function(ev){
+    var header = ev.target && ev.target.closest ? ev.target.closest('.header-acordeon') : null;
+    if(!header) return;
+    var id = null;
+    var onclick = header.getAttribute('onclick') || '';
+    var m = onclick.match(/toggleAcordeon\('([^']+)'\)/);
+    if (m) id = m[1];
+    if (!id) {
+      var contenido = header.nextElementSibling;
+      if (contenido && contenido.classList && contenido.classList.contains('contenido-acordeon')) id = contenido.id;
+    }
+    if(!id) return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    if (ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+    toggleAcordeonSeguro(id);
+  }, true);
+})();
+</script>
 </body></html>
