@@ -1089,8 +1089,19 @@ window.actualizarGraficos = function () { const periodo = document.getElementByI
     if (app) app.style.display = 'flex';
     setText('lbl-nombre-club', club.nombre || currentClubId);
     setText('sidebar-club-id', currentClubId || '---');
-    aplicarDatosClub(club);
-    aplicarCacheLocalClub(currentClubId);
+
+    const cache = leerCacheLocalClub(currentClubId);
+    const cacheTs = cache ? toNum(cache.__ts || 0) : 0;
+    const remoteTs = tsDatosClub(club);
+
+    aplicarDatosClub(club, {actualizarCache:false});
+    if (cache && cacheTs > remoteTs){
+      aplicarCacheLocalClub(currentClubId);
+      guardarDatosClub(snapshotDatos()).catch(e => console.warn('No se pudo sincronizar caché local con Firebase:', e));
+    } else {
+      guardarCacheLocalClub(snapshotDatos());
+    }
+
     refrescarTodo();
     iniciarEscuchasFirebase();
     activarVista(localStorage.getItem('vistaActivaClub') || 'turnero');
@@ -1208,9 +1219,16 @@ window.actualizarGraficos = function () { const periodo = document.getElementByI
     return true;
   }
   function tiene(obj, key){ return Object.prototype.hasOwnProperty.call(obj || {}, key); }
-  function aplicarDatosClub(data){
+  function datosPlanosClub(data){
+    return Object.assign({}, data || {}, (data && data.datosClub && typeof data.datosClub === 'object') ? data.datosClub : {});
+  }
+  function tsDatosClub(data){
+    const d = datosPlanosClub(data);
+    return toNum(d.datosClubActualizadoMs || d.__ts || 0);
+  }
+  function aplicarDatosClub(data, opciones){
     if (!data || typeof data !== 'object') return;
-    const d = Object.assign({}, data, (data.datosClub && typeof data.datosClub === 'object') ? data.datosClub : {});
+    const d = datosPlanosClub(data);
     if (tiene(d,'primerTurno')) primerTurno = String(d.primerTurno || primerTurno || '08:00');
     if (tiene(d,'ultimoTurno')) ultimoTurno = String(d.ultimoTurno || ultimoTurno || '21:30');
     if (tiene(d,'duracionDefault') || tiene(d,'duracionGlobal')) duracionGlobal = toInt(d.duracionDefault != null ? d.duracionDefault : d.duracionGlobal, duracionGlobal || 90);
@@ -1249,7 +1267,7 @@ window.actualizarGraficos = function () { const periodo = document.getElementByI
       reservasGlobales = d.reservas.map(serializar);
       reservaMirrorCargada = true;
     }
-    guardarCacheLocalClub({
+    if (!opciones || opciones.actualizarCache !== false) guardarCacheLocalClub({
       inventario: inventarioGlobal,
       categoriasInventario: categoriasInventarioGlobal,
       gastos: gastosGlobal,
@@ -1264,7 +1282,8 @@ window.actualizarGraficos = function () { const periodo = document.getElementByI
       senaIndoor: senaIndoorGlobal, senaOutdoor: senaOutdoorGlobal, senaTenis: senaTenisGlobal,
       duracionIndoor: duracionIndoorGlobal, duracionOutdoor: duracionOutdoorGlobal, duracionTenis: duracionTenisGlobal,
       telefono: telefonoClubGlobal, ubicacion: ubicacionClubGlobal, fotoClub: fotoClubGlobal,
-      nombresIndoor: nombresIndoorGlobal, nombresOutdoor: nombresOutdoorGlobal, nombresTenis: nombresTenisGlobal, nombresCanchas: nombresCanchasGlobal
+      nombresIndoor: nombresIndoorGlobal, nombresOutdoor: nombresOutdoorGlobal, nombresTenis: nombresTenisGlobal, nombresCanchas: nombresCanchasGlobal,
+      datosClubActualizadoMs: tsDatosClub(d) || Date.now()
     });
   }
   function snapshotDatos(){
@@ -1279,27 +1298,27 @@ window.actualizarGraficos = function () { const periodo = document.getElementByI
       telefono: telefonoClubGlobal, ubicacion: ubicacionClubGlobal, fotoClub: fotoClubGlobal,
       nombresIndoor: nombresIndoorGlobal, nombresOutdoor: nombresOutdoorGlobal, nombresTenis: nombresTenisGlobal, nombresCanchas: nombresCanchasGlobal,
       inventario: inventarioGlobal, gastos: gastosGlobal, ingresos: ingresosGlobal, profesores: profesoresGlobal,
-      categoriasInventario: categoriasInventario(), reservas: reservasGlobales
+      categoriasInventario: categoriasInventario(), reservas: reservasGlobales,
+      datosClubActualizadoMs: Date.now()
     };
   }
   async function guardarDatosClub(parcial){
-    const data = parcial || snapshotDatos();
-    const claves = Object.keys(data || {});
-    guardarCacheLocalClub(data);
+    const parcialLimpio = serializar(parcial || {});
+    const datosCompletos = Object.assign({}, snapshotDatos(), parcialLimpio);
+    datosCompletos.datosClubActualizadoMs = Date.now();
+    const claves = Object.keys(parcial && typeof parcial === 'object' ? parcial : datosCompletos);
+    guardarCacheLocalClub(datosCompletos);
     const marcaPendiente = marcarCambioLocalPendiente(claves);
     const trabajo = async () => {
       const id = currentClubId || window.CLUB_DOC_ID_ACTUAL;
       if (!id) throw new Error('No hay club activo para guardar.');
       const {db} = await firebaseReady();
-      const payload = { actualizadoEn: firebase.firestore.FieldValue.serverTimestamp() };
-      Object.keys(data).forEach(k => {
-        const v = serializar(data[k]);
-        if (v !== undefined) {
-          payload['datosClub.' + k] = v;
-          payload[k] = v;
-        }
-      });
-      await db.collection('clubs').doc(id).set(payload, {merge:true});
+      const ref = db.collection('clubs').doc(id);
+      const datosSerializados = serializar(datosCompletos);
+      await ref.set({
+        datosClub: datosSerializados,
+        actualizadoEn: firebase.firestore.FieldValue.serverTimestamp()
+      }, {merge:true});
       limpiarCambioLocalPendiente(claves, marcaPendiente);
     };
     guardadoEnCurso = guardadoEnCurso.catch(() => null).then(trabajo).catch(e => {
@@ -1338,7 +1357,16 @@ window.actualizarGraficos = function () { const periodo = document.getElementByI
     const {db} = await firebaseReady();
     const ref = db.collection('clubs').doc(id);
     unsubClub = ref.onSnapshot((snap) => {
-      if (snap.exists) aplicarDatosClub(Object.assign({id:snap.id}, snap.data() || {}));
+      if (snap.exists) {
+        const remoto = Object.assign({id:snap.id}, snap.data() || {});
+        const cache = leerCacheLocalClub(snap.id);
+        if (cache && toNum(cache.__ts || 0) > tsDatosClub(remoto)) {
+          aplicarDatosClub(Object.assign({id:snap.id}, cache), {actualizarCache:false});
+          guardarDatosClub(snapshotDatos()).catch(e => console.warn('No se pudo sincronizar caché local con Firebase:', e));
+        } else {
+          aplicarDatosClub(remoto);
+        }
+      }
       refrescarTodo();
     }, (error) => { console.error('lectura club:', error); alert('No se pudo leer datos del club desde Firebase. Detalle: ' + (error.message || error)); });
     unsubReservas = ref.collection('reservas').onSnapshot((snap) => {
@@ -1533,11 +1561,12 @@ window.actualizarGraficos = function () { const periodo = document.getElementByI
     if(cats.some(c => c.toLowerCase() === nueva.toLowerCase())){ alert('Esa categoría ya existe.'); if(input) input.focus(); return; }
     cats.push(nueva);
     setCategorias(cats);
+    marcarCambioLocalPendiente('categoriasInventario');
     if(input) input.value='';
     window.renderizarCategoriasInventario();
     await guardarDatosClub({categoriasInventario:categoriasInventario()});
   };
-  window.eliminarCategoriaInventario = async function(cat){ cat=toText(cat); if(!cat) return; if(inventarioGlobal.some(p => toText(p && p.categoria).toLowerCase() === cat.toLowerCase())){ alert('No se puede borrar esta categoría porque tiene productos cargados.'); return; } if(!(await window.turneroConfirm('¿Borrar la categoría "' + cat + '"?'))) return; setCategorias(categoriasInventario().filter(c => c.toLowerCase() !== cat.toLowerCase())); window.renderizarCategoriasInventario(); await guardarDatosClub({categoriasInventario:categoriasInventario()}); };
+  window.eliminarCategoriaInventario = async function(cat){ cat=toText(cat); if(!cat) return; if(inventarioGlobal.some(p => toText(p && p.categoria).toLowerCase() === cat.toLowerCase())){ alert('No se puede borrar esta categoría porque tiene productos cargados.'); return; } if(!(await window.turneroConfirm('¿Borrar la categoría "' + cat + '"?'))) return; setCategorias(categoriasInventario().filter(c => c.toLowerCase() !== cat.toLowerCase())); marcarCambioLocalPendiente('categoriasInventario'); window.renderizarCategoriasInventario(); await guardarDatosClub({categoriasInventario:categoriasInventario()}); };
   window.agregarInventario = async function(){
     const nombre=toText(getValue('inv-nombre')), categoria=toText(getValue('inv-categoria'));
     const stockVal=getValue('inv-stock'), costoVal=getValue('inv-costo'), precioVal=getValue('inv-precio');
@@ -1546,6 +1575,7 @@ window.actualizarGraficos = function () { const periodo = document.getElementByI
     if(!Number.isFinite(stock) || stock < 0 || !Number.isFinite(costo) || costo < 0 || !Number.isFinite(precio) || precio < 0){ alert('Stock, costo y precio deben ser números válidos.'); return; }
     const producto={id:newId('producto'), nombre, categoria, stock:Math.trunc(stock), costo, precio, creadoEn:new Date().toISOString()};
     inventarioGlobal.push(producto);
+    marcarCambioLocalPendiente(['inventario','categoriasInventario']);
     const cats=categoriasInventario();
     if(!cats.some(c => c.toLowerCase() === categoria.toLowerCase())){ cats.push(categoria); setCategorias(cats); }
     window.cerrarModalAgregarProducto();
@@ -1572,6 +1602,7 @@ window.actualizarGraficos = function () { const periodo = document.getElementByI
     const importe=Number(getValue('gasto-importe'));
     if(!titulo || !Number.isFinite(importe) || importe <= 0){ alert('Completá detalle e importe del egreso.'); return; }
     gastosGlobal.push({id:newId('gasto'), fecha:hoyISO(), fechaRegistro:new Date().toISOString(), titulo, importe, monto:importe, tipo:'egreso'});
+    marcarCambioLocalPendiente('gastos');
     setValue('gasto-titulo','');
     setValue('gasto-importe','');
     refrescarTodo();
