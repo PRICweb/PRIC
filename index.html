@@ -1089,6 +1089,9 @@ window.actualizarGraficos = function () { const periodo = document.getElementByI
     if (app) app.style.display = 'flex';
     setText('lbl-nombre-club', club.nombre || currentClubId);
     setText('sidebar-club-id', currentClubId || '---');
+    aplicarDatosClub(club);
+    aplicarCacheLocalClub(currentClubId);
+    refrescarTodo();
     iniciarEscuchasFirebase();
     activarVista(localStorage.getItem('vistaActivaClub') || 'turnero');
   }
@@ -1171,6 +1174,39 @@ window.actualizarGraficos = function () { const periodo = document.getElementByI
     }
     return valor;
   }
+  function cacheKeyClub(id){
+    return 'club-panel-cache-v2:' + normalizarIdFirestore(id || currentClubId || window.CLUB_DOC_ID_ACTUAL || 'default');
+  }
+  function leerCacheLocalClub(id){
+    try{
+      const raw = localStorage.getItem(cacheKeyClub(id));
+      if (!raw) return null;
+      const data = JSON.parse(raw);
+      return data && typeof data === 'object' ? data : null;
+    }catch(e){
+      console.warn('No se pudo leer caché local del club:', e);
+      return null;
+    }
+  }
+  function guardarCacheLocalClub(parcial){
+    try{
+      const id = currentClubId || window.CLUB_DOC_ID_ACTUAL;
+      if (!id) return;
+      const previo = leerCacheLocalClub(id) || {};
+      const datosPrevios = (previo.datosClub && typeof previo.datosClub === 'object') ? previo.datosClub : previo;
+      const datosNuevos = Object.assign({}, datosPrevios, serializar(parcial || {}));
+      localStorage.setItem(cacheKeyClub(id), JSON.stringify({__ts:Date.now(), datosClub:datosNuevos}));
+    }catch(e){
+      console.warn('No se pudo guardar caché local del club:', e);
+    }
+  }
+  function aplicarCacheLocalClub(id){
+    const cache = leerCacheLocalClub(id);
+    if (!cache) return false;
+    const datos = (cache.datosClub && typeof cache.datosClub === 'object') ? cache.datosClub : cache;
+    aplicarDatosClub({id:id || currentClubId, datosClub:datos});
+    return true;
+  }
   function tiene(obj, key){ return Object.prototype.hasOwnProperty.call(obj || {}, key); }
   function aplicarDatosClub(data){
     if (!data || typeof data !== 'object') return;
@@ -1213,6 +1249,23 @@ window.actualizarGraficos = function () { const periodo = document.getElementByI
       reservasGlobales = d.reservas.map(serializar);
       reservaMirrorCargada = true;
     }
+    guardarCacheLocalClub({
+      inventario: inventarioGlobal,
+      categoriasInventario: categoriasInventarioGlobal,
+      gastos: gastosGlobal,
+      ingresos: ingresosGlobal,
+      profesores: profesoresGlobal,
+      reservas: reservasGlobales,
+      primerTurno, ultimoTurno, duracionGlobal, duracionDefault: duracionGlobal,
+      diasAbiertos: diasAbiertosGlobal,
+      canchasIndoor: canchasIndoorGlobal, canchasOutdoor: canchasOutdoorGlobal, canchasTenis: canchasTenisGlobal,
+      precioIndoor: precioIndoorGlobal, precioOutdoor: precioOutdoorGlobal, precioTenis: precioTenisGlobal,
+      profeIndoor: profeIndoorGlobal, profeOutdoor: profeOutdoorGlobal, profeTenis: profeTenisGlobal,
+      senaIndoor: senaIndoorGlobal, senaOutdoor: senaOutdoorGlobal, senaTenis: senaTenisGlobal,
+      duracionIndoor: duracionIndoorGlobal, duracionOutdoor: duracionOutdoorGlobal, duracionTenis: duracionTenisGlobal,
+      telefono: telefonoClubGlobal, ubicacion: ubicacionClubGlobal, fotoClub: fotoClubGlobal,
+      nombresIndoor: nombresIndoorGlobal, nombresOutdoor: nombresOutdoorGlobal, nombresTenis: nombresTenisGlobal, nombresCanchas: nombresCanchasGlobal
+    });
   }
   function snapshotDatos(){
     return {
@@ -1232,6 +1285,7 @@ window.actualizarGraficos = function () { const periodo = document.getElementByI
   async function guardarDatosClub(parcial){
     const data = parcial || snapshotDatos();
     const claves = Object.keys(data || {});
+    guardarCacheLocalClub(data);
     const marcaPendiente = marcarCambioLocalPendiente(claves);
     const trabajo = async () => {
       const id = currentClubId || window.CLUB_DOC_ID_ACTUAL;
@@ -1240,7 +1294,10 @@ window.actualizarGraficos = function () { const periodo = document.getElementByI
       const payload = { actualizadoEn: firebase.firestore.FieldValue.serverTimestamp() };
       Object.keys(data).forEach(k => {
         const v = serializar(data[k]);
-        if (v !== undefined) payload['datosClub.' + k] = v;
+        if (v !== undefined) {
+          payload['datosClub.' + k] = v;
+          payload[k] = v;
+        }
       });
       await db.collection('clubs').doc(id).set(payload, {merge:true});
       limpiarCambioLocalPendiente(claves, marcaPendiente);
@@ -1626,5 +1683,4 @@ window.actualizarGraficos = function () { const periodo = document.getElementByI
 })();
 </script><script></script><script></script></div>
 <!-- MÓDULO FINAL: Configuración sin título, acordeones cerrados, datos precargados y scroll interno -->
-
 </body></html>
