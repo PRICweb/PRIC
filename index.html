@@ -234,14 +234,32 @@ window.validarEsHoraPasada = validarEsHoraPasada;
 ;
 window.cambiarVista = function (vista) { document.getElementById('pantalla-club').style.display = vista === 'club' ? 'block' : 'none'; if (vista === 'club')
     actualizarLineaDeTiempo(); };
-window.toggleAcordeon = function (id) { const contenido = document.getElementById(id); const flecha = document.getElementById('flecha-' + id); if (contenido.classList.contains('abierto')) {
-    contenido.classList.remove('abierto');
-    flecha.innerText = '🔽';
-}
-else {
-    contenido.classList.add('abierto');
-    flecha.innerText = '🔼';
-} };
+window.toggleAcordeon = function (id) {
+    const contenido = document.getElementById(id);
+    if (!contenido) return;
+    const flecha = document.getElementById('flecha-' + id);
+    const abierto = !contenido.classList.contains('abierto');
+    contenido.classList.toggle('abierto', abierto);
+    contenido.style.display = abierto ? 'block' : 'none';
+    if (flecha) flecha.innerText = abierto ? '🔼' : '🔽';
+};
+document.addEventListener('click', function (ev) {
+    const header = ev.target && ev.target.closest ? ev.target.closest('.header-acordeon') : null;
+    if (!header) return;
+    let id = null;
+    const attr = header.getAttribute('onclick') || '';
+    const match = attr.match(/toggleAcordeon\('([^']+)'\)/);
+    if (match) id = match[1];
+    if (!id) {
+        const contenido = header.nextElementSibling;
+        if (contenido && contenido.classList && contenido.classList.contains('contenido-acordeon')) id = contenido.id;
+    }
+    if (!id) return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    if (ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+    window.toggleAcordeon(id);
+}, true);
 function fechaISOConDelta(dias) {
     const base = new Date();
     base.setHours(0, 0, 0, 0);
@@ -471,12 +489,16 @@ window.cambioTipoEvento = function () {
     if (div && tipo) div.style.display = tipo.value === 'Clases' ? 'block' : 'none';
 };
 window.abrirModalReservaAdmin = function (hora, cancha) {
+    hora = String(hora || '');
+    cancha = String(cancha || '');
+    if (!hora || !cancha) return;
     if (validarEsHoraPasada(fechaSeleccionada, hora)) { alert('No podés reservar un horario pasado.'); return; }
     const duracionSugerida = obtenerDuracionCancha(cancha);
     const minInicio = window.aMinutos(hora);
     let minUltimo = window.aMinutos(ultimoTurno || '21:30');
-    if (minUltimo <= window.aMinutos(primerTurno || '08:00')) minUltimo += 1440;
-    if (minInicio + duracionSugerida > minUltimo + duracionSugerida) { alert('Horario excede el límite del club.'); return; }
+    const minPrimer = window.aMinutos(primerTurno || '08:00');
+    if (minUltimo <= minPrimer) minUltimo += 1440;
+    if (minInicio < minPrimer || minInicio >= minUltimo) { alert('Horario fuera del rango configurado del club.'); return; }
     const colision = (Array.isArray(reservasGlobales) ? reservasGlobales : []).find(r => {
         const aplica = typeof window.reservaAplicaEnFecha === 'function' ? window.reservaAplicaEnFecha(r, fechaSeleccionada) : (r.fecha === fechaSeleccionada);
         if (!aplica || String(r.cancha || '1') !== String(cancha)) return false;
@@ -488,7 +510,7 @@ window.abrirModalReservaAdmin = function (hora, cancha) {
     const canchaInput = document.getElementById('admin-cancha-id'); if (canchaInput) canchaInput.value = cancha;
     const partes = fechaSeleccionada.split('-');
     const f = new Date(Number(partes[0]), Number(partes[1]) - 1, Number(partes[2]));
-    const fechaDisplay = document.getElementById('admin-fecha-display'); if (fechaDisplay) fechaDisplay.innerText = `${f.getDate()}/${f.getMonth() + 1}/${f.getFullYear()}`;
+    const fechaDisplay = document.getElementById('admin-fecha-display'); if (fechaDisplay) fechaDisplay.innerText = f && !isNaN(f) ? `${f.getDate()}/${f.getMonth() + 1}/${f.getFullYear()}` : fechaSeleccionada;
     const horaDisplay = document.getElementById('admin-hora-display'); if (horaDisplay) horaDisplay.innerText = `${hora} hs`;
     const cNum = parseInt(cancha, 10) || 1;
     const tipoC = obtenerLabelModalidad(obtenerTipoCanchaPorNumero(cNum));
@@ -498,13 +520,34 @@ window.abrirModalReservaAdmin = function (hora, cancha) {
     const duracion = document.getElementById('admin-duracion'); if (duracion) duracion.value = String(duracionSugerida);
     const jugador = document.getElementById('admin-input-jugador'); if (jugador) jugador.value = '';
     const telefono = document.getElementById('admin-input-telefono'); if (telefono) telefono.value = '';
-    const modal = document.getElementById('modal-reserva-admin'); if (modal) modal.style.display = 'flex';
+    const modal = document.getElementById('modal-reserva-admin');
+    if (modal) {
+        modal.style.display = 'flex';
+        modal.style.visibility = 'visible';
+        modal.style.pointerEvents = 'auto';
+        modal.removeAttribute('aria-hidden');
+    }
 };
 window.cerrarModalReservaAdmin = function () {
     reservaEnProcesoHora = null;
     const modal = document.getElementById('modal-reserva-admin');
-    if (modal) modal.style.display = 'none';
+    if (modal) {
+        modal.style.display = 'none';
+        modal.style.visibility = 'hidden';
+        modal.style.pointerEvents = 'none';
+        modal.setAttribute('aria-hidden', 'true');
+    }
 };
+document.addEventListener('click', function (ev) {
+    const slot = ev.target && ev.target.closest ? ev.target.closest('#lista-reservas-club .turnero-slot.future') : null;
+    if (!slot) return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    if (ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+    const hora = slot.getAttribute('data-hora');
+    const cancha = slot.getAttribute('data-cancha');
+    window.abrirModalReservaAdmin(hora, cancha);
+}, true);
 window.confirmarReservaAdmin = function () { const inputNombre = document.getElementById('admin-input-jugador').value; const inputTelefono = document.getElementById('admin-input-telefono').value; const canchaAsignada = document.getElementById('admin-cancha-id').value; const tipoEvento = document.getElementById('admin-tipo-evento').value; const duracionSel = parseInt(document.getElementById('admin-duracion').value) || duracionGlobal; let profeSel = null; if (tipoEvento === 'Clases') {
     profeSel = document.getElementById('admin-select-profe').value;
     if (!profeSel) {
@@ -1503,131 +1546,4 @@ window.actualizarGraficos = function () { const periodo = document.getElementByI
 </script><script></script><script></script></div>
 <!-- MÓDULO FINAL: Configuración sin título, acordeones cerrados, datos precargados y scroll interno -->
 
-<script id="fix-clicks-turnero-config">
-(function(){
-  function $(id){ return document.getElementById(id); }
-  function showModal(id){
-    var el=$(id); if(!el) return false;
-    el.style.display='flex';
-    el.style.visibility='visible';
-    el.style.pointerEvents='auto';
-    el.removeAttribute('aria-hidden');
-    return true;
-  }
-  function hideModal(id){
-    var el=$(id); if(!el) return;
-    el.style.display='none';
-    el.style.visibility='hidden';
-    el.style.pointerEvents='none';
-    el.setAttribute('aria-hidden','true');
-  }
-  function toMin(h){
-    if (window.aMinutos) return window.aMinutos(h);
-    var p=String(h||'00:00').split(':');
-    return (parseInt(p[0],10)||0)*60+(parseInt(p[1],10)||0);
-  }
-  function fechaHoy(){
-    if (window.obtenerFechaHoy) return window.obtenerFechaHoy();
-    var d=new Date();
-    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-  }
-  function esPasado(fecha,hora){
-    if (typeof window.validarEsHoraPasada === 'function') return window.validarEsHoraPasada(fecha,hora);
-    var hoy=fechaHoy();
-    if (fecha<hoy) return true;
-    if (fecha>hoy) return false;
-    var n=new Date();
-    return toMin(hora) <= n.getHours()*60+n.getMinutes();
-  }
-  function tipoCancha(n){
-    n=parseInt(n,10)||1;
-    var indoor=Number(window.canchasIndoorGlobal || canchasIndoorGlobal || 0) || 0;
-    var outdoor=Number(window.canchasOutdoorGlobal || canchasOutdoorGlobal || 0) || 0;
-    if (n<=indoor) return 'Indoor';
-    if (n<=indoor+outdoor) return 'Outdoor';
-    return 'Tenis';
-  }
-  function duracionCancha(n){
-    n=parseInt(n,10)||1;
-    var indoor=Number(window.canchasIndoorGlobal || canchasIndoorGlobal || 0) || 0;
-    var outdoor=Number(window.canchasOutdoorGlobal || canchasOutdoorGlobal || 0) || 0;
-    if (n<=indoor) return Number(window.duracionIndoorGlobal || duracionIndoorGlobal || window.duracionGlobal || duracionGlobal || 90) || 90;
-    if (n<=indoor+outdoor) return Number(window.duracionOutdoorGlobal || duracionOutdoorGlobal || window.duracionGlobal || duracionGlobal || 90) || 90;
-    return Number(window.duracionTenisGlobal || duracionTenisGlobal || window.duracionGlobal || duracionGlobal || 90) || 90;
-  }
-  var abrirOriginal = window.abrirModalReservaAdmin;
-  window.abrirModalReservaAdmin = function(hora, cancha){
-    hora = String(hora || '');
-    cancha = String(cancha || '');
-    if (!hora || !cancha) return;
-    var fecha = window.fechaSeleccionada || (typeof fechaSeleccionada !== 'undefined' ? fechaSeleccionada : fechaHoy());
-    if (esPasado(fecha, hora)) { alert('No podés reservar un horario pasado.'); return; }
-    try {
-      if (typeof abrirOriginal === 'function') abrirOriginal.call(window, hora, cancha);
-    } catch(e) {
-      console.error('abrirModalReservaAdmin original:', e);
-    }
-    var modal=$('modal-reserva-admin');
-    if (!modal || modal.style.display === 'flex') return;
-    try { reservaEnProcesoHora = hora; } catch(e) {}
-    var canchaInput=$('admin-cancha-id'); if (canchaInput) canchaInput.value=cancha;
-    var fechaSel = fecha;
-    var partes=String(fechaSel).split('-');
-    var f=new Date(Number(partes[0]), Number(partes[1])-1, Number(partes[2]));
-    var fechaDisplay=$('admin-fecha-display'); if (fechaDisplay) fechaDisplay.innerText = f && !isNaN(f) ? (f.getDate()+'/'+(f.getMonth()+1)+'/'+f.getFullYear()) : fechaSel;
-    var horaDisplay=$('admin-hora-display'); if (horaDisplay) horaDisplay.innerText = hora+' hs';
-    var canchaDisplay=$('admin-cancha-display'); if (canchaDisplay) canchaDisplay.innerText = 'Cancha '+cancha+' ('+tipoCancha(cancha)+')';
-    var tipoEvento=$('admin-tipo-evento'); if (tipoEvento) tipoEvento.value='Normal';
-    var divProfe=$('admin-div-profe'); if (divProfe) divProfe.style.display='none';
-    var dur=$('admin-duracion'); if (dur) dur.value=String(duracionCancha(cancha));
-    var jugador=$('admin-input-jugador'); if (jugador) jugador.value='';
-    var tel=$('admin-input-telefono'); if (tel) tel.value='';
-    showModal('modal-reserva-admin');
-  };
-  window.cerrarModalReservaAdmin = function(){
-    try { reservaEnProcesoHora = null; } catch(e) {}
-    hideModal('modal-reserva-admin');
-  };
-  document.addEventListener('click', function(ev){
-    var slot = ev.target && ev.target.closest ? ev.target.closest('.turnero-slot.future') : null;
-    if (!slot) return;
-    var cont = slot.closest('#lista-reservas-club');
-    if (!cont) return;
-    ev.preventDefault();
-    ev.stopPropagation();
-    if (ev.stopImmediatePropagation) ev.stopImmediatePropagation();
-    var hora = slot.getAttribute('data-hora');
-    var cancha = slot.getAttribute('data-cancha');
-    if ((!hora || !cancha) && slot.getAttribute('onclick')) {
-      var m = slot.getAttribute('onclick').match(/abrirModalReservaAdmin\('([^']+)'\s*,\s*'([^']+)'\)/);
-      if (m) { hora=m[1]; cancha=m[2]; }
-    }
-    window.abrirModalReservaAdmin(hora, cancha);
-  }, true);
-  function toggleAcordeonSeguro(id){
-    var contenido=$(id); if(!contenido) return;
-    var abierto = contenido.classList.toggle('abierto');
-    contenido.style.display = abierto ? 'block' : 'none';
-    var flecha=$('flecha-'+id); if(flecha) flecha.innerText = abierto ? '🔼' : '🔽';
-  }
-  window.toggleAcordeon = toggleAcordeonSeguro;
-  document.addEventListener('click', function(ev){
-    var header = ev.target && ev.target.closest ? ev.target.closest('.header-acordeon') : null;
-    if(!header) return;
-    var id = null;
-    var onclick = header.getAttribute('onclick') || '';
-    var m = onclick.match(/toggleAcordeon\('([^']+)'\)/);
-    if (m) id = m[1];
-    if (!id) {
-      var contenido = header.nextElementSibling;
-      if (contenido && contenido.classList && contenido.classList.contains('contenido-acordeon')) id = contenido.id;
-    }
-    if(!id) return;
-    ev.preventDefault();
-    ev.stopPropagation();
-    if (ev.stopImmediatePropagation) ev.stopImmediatePropagation();
-    toggleAcordeonSeguro(id);
-  }, true);
-})();
-</script>
 </body></html>
