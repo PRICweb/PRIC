@@ -939,6 +939,8 @@ window.actualizarGraficos = function () { const periodo = document.getElementByI
   let guardadoEnCurso = Promise.resolve();
   let reservaMirrorCargada = false;
   let subReservasInicializada = false;
+  const cambiosLocalesPendientes = Object.create(null);
+  const TTL_CAMBIO_LOCAL_MS = 15000;
 
   const $ = (id) => document.getElementById(id);
   const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
@@ -963,6 +965,25 @@ window.actualizarGraficos = function () { const periodo = document.getElementByI
   const setText = (id, value) => { const el=$(id); if(el) el.textContent = value == null ? '' : String(value); };
 
   window.turneroConfirm = async function(mensaje){ return Promise.resolve(window.confirm(String(mensaje || '¿Confirmar acción?'))); };
+
+  function marcarCambioLocalPendiente(claves){
+    const expira = Date.now() + TTL_CAMBIO_LOCAL_MS;
+    (Array.isArray(claves) ? claves : [claves]).forEach(k => { if(k) cambiosLocalesPendientes[k] = expira; });
+    return expira;
+  }
+  function siguePendienteCambioLocal(clave){
+    const expira = cambiosLocalesPendientes[clave];
+    if (!expira) return false;
+    if (Date.now() > expira){ delete cambiosLocalesPendientes[clave]; return false; }
+    return true;
+  }
+  function limpiarCambioLocalPendiente(claves, expira){
+    setTimeout(() => {
+      (Array.isArray(claves) ? claves : [claves]).forEach(k => {
+        if (k && cambiosLocalesPendientes[k] === expira) delete cambiosLocalesPendientes[k];
+      });
+    }, 1200);
+  }
 
   function normalizarIdFirestore(valor){
     return String(valor || 'Club Central').trim().replace(/[\\/#\[\]?]/g, '_').replace(/\s+/g, ' ') || 'Club Central';
@@ -1183,12 +1204,12 @@ window.actualizarGraficos = function () { const periodo = document.getElementByI
     if (Array.isArray(d.nombresOutdoor)) nombresOutdoorGlobal = d.nombresOutdoor;
     if (Array.isArray(d.nombresTenis)) nombresTenisGlobal = d.nombresTenis;
     nombresCanchasGlobal = Array.isArray(d.nombresCanchas) ? d.nombresCanchas : [].concat(nombresIndoorGlobal, nombresOutdoorGlobal, nombresTenisGlobal);
-    if (Array.isArray(d.inventario)) inventarioGlobal = d.inventario.map(serializar);
-    if (Array.isArray(d.gastos)) gastosGlobal = d.gastos.map(serializar);
-    if (Array.isArray(d.ingresos)) ingresosGlobal = d.ingresos.map(serializar);
-    if (Array.isArray(d.profesores)) profesoresGlobal = d.profesores.map(serializar);
-    if (Array.isArray(d.categoriasInventario)) categoriasInventarioGlobal = d.categoriasInventario.map(toText).filter(Boolean);
-    if (Array.isArray(d.reservas) && d.reservas.length && !reservaMirrorCargada){
+    if (Array.isArray(d.inventario) && !siguePendienteCambioLocal('inventario')) inventarioGlobal = d.inventario.map(serializar);
+    if (Array.isArray(d.gastos) && !siguePendienteCambioLocal('gastos')) gastosGlobal = d.gastos.map(serializar);
+    if (Array.isArray(d.ingresos) && !siguePendienteCambioLocal('ingresos')) ingresosGlobal = d.ingresos.map(serializar);
+    if (Array.isArray(d.profesores) && !siguePendienteCambioLocal('profesores')) profesoresGlobal = d.profesores.map(serializar);
+    if (Array.isArray(d.categoriasInventario) && !siguePendienteCambioLocal('categoriasInventario')) categoriasInventarioGlobal = d.categoriasInventario.map(toText).filter(Boolean);
+    if (Array.isArray(d.reservas) && d.reservas.length && !reservaMirrorCargada && !siguePendienteCambioLocal('reservas')){
       reservasGlobales = d.reservas.map(serializar);
       reservaMirrorCargada = true;
     }
@@ -1209,19 +1230,27 @@ window.actualizarGraficos = function () { const periodo = document.getElementByI
     };
   }
   async function guardarDatosClub(parcial){
+    const data = parcial || snapshotDatos();
+    const claves = Object.keys(data || {});
+    const marcaPendiente = marcarCambioLocalPendiente(claves);
     const trabajo = async () => {
       const id = currentClubId || window.CLUB_DOC_ID_ACTUAL;
       if (!id) throw new Error('No hay club activo para guardar.');
       const {db} = await firebaseReady();
-      const data = parcial || snapshotDatos();
       const payload = { actualizadoEn: firebase.firestore.FieldValue.serverTimestamp() };
       Object.keys(data).forEach(k => {
         const v = serializar(data[k]);
         if (v !== undefined) payload['datosClub.' + k] = v;
       });
       await db.collection('clubs').doc(id).set(payload, {merge:true});
+      limpiarCambioLocalPendiente(claves, marcaPendiente);
     };
-    guardadoEnCurso = guardadoEnCurso.catch(() => null).then(trabajo).catch(e => { console.error('guardarDatosClub:', e); alert('No se pudo guardar en Firebase. Detalle: ' + (e.message || e)); throw e; });
+    guardadoEnCurso = guardadoEnCurso.catch(() => null).then(trabajo).catch(e => {
+      claves.forEach(k => { if (cambiosLocalesPendientes[k] === marcaPendiente) delete cambiosLocalesPendientes[k]; });
+      console.error('guardarDatosClub:', e);
+      alert('No se pudo guardar en Firebase. Detalle: ' + (e.message || e));
+      throw e;
+    });
     return guardadoEnCurso;
   }
   window.guardarDatosClub = guardarDatosClub;
@@ -1258,10 +1287,12 @@ window.actualizarGraficos = function () { const periodo = document.getElementByI
     unsubReservas = ref.collection('reservas').onSnapshot((snap) => {
       const arr = [];
       snap.forEach((doc) => arr.push(Object.assign({id:doc.id}, serializar(doc.data() || {}))));
-      if (arr.length > 0 || subReservasInicializada || !reservaMirrorCargada){
-        reservasGlobales = arr.sort((a,b) => String(a.fecha || '').localeCompare(String(b.fecha || '')) || String(a.hora || '').localeCompare(String(b.hora || '')));
+      if (!siguePendienteCambioLocal('reservas')){
+        if (arr.length > 0 || subReservasInicializada || !reservaMirrorCargada){
+          reservasGlobales = arr.sort((a,b) => String(a.fecha || '').localeCompare(String(b.fecha || '')) || String(a.hora || '').localeCompare(String(b.hora || '')));
+        }
+        if (arr.length > 0) subReservasInicializada = true;
       }
-      if (arr.length > 0) subReservasInicializada = true;
       refrescarTodo();
     }, (error) => { console.error('lectura reservas:', error); alert('No se pudo leer turnos desde Firebase. Detalle: ' + (error.message || error)); });
   }
@@ -1489,7 +1520,8 @@ window.actualizarGraficos = function () { const periodo = document.getElementByI
     refrescarTodo();
     await guardarDatosClub({gastos:gastosGlobal});
   };
-  window.agregarIngresoLibre = async function(){ const titulo=toText(getValue('ingreso-titulo')); const efectivo=toNum(getValue('ingreso-efectivo')); const transferencia=toNum(getValue('ingreso-transferencia')); if(!titulo || efectivo + transferencia <= 0){ alert('Completá detalle y monto del ingreso.'); return; } ingresosGlobal.push({id:newId('ingreso'), fecha:hoyISO(), fechaRegistro:new Date().toISOString(), titulo, efectivo, transferencia, monto:efectivo+transferencia, tipo:'ingreso_libre'}); setValue('ingreso-titulo',''); setValue('ingreso-efectivo',''); setValue('ingreso-transferencia',''); refrescarTodo(); await guardarDatosClub({ingresos:ingresosGlobal}); };
+  window.agregarIngresoLibre = async function(){ const titulo=toText(getValue('ingreso-titulo')); const efectivo=toNum(getValue('ingreso-efectivo')); const transferencia=toNum(getValue('ingreso-transferencia')); if(!titulo || efectivo + transferencia <= 0){ alert('Completá detalle y monto del ingreso.'); return; } ingresosGlobal.push({id:newId('ingreso'), fecha:hoyISO(), fechaRegistro:new Date().toISOString(), titulo, efectivo, transferencia, monto:efectivo+transferencia, tipo:'ingreso_libre'});
+    marcarCambioLocalPendiente('ingresos'); setValue('ingreso-titulo',''); setValue('ingreso-efectivo',''); setValue('ingreso-transferencia',''); refrescarTodo(); await guardarDatosClub({ingresos:ingresosGlobal}); };
 
   function transacciones(){
     const tx=[];
@@ -1507,11 +1539,12 @@ window.actualizarGraficos = function () { const periodo = document.getElementByI
     const nombre=toText(input && input.value);
     if(!nombre){ alert('Escribí el nombre del profesor.'); if(input) input.focus(); return; }
     profesoresGlobal.push({id:newId('profe'), nombre});
+    marcarCambioLocalPendiente('profesores');
     if(input) input.value='';
     window.renderizarProfesores();
     await guardarDatosClub({profesores:profesoresGlobal});
   };
-  window.eliminarProfe = async function(id){ if(!(await window.turneroConfirm('¿Eliminar profesor?'))) return; profesoresGlobal = profesoresGlobal.filter(p => String(p.id) !== String(id)); window.renderizarProfesores(); await guardarDatosClub({profesores:profesoresGlobal}); };
+  window.eliminarProfe = async function(id){ if(!(await window.turneroConfirm('¿Eliminar profesor?'))) return; profesoresGlobal = profesoresGlobal.filter(p => String(p.id) !== String(id)); marcarCambioLocalPendiente('profesores'); window.renderizarProfesores(); await guardarDatosClub({profesores:profesoresGlobal}); };
   window.renderizarProfesores = function(){ const tb=$('lista-profesores'); if(tb){ tb.innerHTML = profesoresGlobal.length ? profesoresGlobal.map(p => '<tr><td style="padding:10px;">'+esc(p.nombre)+'</td><td style="text-align:right;"><button type="button" onclick="window.eliminarProfe(\''+esc(p.id)+'\')" style="background:none;border:none;cursor:pointer;font-size:1.1rem;">🗑️</button></td></tr>').join('') : '<tr><td style="padding:10px;color:#52627a;">No hay profesores.</td></tr>'; } const sel=$('admin-select-profe'); if(sel){ const prev=sel.value; sel.innerHTML = '<option value="" disabled selected>Selecciona un profe...</option>' + profesoresGlobal.map(p => '<option value="'+esc(p.nombre)+'">'+esc(p.nombre)+'</option>').join(''); if(prev) sel.value=prev; } window.renderizarClasesPendientes(); };
   window.renderizarClasesPendientes = function(){ const tb=$('tabla-clases-pendientes'); if(!tb) return; const clases=reservasGlobales.filter(r => (r.esClase || r.tipoEvento === 'Clases') && (toNum(r.pagoEfectivo)+toNum(r.pagoTransferencia)) < totalTurno(r)); tb.innerHTML = clases.length ? clases.map(r => '<tr><td>'+esc(r.fecha)+' '+esc(r.hora)+'<br><small>'+esc(r.jugador || '')+'</small></td><td style="text-align:right;">'+money(totalTurno(r) - toNum(r.pagoEfectivo) - toNum(r.pagoTransferencia))+'</td><td style="text-align:center;"><button type="button" class="btn-modal btn-cobrar-clase" style="padding:7px 10px;font-size:.82em;" onclick="window.abrirModalCobrarClase(\''+esc(r.id)+'\')">Cobrar</button></td></tr>').join('') : '<tr><td colspan="3" style="text-align:center;color:#52627a;padding:12px;">Sin clases pendientes.</td></tr>'; };
   window.abrirModalCobrarClase = function(id){ const r=reservasGlobales.find(x => String(x.id) === String(id)); if(!r) return; setValue('cobrar-clase-id', id); setText('lbl-cobrar-clase', (r.jugador || '') + ' · ' + r.fecha + ' ' + r.hora); setText('cobrar-clase-total', money(totalTurno(r))); setValue('clase-pago-efectivo',''); setValue('clase-pago-transferencia',''); show('modal-cobrar-clase'); };
