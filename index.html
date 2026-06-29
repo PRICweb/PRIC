@@ -778,20 +778,12 @@ document.addEventListener('click', function (ev) {
     setText('lbl-nombre-club', club.nombre || currentClubId);
     setText('sidebar-club-id', currentClubId || '---');
 
-    const cache = leerCacheLocalClub(currentClubId);
-    const cacheTs = cache ? toNum(cache.__ts || 0) : 0;
-    const remoteTs = tsDatosClub(club);
-
-    aplicarDatosClub(club, {actualizarCache:false});
-    if (cache && cacheTs > remoteTs){
-      aplicarCacheLocalClub(currentClubId);
-      guardarDatosClub(snapshotDatos()).catch(e => console.warn('No se pudo sincronizar caché local con Firebase:', e));
-    } else {
-      guardarCacheLocalClub(snapshotDatos());
-    }
+    limpiarCacheViejaUnaVez(currentClubId);
+    aplicarDatosClub(club, {actualizarCache:true});
 
     refrescarTodo();
     iniciarEscuchasFirebase();
+    limpiarReservasDuplicadasDocumentoPrincipalUnaVez(club).catch(e => console.warn('No se pudo limpiar el espejo antiguo de reservas:', e));
     activarVista(localStorage.getItem('vistaActivaClub') || 'turnero');
   }
   async function controlarSesion(user){
@@ -874,7 +866,18 @@ document.addEventListener('click', function (ev) {
     return valor;
   }
   function cacheKeyClub(id){
-    return 'club-panel-cache-v2:' + normalizarIdFirestore(id || currentClubId || window.CLUB_DOC_ID_ACTUAL || 'default');
+    return 'club-panel-cache-v3:' + normalizarIdFirestore(id || currentClubId || window.CLUB_DOC_ID_ACTUAL || 'default');
+  }
+  function limpiarCacheViejaUnaVez(id){
+    try{
+      const clubId = normalizarIdFirestore(id || currentClubId || window.CLUB_DOC_ID_ACTUAL || 'default');
+      const marca = 'club-panel-cache-v3-migrada:' + clubId;
+      if (localStorage.getItem(marca) === '1') return;
+      localStorage.removeItem('club-panel-cache-v2:' + clubId);
+      localStorage.setItem(marca, '1');
+    }catch(e){
+      console.warn('No se pudo limpiar la caché anterior:', e);
+    }
   }
   function leerCacheLocalClub(id){
     try{
@@ -952,10 +955,6 @@ document.addEventListener('click', function (ev) {
     if (Array.isArray(d.profesores) && !siguePendienteCambioLocal('profesores')) profesoresGlobal = d.profesores.map(serializar);
     if (Array.isArray(d.categoriasInventario) && !siguePendienteCambioLocal('categoriasInventario')) categoriasInventarioGlobal = d.categoriasInventario.map(toText).filter(Boolean);
     if (Array.isArray(d.torneos) && !siguePendienteCambioLocal('torneos')) torneosGlobal = d.torneos.map(serializar);
-    if (Array.isArray(d.reservas) && d.reservas.length && !reservaMirrorCargada && !siguePendienteCambioLocal('reservas')){
-      reservasGlobales = d.reservas.map(serializar);
-      reservaMirrorCargada = true;
-    }
     if (!opciones || opciones.actualizarCache !== false) guardarCacheLocalClub({
       inventario: inventarioGlobal,
       categoriasInventario: categoriasInventarioGlobal,
@@ -963,7 +962,6 @@ document.addEventListener('click', function (ev) {
       gastos: gastosGlobal,
       ingresos: ingresosGlobal,
       profesores: profesoresGlobal,
-      reservas: reservasGlobales,
       primerTurno, ultimoTurno, duracionGlobal, duracionDefault: duracionGlobal,
       diasAbiertos: diasAbiertosGlobal,
       canchasIndoor: canchasIndoorGlobal, canchasOutdoor: canchasOutdoorGlobal, canchasTenis: canchasTenisGlobal,
@@ -988,31 +986,45 @@ document.addEventListener('click', function (ev) {
       telefono: telefonoClubGlobal, ubicacion: ubicacionClubGlobal, fotoClub: fotoClubGlobal,
       nombresIndoor: nombresIndoorGlobal, nombresOutdoor: nombresOutdoorGlobal, nombresTenis: nombresTenisGlobal, nombresCanchas: nombresCanchasGlobal,
       inventario: inventarioGlobal, gastos: gastosGlobal, ingresos: ingresosGlobal, profesores: profesoresGlobal,
-      categoriasInventario: categoriasInventario(), torneos: torneosGlobal, reservas: reservasGlobales,
+      categoriasInventario: categoriasInventario(), torneos: torneosGlobal,
       datosClubActualizadoMs: Date.now()
     };
   }
   async function guardarDatosClub(parcial){
     const parcialLimpio = serializar(parcial || {});
-    const datosCompletos = Object.assign({}, snapshotDatos(), parcialLimpio);
-    datosCompletos.datosClubActualizadoMs = Date.now();
-    const claves = Object.keys(parcial && typeof parcial === 'object' ? parcial : datosCompletos);
-    guardarCacheLocalClub(datosCompletos);
-    const marcaPendiente = marcarCambioLocalPendiente(claves);
+    if (!parcialLimpio || typeof parcialLimpio !== 'object' || Array.isArray(parcialLimpio)) {
+      throw new Error('Los datos del club deben enviarse como un objeto.');
+    }
+
+    // Las reservas viven exclusivamente en clubs/{clubId}/reservas.
+    delete parcialLimpio.reservas;
+
+    const claves = Object.keys(parcialLimpio);
+    if (!claves.length) return;
+
+    const marcaActualizacion = Date.now();
+    parcialLimpio.datosClubActualizadoMs = marcaActualizacion;
+    const clavesPendientes = [...new Set([...claves, 'datosClubActualizadoMs'])];
+    guardarCacheLocalClub(parcialLimpio);
+    const marcaPendiente = marcarCambioLocalPendiente(clavesPendientes);
+
     const trabajo = async () => {
       const id = currentClubId || window.CLUB_DOC_ID_ACTUAL;
       if (!id) throw new Error('No hay club activo para guardar.');
       const {db} = await firebaseReady();
       const ref = db.collection('clubs').doc(id);
-      const datosSerializados = serializar(datosCompletos);
-      await ref.set({
-        datosClub: datosSerializados,
+      const actualizaciones = {
         actualizadoEn: firebase.firestore.FieldValue.serverTimestamp()
-      }, {merge:true});
-      limpiarCambioLocalPendiente(claves, marcaPendiente);
+      };
+      Object.entries(parcialLimpio).forEach(([clave, valor]) => {
+        actualizaciones['datosClub.' + clave] = valor;
+      });
+      await ref.update(actualizaciones);
+      limpiarCambioLocalPendiente(clavesPendientes, marcaPendiente);
     };
+
     guardadoEnCurso = guardadoEnCurso.catch(() => null).then(trabajo).catch(e => {
-      claves.forEach(k => { if (cambiosLocalesPendientes[k] === marcaPendiente) delete cambiosLocalesPendientes[k]; });
+      clavesPendientes.forEach(k => { if (cambiosLocalesPendientes[k] === marcaPendiente) delete cambiosLocalesPendientes[k]; });
       console.error('guardarDatosClub:', e);
       alert('No se pudo guardar en Firebase. Detalle: ' + (e.message || e));
       throw e;
@@ -1026,14 +1038,33 @@ document.addEventListener('click', function (ev) {
     const {db} = await firebaseReady();
     const clean = serializar(Object.assign({}, reserva, {clubId:id, actualizadoEn:new Date().toISOString()}));
     await db.collection('clubs').doc(id).collection('reservas').doc(String(reserva.id)).set(clean, {merge:true});
-    await guardarDatosClub({reservas: reservasGlobales});
   }
   async function borrarReservaFirebase(idReserva){
     const id = currentClubId || window.CLUB_DOC_ID_ACTUAL;
     if (!id || !idReserva) throw new Error('Reserva o club inválido.');
     const {db} = await firebaseReady();
     await db.collection('clubs').doc(id).collection('reservas').doc(String(idReserva)).delete();
-    await guardarDatosClub({reservas: reservasGlobales});
+  }
+  async function limpiarReservasDuplicadasDocumentoPrincipalUnaVez(clubData){
+    const id = currentClubId || window.CLUB_DOC_ID_ACTUAL;
+    if (!id) return;
+    const marca = 'club-reservas-espejo-eliminado-v1:' + normalizarIdFirestore(id);
+    try{
+      if (localStorage.getItem(marca) === '1') return;
+      const datosExistentes = datosPlanosClub(clubData || currentClubData || {});
+      if (!tiene(datosExistentes, 'reservas')) {
+        localStorage.setItem(marca, '1');
+        return;
+      }
+      const {db} = await firebaseReady();
+      await db.collection('clubs').doc(id).update({
+        'datosClub.reservas': firebase.firestore.FieldValue.delete()
+      });
+      localStorage.setItem(marca, '1');
+    }catch(e){
+      // Si no se puede limpiar, no se interrumpe el panel y se reintentará en otro ingreso.
+      console.warn('Limpieza del espejo de reservas:', e);
+    }
   }
   function detenerEscuchasFirebase(){
     if (typeof unsubClub === 'function') unsubClub();
@@ -1049,24 +1080,22 @@ document.addEventListener('click', function (ev) {
     unsubClub = ref.onSnapshot((snap) => {
       if (snap.exists) {
         const remoto = Object.assign({id:snap.id}, snap.data() || {});
-        const cache = leerCacheLocalClub(snap.id);
-        if (cache && toNum(cache.__ts || 0) > tsDatosClub(remoto)) {
-          aplicarDatosClub(Object.assign({id:snap.id}, cache), {actualizarCache:false});
-          guardarDatosClub(snapshotDatos()).catch(e => console.warn('No se pudo sincronizar caché local con Firebase:', e));
-        } else {
-          aplicarDatosClub(remoto);
-        }
+        aplicarDatosClub(remoto, {actualizarCache:true});
       }
       refrescarTodo();
     }, (error) => { console.error('lectura club:', error); alert('No se pudo leer datos del club desde Firebase. Detalle: ' + (error.message || error)); });
-    unsubReservas = ref.collection('reservas').onSnapshot((snap) => {
+
+    const fechaDesde = fechaMinimaTurnero();
+    const fechaHasta = fechaMaximaTurnero();
+    unsubReservas = ref.collection('reservas')
+      .where('fecha', '>=', fechaDesde)
+      .where('fecha', '<=', fechaHasta)
+      .onSnapshot((snap) => {
       const arr = [];
       snap.forEach((doc) => arr.push(Object.assign({id:doc.id}, serializar(doc.data() || {}))));
       if (!siguePendienteCambioLocal('reservas')){
-        if (arr.length > 0 || subReservasInicializada || !reservaMirrorCargada){
-          reservasGlobales = arr.sort((a,b) => String(a.fecha || '').localeCompare(String(b.fecha || '')) || String(a.hora || '').localeCompare(String(b.hora || '')));
-        }
-        if (arr.length > 0) subReservasInicializada = true;
+        reservasGlobales = arr.sort((a,b) => String(a.fecha || '').localeCompare(String(b.fecha || '')) || String(a.hora || '').localeCompare(String(b.hora || '')));
+        subReservasInicializada = true;
       }
       refrescarTodo();
     }, (error) => { console.error('lectura reservas:', error); alert('No se pudo leer turnos desde Firebase. Detalle: ' + (error.message || error)); });
@@ -1556,7 +1585,7 @@ document.addEventListener('click', function (ev) {
     const torneoId=newId('torneo'),torneo={id:torneoId,nombre,premio,categoria,fechaDesde:esLiga?'':desde,fechaHasta:esLiga?'':hasta,fechas:esLiga?[]:fechas,horaDesde:esLiga?'':horaDesde,horaHasta:esLiga?'':horaHasta,limiteInscripcion,formato,parejasPorGrupo,limiteParejas,clasificadosPorGrupo,modalidad,cantidadCanchas:cant,canchas,precioInscripcion:precio,partidosAsegurados:partidos,visibilidad,estado:'inscripcion',inscripcionAbierta:true,inscriptos:[],grupos:[],partidosGrupos:[],rondas:[],creadoEn:new Date().toISOString()};
     const duracion=esLiga?0:(minHasta-minDesde),nuevas=esLiga?[]:fechas.flatMap(fecha=>canchas.map(cancha=>({id:newId('reserva-torneo'),fecha,hora:horaDesde,cancha,jugador:'🏆 '+nombre,telefono:'',duracion,tipoEvento:'Torneo',esTorneo:true,torneoId,categoriaTorneo:categoria,modalidadTorneo:modalidad,fijo:false,fechasCanceladas:[],asistencia:true,pagoEfectivo:0,pagoTransferencia:0,descuento:0,consumos:[],origen:'torneo',fechaRegistro:new Date().toISOString()})));
     torneosGlobal.push(torneo);reservasGlobales.push(...nuevas);marcarCambioLocalPendiente(['torneos','reservas']);window.renderizarPantallas();window.renderizarTorneos();
-    try{for(const r of nuevas)await guardarReservaFirebase(r);await guardarDatosClub({torneos:torneosGlobal,reservas:reservasGlobales});alert('Torneo creado correctamente. Ya aparece en “En curso”.');window.limpiarFormularioTorneo();window.cambiarTabTorneo('encurso');}
+    try{for(const r of nuevas)await guardarReservaFirebase(r);await guardarDatosClub({torneos:torneosGlobal});alert('Torneo creado correctamente. Ya aparece en “En curso”.');window.limpiarFormularioTorneo();window.cambiarTabTorneo('encurso');}
     catch(e){torneosGlobal=torneosGlobal.filter(t=>t.id!==torneoId);reservasGlobales=reservasGlobales.filter(r=>r.torneoId!==torneoId);window.renderizarPantallas();window.renderizarTorneos();alert('No se pudo crear el torneo: '+(e.message||e));}
   };
   window.agregarInscriptoTorneo=async function(id){
