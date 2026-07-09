@@ -246,6 +246,158 @@
       width: 100%;
     }
 
+
+    .flujo-reserva {
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+    }
+
+    .paso-reserva {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .paso-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .paso-header h3 {
+      margin: 0;
+      color: var(--text);
+      font-size: 1rem;
+      font-weight: 900;
+      letter-spacing: -0.01em;
+    }
+
+    .paso-header span {
+      color: var(--muted);
+      font-size: .82rem;
+      font-weight: 700;
+    }
+
+    .opciones-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+      gap: 10px;
+    }
+
+    .opcion-card {
+      min-height: 64px;
+      border: 1px solid var(--border);
+      background: #ffffff;
+      border-radius: 16px;
+      color: var(--text);
+      font-family: inherit;
+      cursor: pointer;
+      padding: 12px;
+      text-align: left;
+      transition: transform .14s ease, border-color .14s ease, background .14s ease, box-shadow .14s ease;
+    }
+
+    .opcion-card:hover {
+      transform: translateY(-1px);
+      background: #f8fafc;
+      box-shadow: 0 10px 22px rgba(15, 23, 42, .06);
+    }
+
+    .opcion-card.activa {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #ffffff;
+      box-shadow: 0 12px 26px rgba(15, 23, 42, .16);
+    }
+
+    .opcion-card strong {
+      display: block;
+      font-size: .98rem;
+      font-weight: 900;
+      margin-bottom: 3px;
+    }
+
+    .opcion-card small {
+      display: block;
+      color: var(--muted);
+      font-weight: 700;
+      font-size: .76rem;
+    }
+
+    .opcion-card.activa small { color: #cbd5e1; }
+
+    .calendario-bloque {
+      border-top: 1px solid var(--border-soft);
+      padding-top: 4px;
+    }
+
+    .horarios-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+      gap: 12px;
+      max-height: 520px;
+      overflow-y: auto;
+      padding: 2px 5px 2px 0;
+    }
+
+    .horarios-grid::-webkit-scrollbar { width: 6px; }
+    .horarios-grid::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+    .horario-card {
+      height: 66px;
+      border: 1.5px solid var(--border);
+      background: #ffffff;
+      color: var(--text);
+      border-radius: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 900;
+      letter-spacing: -0.01em;
+      transition: transform .14s ease, border-color .14s ease, background .14s ease, box-shadow .14s ease;
+    }
+
+    .horario-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--primary);
+      background: #f8fafc;
+      box-shadow: 0 12px 24px rgba(15, 23, 42, .08);
+    }
+
+    .resumen-seleccion {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin: 0 0 12px 0;
+      text-align: left;
+    }
+
+    .resumen-chip {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 9px 10px;
+    }
+
+    .resumen-chip small {
+      display: block;
+      color: var(--muted);
+      font-size: .72rem;
+      font-weight: 800;
+      margin-bottom: 3px;
+    }
+
+    .resumen-chip strong {
+      color: var(--text);
+      font-size: .9rem;
+      font-weight: 900;
+    }
+
     @media (max-width: 540px) {
       body { padding: 12px 10px; }
       .vista-jugador { padding: 16px; border-radius: 18px; }
@@ -253,6 +405,8 @@
       .selector-modalidad { justify-content: space-between; }
       .selector-modalidad select { flex: 1; }
       .texto-canchas-disp { max-width: 110px; }
+      .resumen-seleccion { grid-template-columns: 1fr; }
+      .horarios-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
   </style>
 </head>
@@ -265,25 +419,35 @@
   <div id="pantalla-jugador" class="vista-jugador" style="display:none;">
     <div class="header-publico">
       <h2 id="titulo-club">Cargando club...</h2>
-      <p id="subtitulo-club">Elegí día, horario y completá tus datos.</p>
+      <p id="subtitulo-club">Elegí modalidad, duración, día y horario.</p>
     </div>
 
-    <div id="calendario-jugador" class="calendario-strip"></div>
+    <div class="flujo-reserva">
+      <section class="paso-reserva" id="paso-modalidad">
+        <div class="paso-header">
+          <h3>1. Elegí la modalidad</h3>
+          <span>Según disponibilidad del club</span>
+        </div>
+        <div id="opciones-modalidad" class="opciones-grid"></div>
+      </section>
 
-    <div class="sub-header">
-      <span>Horarios disponibles</span>
-      <div class="selector-modalidad">
-        <label for="select-modalidad-lista">Modalidad</label>
-        <select id="select-modalidad-lista" onchange="window.cambiarModalidadLista(this.value)">
-          <option value="todas">Todas</option>
-          <option value="indoor">Indoor</option>
-          <option value="outdoor">Outdoor</option>
-          <option value="tenis">Tenis</option>
-        </select>
-      </div>
+      <section class="paso-reserva" id="paso-duracion" style="display:none;">
+        <div class="paso-header">
+          <h3>2. Elegí la duración</h3>
+          <span>Turno a reservar</span>
+        </div>
+        <div id="opciones-duracion" class="opciones-grid"></div>
+      </section>
+
+      <section class="paso-reserva calendario-bloque" id="paso-fecha-horario" style="display:none;">
+        <div class="paso-header">
+          <h3>3. Elegí día y horario</h3>
+          <span>Horarios disponibles</span>
+        </div>
+        <div id="calendario-jugador" class="calendario-strip"></div>
+        <div id="lista-horarios" class="horarios-grid">Cargando horarios...</div>
+      </section>
     </div>
-
-    <div id="lista-horarios">Cargando horarios...</div>
   </div>
 
   <div id="modal-reserva-jugador" class="modal-overlay">
@@ -294,25 +458,19 @@
         Horario: <strong id="reserva-hora-display" style="color:#07152b;"></strong>
       </p>
 
+      <div class="resumen-seleccion">
+        <div class="resumen-chip"><small>Modalidad</small><strong id="resumen-modalidad">-</strong></div>
+        <div class="resumen-chip"><small>Duración</small><strong id="resumen-duracion">-</strong></div>
+        <div class="resumen-chip"><small>Horario</small><strong id="resumen-horario">-</strong></div>
+      </div>
+
       <div style="text-align:left;display:flex;flex-direction:column;gap:12px;">
         <div>
-          <label style="font-size:.9em;color:#52627a;font-weight:800;">1. Tipo de cancha:</label>
-          <select id="select-cancha-modal" class="input-form" style="margin-top:5px;"></select>
-        </div>
-        <div>
-          <label style="font-size:.9em;color:#52627a;font-weight:800;">2. Duración del turno:</label>
-          <select id="select-duracion-modal" class="input-form" style="margin-top:5px;">
-            <option value="60">1 hora (60 min)</option>
-            <option value="90">1 hora y media (90 min)</option>
-            <option value="120">2 horas (120 min)</option>
-          </select>
-        </div>
-        <div>
-          <label style="font-size:.9em;color:#52627a;font-weight:800;">3. Nombre y apellido:</label>
+          <label style="font-size:.9em;color:#52627a;font-weight:800;">Nombre y apellido:</label>
           <input type="text" id="input-nombre-jugador" class="input-form" placeholder="Ej: Franco Aramayo" style="margin-top:5px;" />
         </div>
         <div>
-          <label style="font-size:.9em;color:#52627a;font-weight:800;">4. Teléfono / WhatsApp:</label>
+          <label style="font-size:.9em;color:#52627a;font-weight:800;">Teléfono / WhatsApp:</label>
           <input type="tel" id="input-telefono-jugador" class="input-form" placeholder="Ej: 3511234567" style="margin-top:5px;" />
         </div>
       </div>
@@ -397,7 +555,8 @@
     let telefonoClubGlobal = '';
     let reservasGlobales = [];
     let reservaEnProcesoHora = null;
-    let modalidadLista = 'todas';
+    let modalidadSeleccionada = '';
+    let duracionSeleccionada = null;
 
     function normalizarIdFirestore(valor) {
       return String(valor || '')
@@ -494,17 +653,94 @@
       actualizarSelectorModalidades();
     }
 
-    function actualizarSelectorModalidades() {
-      const select = document.getElementById('select-modalidad-lista');
-      if (!select) return;
-      const disponibles = [{ value: 'todas', label: 'Todas' }];
-      if (canchasIndoorGlobal > 0) disponibles.push({ value: 'indoor', label: 'Indoor' });
-      if (canchasOutdoorGlobal > 0) disponibles.push({ value: 'outdoor', label: 'Outdoor' });
-      if (canchasTenisGlobal > 0) disponibles.push({ value: 'tenis', label: 'Tenis' });
-      select.innerHTML = disponibles.map(o => `<option value="${o.value}">${o.label}</option>`).join('');
-      if (!disponibles.some(o => o.value === modalidadLista)) modalidadLista = 'todas';
-      select.value = modalidadLista;
+    function labelModalidad(valor) {
+      if (valor === 'indoor') return 'Pádel Indoor';
+      if (valor === 'outdoor') return 'Pádel Outdoor';
+      if (valor === 'tenis') return 'Tenis';
+      return 'Modalidad';
     }
+
+    function modalidadesDisponibles() {
+      const opciones = [];
+      if (canchasIndoorGlobal > 0) opciones.push({ value: 'indoor', label: 'Pádel Indoor', detalle: `${canchasIndoorGlobal} cancha${canchasIndoorGlobal === 1 ? '' : 's'}` });
+      if (canchasOutdoorGlobal > 0) opciones.push({ value: 'outdoor', label: 'Pádel Outdoor', detalle: `${canchasOutdoorGlobal} cancha${canchasOutdoorGlobal === 1 ? '' : 's'}` });
+      if (canchasTenisGlobal > 0) opciones.push({ value: 'tenis', label: 'Tenis', detalle: `${canchasTenisGlobal} cancha${canchasTenisGlobal === 1 ? '' : 's'}` });
+      return opciones;
+    }
+
+    function actualizarSelectorModalidades() {
+      const contenedor = document.getElementById('opciones-modalidad');
+      if (!contenedor) return;
+      const disponibles = modalidadesDisponibles();
+
+      if (!disponibles.length) {
+        contenedor.innerHTML = '<div class="empty-state">Este club todavía no tiene modalidades configuradas.</div>';
+        modalidadSeleccionada = '';
+        duracionSeleccionada = null;
+        actualizarOpcionesDuracion();
+        return;
+      }
+
+      if (modalidadSeleccionada && !disponibles.some(o => o.value === modalidadSeleccionada)) {
+        modalidadSeleccionada = '';
+        duracionSeleccionada = null;
+      }
+
+      contenedor.innerHTML = disponibles.map(o => `
+        <button type="button" class="opcion-card ${modalidadSeleccionada === o.value ? 'activa' : ''}" onclick="window.seleccionarModalidadReserva('${o.value}')">
+          <strong>${escapeHtml(o.label)}</strong>
+          <small>${escapeHtml(o.detalle)}</small>
+        </button>
+      `).join('');
+
+      actualizarOpcionesDuracion();
+    }
+
+    function actualizarOpcionesDuracion() {
+      const pasoDuracion = document.getElementById('paso-duracion');
+      const pasoFechaHorario = document.getElementById('paso-fecha-horario');
+      const contenedor = document.getElementById('opciones-duracion');
+      const horarios = document.getElementById('lista-horarios');
+      if (!pasoDuracion || !pasoFechaHorario || !contenedor) return;
+
+      if (!modalidadSeleccionada) {
+        pasoDuracion.style.display = 'none';
+        pasoFechaHorario.style.display = 'none';
+        if (horarios) horarios.innerHTML = '';
+        return;
+      }
+
+      pasoDuracion.style.display = 'flex';
+      const sugerida = duracionSugeridaParaModalidad(modalidadSeleccionada);
+      const opciones = Array.from(new Set([sugerida, 60, 90, 120].filter(v => Number.isFinite(Number(v)) && Number(v) > 0))).sort((a, b) => a - b);
+      if (!duracionSeleccionada || !opciones.includes(duracionSeleccionada)) duracionSeleccionada = sugerida;
+
+      contenedor.innerHTML = opciones.map(min => {
+        const texto = min % 60 === 0 ? `${min / 60} hora${min === 60 ? '' : 's'}` : `${(min / 60).toFixed(1)} hs`;
+        return `
+          <button type="button" class="opcion-card ${duracionSeleccionada === min ? 'activa' : ''}" onclick="window.seleccionarDuracionReserva(${min})">
+            <strong>${escapeHtml(texto)}</strong>
+            <small>${min} minutos</small>
+          </button>
+        `;
+      }).join('');
+
+      pasoFechaHorario.style.display = duracionSeleccionada ? 'flex' : 'none';
+      renderizarPantallas();
+    }
+
+    window.seleccionarModalidadReserva = function(valor) {
+      modalidadSeleccionada = valor;
+      duracionSeleccionada = duracionSugeridaParaModalidad(valor);
+      actualizarSelectorModalidades();
+      renderizarCalendarios();
+      renderizarPantallas();
+    };
+
+    window.seleccionarDuracionReserva = function(minutos) {
+      duracionSeleccionada = toInt(minutos, duracionSugeridaParaModalidad(modalidadSeleccionada));
+      actualizarOpcionesDuracion();
+    };
 
     function getCanchas() {
       const canchas = [];
@@ -607,17 +843,23 @@
       renderizarPantallas();
     };
 
-    window.cambiarModalidadLista = function(valor) {
-      modalidadLista = valor || 'todas';
-      renderizarPantallas();
-    };
-
     window.renderizarPantallas = function() {
       const contenedorHorarios = document.getElementById('lista-horarios');
+      if (!contenedorHorarios) return;
       contenedorHorarios.innerHTML = '';
 
       if (!getCanchas().length) {
         contenedorHorarios.innerHTML = '<div class="empty-state">Este club todavía no tiene canchas configuradas.</div>';
+        return;
+      }
+
+      if (!modalidadSeleccionada) {
+        contenedorHorarios.innerHTML = '<div class="empty-state">Primero elegí una modalidad.</div>';
+        return;
+      }
+
+      if (!duracionSeleccionada) {
+        contenedorHorarios.innerHTML = '<div class="empty-state">Elegí la duración para ver horarios.</div>';
         return;
       }
 
@@ -632,53 +874,44 @@
 
       horariosFiltrados.forEach(hora => {
         if (validarEsHoraPasada(hora)) return;
-        const duracionVista = duracionSugeridaParaModalidad(modalidadLista === 'todas' ? 'indoor' : modalidadLista);
-        const libres = canchasLibresPara(hora, duracionVista, modalidadLista);
+        const libres = canchasLibresPara(hora, duracionSeleccionada, modalidadSeleccionada);
         if (!libres.length) return;
 
-        const div = document.createElement('div');
-        div.className = 'turno-item';
-        div.onclick = () => window.abrirModalReservaJugador(hora);
-        const hsTexto = duracionVista % 60 === 0 ? `${duracionVista / 60}` : `${(duracionVista / 60).toFixed(1)}`;
-        div.innerHTML = `<span class="punto-verde"></span><span class="hora">${hora} hs</span><span class="texto-disponible">Turno ${hsTexto} hs</span><span class="texto-canchas-disp">${resumenModalidades(libres)} libres</span>`;
-        contenedorHorarios.appendChild(div);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'horario-card';
+        btn.onclick = () => window.abrirModalReservaJugador(hora);
+        btn.innerText = `${hora} hs`;
+        contenedorHorarios.appendChild(btn);
         renderizados++;
       });
 
       if (!renderizados) {
-        contenedorHorarios.innerHTML = '<div class="empty-state">No quedan horarios disponibles para esta fecha y modalidad.</div>';
+        contenedorHorarios.innerHTML = '<div class="empty-state">No quedan horarios disponibles para esta fecha, modalidad y duración.</div>';
       }
     };
 
-    function actualizarOpcionesCanchaModal() {
-      const selectTipo = document.getElementById('select-cancha-modal');
-      const selectDuracion = document.getElementById('select-duracion-modal');
-      const duracionElegida = toInt(selectDuracion.value, duracionGlobal || 90);
-      const libres = canchasLibresPara(reservaEnProcesoHora, duracionElegida, modalidadLista);
-      selectTipo.innerHTML = '';
 
-      libres.forEach(c => {
-        const labelModalidad = c.modalidad === 'indoor' ? 'Pádel Indoor' : c.modalidad === 'outdoor' ? 'Pádel Outdoor' : 'Tenis';
-        selectTipo.innerHTML += `<option value="${c.numero}" data-modalidad="${c.modalidad}">${escapeHtml(labelModalidad)} · ${escapeHtml(c.label)} ($${window.formatearDinero(c.precio)})</option>`;
-      });
-
-      if (!libres.length) {
-        selectTipo.innerHTML = '<option value="">Sin canchas disponibles</option>';
-      }
-    }
 
     window.abrirModalReservaJugador = function(hora) {
+      if (!modalidadSeleccionada || !duracionSeleccionada) {
+        alert('Primero elegí modalidad y duración.');
+        return;
+      }
+      const libres = canchasLibresPara(hora, duracionSeleccionada, modalidadSeleccionada);
+      if (!libres.length) {
+        alert('Ese horario ya no está disponible. Elegí otro.');
+        renderizarPantallas();
+        return;
+      }
+
       reservaEnProcesoHora = hora;
       let pF = fechaSeleccionada.split('-');
       document.getElementById('reserva-fecha-display').innerText = `${pF[2]}/${pF[1]}/${pF[0]}`;
       document.getElementById('reserva-hora-display').innerText = `${hora} hs`;
-
-      const selectDuracion = document.getElementById('select-duracion-modal');
-      const duracionBase = duracionSugeridaParaModalidad(modalidadLista === 'todas' ? 'indoor' : modalidadLista);
-      selectDuracion.value = String([60, 90, 120].includes(duracionBase) ? duracionBase : 90);
-      selectDuracion.onchange = actualizarOpcionesCanchaModal;
-
-      actualizarOpcionesCanchaModal();
+      document.getElementById('resumen-modalidad').innerText = labelModalidad(modalidadSeleccionada);
+      document.getElementById('resumen-duracion').innerText = `${duracionSeleccionada} min`;
+      document.getElementById('resumen-horario').innerText = `${hora} hs`;
       document.getElementById('input-nombre-jugador').value = '';
       document.getElementById('input-telefono-jugador').value = '';
       document.getElementById('modal-reserva-jugador').style.display = 'flex';
@@ -696,24 +929,25 @@
       const inputNombre = document.getElementById('input-nombre-jugador').value.trim();
       const inputTelefono = document.getElementById('input-telefono-jugador').value.trim();
       const btnConfirmar = document.getElementById('btn-confirmar-reserva');
-      const canchaAsignada = document.getElementById('select-cancha-modal').value;
-      const duracionElegida = toInt(document.getElementById('select-duracion-modal').value, duracionGlobal || 90);
+      const duracionElegida = toInt(duracionSeleccionada, duracionSugeridaParaModalidad(modalidadSeleccionada));
 
       if (!inputNombre || !inputTelefono) {
         alert('Por favor completá tu nombre y teléfono.');
         return;
       }
-      if (!canchaAsignada) {
-        alert('No hay canchas disponibles para ese horario y duración.');
+      if (!modalidadSeleccionada || !reservaEnProcesoHora) {
+        alert('Elegí modalidad, duración y horario antes de reservar.');
         return;
       }
 
-      const sigueLibre = canchasLibresPara(reservaEnProcesoHora, duracionElegida, modalidadLista).some(c => String(c.numero) === String(canchaAsignada));
-      if (!sigueLibre) {
-        alert('Ese horario acaba de ser ocupado. Elegí otro horario o cambiá la duración.');
+      const libres = canchasLibresPara(reservaEnProcesoHora, duracionElegida, modalidadSeleccionada);
+      if (!libres.length) {
+        alert('Ese horario acaba de ser ocupado. Elegí otro horario.');
+        window.cerrarModalReservaJugador();
         renderizarPantallas();
         return;
       }
+      const canchaAsignada = libres[0].numero;
 
       btnConfirmar.disabled = true;
       btnConfirmar.innerText = 'Guardando reserva...';
@@ -726,6 +960,7 @@
           fecha: fechaSeleccionada,
           hora: reservaEnProcesoHora,
           cancha: String(canchaAsignada),
+          modalidad: modalidadSeleccionada,
           duracion: duracionElegida,
           jugador: inputNombre,
           telefono: inputTelefono,
@@ -748,7 +983,7 @@
 
         await setDoc(ref, reserva, { merge: false });
 
-        document.getElementById('exito-cancha').innerText = `Cancha ${canchaAsignada}`;
+        document.getElementById('exito-cancha').innerText = labelModalidad(modalidadSeleccionada);
         document.getElementById('exito-hora').innerText = reservaEnProcesoHora;
         window.cerrarModalReservaJugador();
         document.getElementById('modal-exito-reserva').style.display = 'flex';
