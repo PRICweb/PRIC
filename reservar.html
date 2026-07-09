@@ -359,7 +359,7 @@
     const db = getFirestore(app);
 
     const urlParams = new URLSearchParams(window.location.search);
-    const clubId = normalizarIdFirestore(urlParams.get('club') || '');
+    const clubId = urlParams.get('club') || '';
 
     let fechasValidas = [];
     let fechaActual = new Date();
