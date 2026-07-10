@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Reserva de Canchas</title>
   <style>
     :root {
@@ -480,15 +480,259 @@
       border-color: var(--primary);
     }
 
-    @media (max-width: 540px) {
-      body { padding: 12px 10px; }
-      .vista-jugador { padding: 16px; border-radius: 18px; }
-      .sub-header { flex-direction: column; align-items: stretch; }
-      .selector-modalidad { justify-content: space-between; }
-      .selector-modalidad select { flex: 1; }
-      .texto-canchas-disp { max-width: 110px; }
-      .resumen-seleccion { grid-template-columns: 1fr; }
-      .horarios-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+
+    /* Responsive móvil: uso fácil desde celular */
+    html {
+      min-height: 100%;
+      -webkit-text-size-adjust: 100%;
+      scroll-behavior: smooth;
+    }
+
+    button,
+    select,
+    input {
+      touch-action: manipulation;
+    }
+
+    .paso-reserva {
+      scroll-margin-top: 14px;
+    }
+
+    .opcion-card,
+    .horario-card,
+    .dia-item,
+    .btn-modal {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .horario-card:active,
+    .opcion-card:active,
+    .dia-item:active,
+    .btn-modal:active {
+      transform: scale(.985);
+    }
+
+    @media (max-width: 760px) {
+      body {
+        padding: max(12px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+        align-items: stretch;
+      }
+
+      .vista-jugador {
+        width: 100%;
+        max-width: none;
+        padding: 18px;
+        border-radius: 20px;
+        box-shadow: 0 14px 32px rgba(59, 130, 246, .10);
+      }
+
+      .header-publico {
+        gap: 8px;
+        padding-bottom: 14px;
+        margin-bottom: 16px;
+      }
+
+      .header-publico h2 {
+        font-size: clamp(1.28rem, 6vw, 1.65rem);
+        line-height: 1.12;
+      }
+
+      .header-publico p {
+        font-size: .92rem;
+        line-height: 1.35;
+      }
+
+      .flujo-reserva {
+        gap: 18px;
+      }
+
+      .paso-reserva {
+        gap: 10px;
+      }
+
+      .paso-header {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .paso-header h3 {
+        font-size: 1rem;
+        line-height: 1.2;
+      }
+
+      .paso-header span {
+        font-size: .78rem;
+        line-height: 1.25;
+      }
+
+      .opciones-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      .opcion-card {
+        min-height: 58px;
+        border-radius: 15px;
+        padding: 13px 14px;
+      }
+
+      .opcion-card strong {
+        font-size: .98rem;
+        line-height: 1.15;
+      }
+
+      .opcion-card small {
+        font-size: .78rem;
+        line-height: 1.25;
+      }
+
+      #opciones-duracion.opciones-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      #opciones-duracion .opcion-card {
+        text-align: center;
+        min-height: 64px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      .calendario-bloque {
+        padding-top: 12px;
+      }
+
+      .calendario-strip {
+        gap: 8px;
+        margin-left: -2px;
+        margin-right: -2px;
+        padding: 2px 2px 12px 2px;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .dia-item {
+        min-width: 62px;
+        padding: 11px 7px;
+        border-radius: 14px;
+        scroll-snap-align: start;
+      }
+
+      .dia-nombre {
+        font-size: .68rem;
+      }
+
+      .dia-numero {
+        font-size: 1.22rem;
+      }
+
+      .horarios-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        max-height: none;
+        overflow: visible;
+        padding: 0;
+      }
+
+      .horario-card {
+        height: 58px;
+        min-height: 58px;
+        border-radius: 15px;
+        font-size: .98rem;
+      }
+
+      .empty-state {
+        padding: 22px 14px;
+        border-radius: 16px;
+        font-size: .94rem;
+        line-height: 1.4;
+      }
+
+      .modal-overlay {
+        align-items: flex-end;
+        padding: 10px;
+        background: rgba(15, 23, 42, .42);
+      }
+
+      .modal-content {
+        width: 100%;
+        max-width: none;
+        max-height: calc(100dvh - 20px);
+        overflow-y: auto;
+        border-radius: 24px 24px 18px 18px;
+        padding: 20px 16px 16px;
+      }
+
+      .modal-content h3,
+      .modal-content h2 {
+        font-size: 1.2rem;
+        line-height: 1.2;
+      }
+
+      .resumen-seleccion {
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+
+      .resumen-chip {
+        padding: 10px 12px;
+        border-radius: 14px;
+      }
+
+      .resumen-chip small {
+        font-size: .72rem;
+      }
+
+      .resumen-chip strong {
+        font-size: .95rem;
+      }
+
+      label {
+        font-size: .86rem !important;
+      }
+
+      .input-form {
+        min-height: 48px;
+        font-size: 16px;
+        padding: 13px 14px;
+      }
+
+      .btn-modal {
+        min-height: 50px;
+        font-size: .98rem;
+        padding: 14px;
+      }
+    }
+
+    @media (max-width: 380px) {
+      .vista-jugador {
+        padding: 15px;
+        border-radius: 18px;
+      }
+
+      #opciones-duracion.opciones-grid,
+      .horarios-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .horario-card {
+        height: 54px;
+        min-height: 54px;
+        font-size: .92rem;
+      }
+
+      .opcion-card {
+        padding: 12px;
+      }
+    }
+
+    @media (min-width: 430px) and (max-width: 760px) {
+      .horarios-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
     }
   </style>
 </head>
@@ -663,6 +907,15 @@
       return Object.prototype.hasOwnProperty.call(obj || {}, clave);
     }
 
+
+
+    function desplazarAPaso(id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      setTimeout(() => {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 80);
+    }
     function escapeHtml(valor) {
       return String(valor == null ? '' : valor)
         .replace(/&/g, '&amp;')
@@ -817,11 +1070,13 @@
       actualizarSelectorModalidades();
       renderizarCalendarios();
       renderizarPantallas();
+      desplazarAPaso('paso-duracion');
     };
 
     window.seleccionarDuracionReserva = function(minutos) {
       duracionSeleccionada = toInt(minutos, duracionSugeridaParaModalidad(modalidadSeleccionada));
       actualizarOpcionesDuracion();
+      desplazarAPaso('paso-fecha-horario');
     };
 
     function getCanchas() {
@@ -997,6 +1252,7 @@
       document.getElementById('input-nombre-jugador').value = '';
       document.getElementById('input-telefono-jugador').value = '';
       document.getElementById('modal-reserva-jugador').style.display = 'flex';
+      setTimeout(() => document.getElementById('input-nombre-jugador').focus(), 160);
     };
 
     window.cerrarModalReservaJugador = function() {
