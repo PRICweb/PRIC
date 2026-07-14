@@ -401,6 +401,39 @@
     }
 
 
+    .resumen-pago {
+      background: var(--blue-soft);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 12px;
+      text-align: left;
+      color: var(--text);
+      display: grid;
+      gap: 7px;
+    }
+
+    .resumen-pago-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: .92rem;
+      color: var(--muted);
+    }
+
+    .resumen-pago-row strong {
+      color: var(--text);
+      font-weight: 650;
+    }
+
+    .resumen-pago-nota {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: .82rem;
+      line-height: 1.35;
+    }
+
+
+
     /* Ajuste visual: estilo azul minimalista y tipografía más fina */
     body {
       font-weight: 400;
@@ -790,6 +823,12 @@
         <div class="resumen-chip"><small>Horario</small><strong id="resumen-horario">-</strong></div>
       </div>
 
+      <div class="resumen-pago" id="resumen-pago-sena">
+        <div class="resumen-pago-row"><span>Total del turno</span><strong id="resumen-precio-total">$0</strong></div>
+        <div class="resumen-pago-row"><span>Seña a pagar</span><strong id="resumen-monto-sena">$0</strong></div>
+        <p class="resumen-pago-nota" id="resumen-nota-sena">La seña se calcula según la modalidad configurada por el club.</p>
+      </div>
+
       <div style="text-align:left;display:flex;flex-direction:column;gap:12px;">
         <div>
           <label style="font-size:.9em;color:#52627a;font-weight:800;">Nombre y apellido:</label>
@@ -842,6 +881,8 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
+    const BACKEND_URL = 'https://us-central1-pric-60f50.cloudfunctions.net/api';
+
     const urlParams = new URLSearchParams(window.location.search);
     const clubId = urlParams.get('club') || '';
 
@@ -870,6 +911,10 @@
     let precioIndoorGlobal = '5000';
     let precioOutdoorGlobal = '4000';
     let precioTenisGlobal = '3500';
+    let senaIndoorGlobal = 0;
+    let senaOutdoorGlobal = 0;
+    let senaTenisGlobal = 0;
+    let mercadoPagoConectadoGlobal = false;
     let duracionIndoorGlobal = 90;
     let duracionOutdoorGlobal = 90;
     let duracionTenisGlobal = 60;
@@ -896,6 +941,11 @@
 
     function toInt(valor, fallback = 0) {
       const n = parseInt(valor, 10);
+      return Number.isFinite(n) ? n : fallback;
+    }
+
+    function toNum(valor, fallback = 0) {
+      const n = Number(valor);
       return Number.isFinite(n) ? n : fallback;
     }
 
@@ -974,6 +1024,10 @@
       precioIndoorGlobal = tiene(d, 'precioIndoor') ? String(d.precioIndoor || 0) : precioIndoorGlobal;
       precioOutdoorGlobal = tiene(d, 'precioOutdoor') ? String(d.precioOutdoor || 0) : precioOutdoorGlobal;
       precioTenisGlobal = tiene(d, 'precioTenis') ? String(d.precioTenis || 0) : precioTenisGlobal;
+      senaIndoorGlobal = tiene(d, 'senaIndoor') ? toNum(d.senaIndoor, 0) : senaIndoorGlobal;
+      senaOutdoorGlobal = tiene(d, 'senaOutdoor') ? toNum(d.senaOutdoor, 0) : senaOutdoorGlobal;
+      senaTenisGlobal = tiene(d, 'senaTenis') ? toNum(d.senaTenis, 0) : senaTenisGlobal;
+      mercadoPagoConectadoGlobal = !!(data && data.mercadoPago && data.mercadoPago.connected);
       duracionIndoorGlobal = tiene(d, 'duracionIndoor') ? toInt(d.duracionIndoor, duracionGlobal || 90) : duracionIndoorGlobal;
       duracionOutdoorGlobal = tiene(d, 'duracionOutdoor') ? toInt(d.duracionOutdoor, duracionGlobal || 90) : duracionOutdoorGlobal;
       duracionTenisGlobal = tiene(d, 'duracionTenis') ? toInt(d.duracionTenis, 60) : duracionTenisGlobal;
@@ -993,6 +1047,52 @@
       if (valor === 'outdoor') return 'Pádel Outdoor';
       if (valor === 'tenis') return 'Tenis';
       return 'Modalidad';
+    }
+
+    function configPagoModalidad(valor) {
+      if (valor === 'indoor') return { precio30: toNum(precioIndoorGlobal, 0), porcentajeSena: toNum(senaIndoorGlobal, 0), nombre: 'Pádel Indoor' };
+      if (valor === 'outdoor') return { precio30: toNum(precioOutdoorGlobal, 0), porcentajeSena: toNum(senaOutdoorGlobal, 0), nombre: 'Pádel Outdoor' };
+      if (valor === 'tenis') return { precio30: toNum(precioTenisGlobal, 0), porcentajeSena: toNum(senaTenisGlobal, 0), nombre: 'Tenis' };
+      return { precio30: 0, porcentajeSena: 0, nombre: 'Modalidad' };
+    }
+
+    function calcularPagoSena(modalidad, duracion) {
+      const cfg = configPagoModalidad(modalidad);
+      const total = Math.max(0, Math.round(cfg.precio30 * (toInt(duracion, 90) / 30)));
+      const porcentaje = Math.max(0, Math.min(100, toNum(cfg.porcentajeSena, 0)));
+      const sena = Math.max(0, Math.round(total * porcentaje / 100));
+      return { total, porcentaje, sena, nombre: cfg.nombre };
+    }
+
+    function formatearPesos(numero) {
+      return '$' + Number(numero || 0).toLocaleString('es-AR');
+    }
+
+    function actualizarResumenPagoSena() {
+      const pago = calcularPagoSena(modalidadSeleccionada, duracionSeleccionada);
+      const totalEl = document.getElementById('resumen-precio-total');
+      const senaEl = document.getElementById('resumen-monto-sena');
+      const notaEl = document.getElementById('resumen-nota-sena');
+      if (totalEl) totalEl.innerText = formatearPesos(pago.total);
+      if (senaEl) senaEl.innerText = formatearPesos(pago.sena);
+      if (notaEl) {
+        if (!mercadoPagoConectadoGlobal) {
+          notaEl.innerText = 'El club todavía no tiene Mercado Pago conectado. Avisale al club para poder cobrar señas online.';
+        } else if (pago.porcentaje <= 0) {
+          notaEl.innerText = 'Esta modalidad no tiene seña configurada; la reserva se confirmará sin pago online.';
+        } else {
+          notaEl.innerText = `Vas a pagar el ${pago.porcentaje}% como seña. El saldo se abona en el club.`;
+        }
+      }
+      const btn = document.getElementById('btn-confirmar-reserva');
+      if (btn) btn.innerText = pago.sena > 0 ? 'Pagar seña y reservar' : 'Confirmar reserva';
+      return pago;
+    }
+
+    function reservaBloqueaDisponibilidad(reserva) {
+      const estado = String(reserva.estado || reserva.status || reserva.estadoPago || '').toLowerCase();
+      const estadosLibres = ['cancelada', 'cancelado', 'vencida', 'vencido', 'rechazada', 'rechazado', 'error_pago', 'pago_error'];
+      return !estadosLibres.includes(estado);
     }
 
     function modalidadesDisponibles() {
@@ -1135,6 +1235,7 @@
       const bloquesNuevos = bloquesDeTurno(hora, duracion);
       return canchas.filter(c => {
         return !reservasGlobales.some(r => {
+          if (!reservaBloqueaDisponibilidad(r)) return false;
           if (!reservaAplicaEnFecha(r, fechaSeleccionada)) return false;
           if (String(r.cancha) !== String(c.numero)) return false;
           const bloquesReserva = bloquesDeTurno(r.hora, r.duracion || duracionGlobal || 90);
@@ -1249,6 +1350,7 @@
       document.getElementById('resumen-modalidad').innerText = labelModalidad(modalidadSeleccionada);
       document.getElementById('resumen-duracion').innerText = `${duracionSeleccionada} min`;
       document.getElementById('resumen-horario').innerText = `${hora} hs`;
+      actualizarResumenPagoSena();
       document.getElementById('input-nombre-jugador').value = '';
       document.getElementById('input-telefono-jugador').value = '';
       document.getElementById('modal-reserva-jugador').style.display = 'flex';
@@ -1268,13 +1370,20 @@
       const inputTelefono = document.getElementById('input-telefono-jugador').value.trim();
       const btnConfirmar = document.getElementById('btn-confirmar-reserva');
       const duracionElegida = toInt(duracionSeleccionada, duracionSugeridaParaModalidad(modalidadSeleccionada));
+      const pagoSena = calcularPagoSena(modalidadSeleccionada, duracionElegida);
 
       if (!inputNombre || !inputTelefono) {
         alert('Por favor completá tu nombre y teléfono.');
         return;
       }
+
       if (!modalidadSeleccionada || !reservaEnProcesoHora) {
         alert('Elegí modalidad, duración y horario antes de reservar.');
+        return;
+      }
+
+      if (pagoSena.sena > 0 && !mercadoPagoConectadoGlobal) {
+        alert('Este club todavía no tiene Mercado Pago conectado. No se puede cobrar la seña online.');
         return;
       }
 
@@ -1285,19 +1394,23 @@
         renderizarPantallas();
         return;
       }
+
       const canchaAsignada = libres[0].numero;
+      const canchaAsignadaLabel = libres[0].label || labelModalidad(modalidadSeleccionada);
 
       btnConfirmar.disabled = true;
-      btnConfirmar.innerText = 'Guardando reserva...';
+      btnConfirmar.innerText = pagoSena.sena > 0 ? 'Creando pago...' : 'Guardando reserva...';
+
+      const ref = doc(collection(db, 'clubs', clubId, 'reservas'));
 
       try {
-        const ref = doc(collection(db, 'clubs', clubId, 'reservas'));
         const reserva = {
           id: ref.id,
           clubId,
           fecha: fechaSeleccionada,
           hora: reservaEnProcesoHora,
           cancha: String(canchaAsignada),
+          canchaNombre: canchaAsignadaLabel,
           modalidad: modalidadSeleccionada,
           duracion: duracionElegida,
           jugador: inputNombre,
@@ -1313,7 +1426,12 @@
           descuento: 0,
           consumos: [],
           origen: 'cliente',
-          status: 'confirmado',
+          status: pagoSena.sena > 0 ? 'pendiente_pago' : 'confirmado',
+          estado: pagoSena.sena > 0 ? 'pendiente_pago' : 'confirmado',
+          estadoPago: pagoSena.sena > 0 ? 'pendiente_pago' : 'sin_sena',
+          precioTotalCalculado: pagoSena.total,
+          porcentajeSena: pagoSena.porcentaje,
+          montoSena: pagoSena.sena,
           fechaRegistro: new Date().toISOString(),
           creadoEn: serverTimestamp(),
           actualizadoEn: serverTimestamp()
@@ -1321,17 +1439,43 @@
 
         await setDoc(ref, reserva, { merge: false });
 
-        document.getElementById('exito-cancha').innerText = labelModalidad(modalidadSeleccionada);
+        if (pagoSena.sena > 0) {
+          const response = await fetch(`${BACKEND_URL}/reservas/${encodeURIComponent(ref.id)}/pagar-sena`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ clubId })
+          });
+
+          const data = await response.json().catch(() => ({}));
+
+          if (!response.ok || !data.ok || !data.initPoint) {
+            await setDoc(ref, {
+              status: 'pago_error',
+              estado: 'pago_error',
+              estadoPago: 'pago_error',
+              errorPago: data.error || 'No se pudo crear el pago de la seña.',
+              actualizadoEn: serverTimestamp()
+            }, { merge: true });
+            throw new Error(data.error || 'No se pudo crear el pago de la seña.');
+          }
+
+          btnConfirmar.innerText = 'Redirigiendo a Mercado Pago...';
+          window.location.href = data.initPoint;
+          return;
+        }
+
+        document.getElementById('exito-cancha').innerText = canchaAsignadaLabel;
         document.getElementById('exito-hora').innerText = reservaEnProcesoHora;
         window.cerrarModalReservaJugador();
         document.getElementById('modal-exito-reserva').style.display = 'flex';
       } catch (error) {
-        console.error('Error al guardar la reserva:', error);
-        alert('Ocurrió un error al guardar tu reserva.');
+        console.error('Error al guardar la reserva o crear el pago:', error);
+        alert(error && error.message ? error.message : 'Ocurrió un error al guardar tu reserva.');
         btnConfirmar.disabled = false;
-        btnConfirmar.innerText = 'Confirmar reserva';
+        btnConfirmar.innerText = pagoSena.sena > 0 ? 'Pagar seña y reservar' : 'Confirmar reserva';
       }
     };
+
 
     function iniciarAppCliente() {
       const clubRef = doc(db, 'clubs', clubId);
