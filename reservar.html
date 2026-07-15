@@ -864,6 +864,7 @@
       doc,
       onSnapshot,
       setDoc,
+      deleteDoc,
       serverTimestamp
     } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
@@ -882,6 +883,7 @@
     const db = getFirestore(app);
 
     const BACKEND_URL = 'https://us-central1-pric-60f50.cloudfunctions.net/api';
+    const TIEMPO_PAGO_SENA_MS = 10 * 60 * 1000;
 
     const urlParams = new URLSearchParams(window.location.search);
     const clubId = urlParams.get('club') || '';
@@ -1089,10 +1091,61 @@
       return pago;
     }
 
+    function esReservaPendientePago(reserva) {
+      const estadoPago = String(reserva && reserva.estadoPago || '').toLowerCase();
+      const estado = String(reserva && reserva.estado || '').toLowerCase();
+      const status = String(reserva && reserva.status || '').toLowerCase();
+      return estadoPago === 'pendiente_pago' || estado === 'pendiente_pago' || status === 'pendiente_pago';
+    }
+
+    function obtenerExpiracionPagoMs(reserva) {
+      if (!reserva) return 0;
+      const directo = toNum(reserva.expiraPagoEnMs || reserva.pagoExpiraEnMs || reserva.expiraPagoEn || 0, 0);
+      if (directo > 0) return directo;
+
+      const iso = reserva.expiraPagoISO || reserva.pagoExpiraEnISO || reserva.expiraPagoFecha || '';
+      if (iso) {
+        const t = new Date(iso).getTime();
+        if (Number.isFinite(t)) return t;
+      }
+
+      const creado = reserva.fechaRegistro || reserva.creadoEnCliente || reserva.creadoEn || '';
+      if (typeof creado === 'string' && creado) {
+        const t = new Date(creado).getTime();
+        if (Number.isFinite(t)) return t + TIEMPO_PAGO_SENA_MS;
+      }
+
+      return 0;
+    }
+
+    function reservaPagoVencido(reserva) {
+      if (!esReservaPendientePago(reserva)) return false;
+      const expiraMs = obtenerExpiracionPagoMs(reserva);
+      return expiraMs > 0 && Date.now() >= expiraMs;
+    }
+
     function reservaBloqueaDisponibilidad(reserva) {
+      if (reservaPagoVencido(reserva)) return false;
       const estado = String(reserva.estado || reserva.status || reserva.estadoPago || '').toLowerCase();
       const estadosLibres = ['cancelada', 'cancelado', 'vencida', 'vencido', 'rechazada', 'rechazado', 'error_pago', 'pago_error'];
       return !estadosLibres.includes(estado);
+    }
+
+    async function borrarReservaPendienteVencida(reserva) {
+      if (!reserva || !reserva.id || !reservaPagoVencido(reserva)) return;
+      try {
+        await deleteDoc(doc(db, 'clubs', clubId, 'reservas', String(reserva.id)));
+      } catch (error) {
+        console.warn('No se pudo borrar reserva pendiente vencida:', reserva.id, error);
+      }
+    }
+
+    function limpiarReservasPendientesVencidas() {
+      const vencidas = reservasGlobales.filter(reservaPagoVencido);
+      if (!vencidas.length) return;
+      reservasGlobales = reservasGlobales.filter(r => !reservaPagoVencido(r));
+      renderizarPantallas();
+      vencidas.forEach(borrarReservaPendienteVencida);
     }
 
     function modalidadesDisponibles() {
@@ -1432,7 +1485,11 @@
           precioTotalCalculado: pagoSena.total,
           porcentajeSena: pagoSena.porcentaje,
           montoSena: pagoSena.sena,
+          expiraPagoEnMs: pagoSena.sena > 0 ? Date.now() + TIEMPO_PAGO_SENA_MS : null,
+          expiraPagoISO: pagoSena.sena > 0 ? new Date(Date.now() + TIEMPO_PAGO_SENA_MS).toISOString() : null,
+          minutosParaPagar: pagoSena.sena > 0 ? 10 : null,
           fechaRegistro: new Date().toISOString(),
+          creadoEnCliente: new Date().toISOString(),
           creadoEn: serverTimestamp(),
           actualizadoEn: serverTimestamp()
         };
@@ -1500,12 +1557,17 @@
       onSnapshot(reservasRef, (snap) => {
         reservasGlobales = [];
         snap.forEach((documento) => reservasGlobales.push({ id: documento.id, ...documento.data() }));
+        limpiarReservasPendientesVencidas();
         renderizarPantallas();
       }, (error) => {
         console.error('Error leyendo reservas:', error);
         alert('No se pudieron leer los turnos desde Firebase.');
       });
     }
+
+    setInterval(() => {
+      limpiarReservasPendientesVencidas();
+    }, 30 * 1000);
 
     if (!clubId) {
       document.getElementById('mensaje-error').style.display = 'block';
