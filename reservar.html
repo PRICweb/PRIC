@@ -856,6 +856,16 @@
     </div>
   </div>
 
+  <div id="modal-resultado-pago" class="modal-overlay">
+    <div class="modal-content" id="resultado-pago-card" style="border-color:#3b82f6;">
+      <h2 id="resultado-pago-titulo" style="color:#3b82f6;margin:0 0 12px 0;">Resultado del pago</h2>
+      <p id="resultado-pago-mensaje" style="color:#52627a;font-size:1.05em;line-height:1.5;margin:0 0 16px 0;">
+        Estamos revisando el estado del pago.
+      </p>
+      <button class="btn-modal btn-confirmado" id="btn-resultado-pago" onclick="window.cerrarModalResultadoPago()">Entendido</button>
+    </div>
+  </div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import {
@@ -887,6 +897,8 @@
 
     const urlParams = new URLSearchParams(window.location.search);
     const clubId = urlParams.get('club') || '';
+    const mpResultado = String(urlParams.get('mp') || '').toLowerCase();
+    const reservaIdRetorno = urlParams.get('reservaId') || '';
 
     let fechasValidas = [];
     let fechaActual = new Date();
@@ -1534,6 +1546,140 @@
     };
 
 
+    function limpiarParametrosPagoUrl() {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('mp');
+      url.searchParams.delete('reservaId');
+      window.history.replaceState({}, document.title, url.toString());
+    }
+
+    window.cerrarModalResultadoPago = function() {
+      const modal = document.getElementById('modal-resultado-pago');
+      if (modal) modal.style.display = 'none';
+      limpiarParametrosPagoUrl();
+    };
+
+    function pintarResultadoPago(tipo, titulo, mensaje) {
+      const modal = document.getElementById('modal-resultado-pago');
+      const card = document.getElementById('resultado-pago-card');
+      const tituloEl = document.getElementById('resultado-pago-titulo');
+      const mensajeEl = document.getElementById('resultado-pago-mensaje');
+      const boton = document.getElementById('btn-resultado-pago');
+
+      if (!modal || !card || !tituloEl || !mensajeEl) return;
+
+      const estilos = {
+        success: { color: '#10b981', boton: '#10b981' },
+        pending: { color: '#f59e0b', boton: '#f59e0b' },
+        failure: { color: '#ef4444', boton: '#ef4444' },
+        info: { color: '#3b82f6', boton: '#3b82f6' }
+      };
+
+      const estilo = estilos[tipo] || estilos.info;
+
+      card.style.borderColor = estilo.color;
+      tituloEl.style.color = estilo.color;
+      tituloEl.innerText = titulo;
+      mensajeEl.innerText = mensaje;
+
+      if (boton) {
+        boton.style.background = estilo.boton;
+        boton.style.color = '#ffffff';
+      }
+
+      modal.style.display = 'flex';
+    }
+
+    function estadoPagoReserva(reserva) {
+      const estadoPago = String(reserva && reserva.estadoPago || '').toLowerCase();
+      const estado = String(reserva && reserva.estado || '').toLowerCase();
+      const status = String(reserva && reserva.status || '').toLowerCase();
+      return { estadoPago, estado, status };
+    }
+
+    function revisarEstadoReservaRetornada(reserva) {
+      const estados = estadoPagoReserva(reserva);
+
+      if (
+        reserva &&
+        (
+          reserva.senaPagada === true ||
+          estados.estadoPago === 'sena_pagada' ||
+          estados.estado === 'confirmado' ||
+          estados.status === 'confirmado'
+        )
+      ) {
+        pintarResultadoPago(
+          'success',
+          'Pago recibido ✅',
+          'Pago recibido. Tu reserva quedó confirmada.'
+        );
+        return;
+      }
+
+      if (
+        estados.estadoPago === 'pago_no_aprobado' ||
+        estados.estadoPago === 'pago_monto_invalido' ||
+        estados.estadoPago === 'vencida' ||
+        estados.estado === 'vencida' ||
+        estados.status === 'vencida'
+      ) {
+        pintarResultadoPago(
+          'failure',
+          'Pago no completado',
+          'El pago no se pudo completar. El turno no queda confirmado.'
+        );
+        return;
+      }
+
+      if (
+        estados.estadoPago === 'pendiente_pago' ||
+        estados.estado === 'pendiente_pago' ||
+        estados.status === 'pendiente_pago'
+      ) {
+        pintarResultadoPago(
+          'pending',
+          'Pago pendiente',
+          'El pago está pendiente. Te avisaremos cuando se confirme.'
+        );
+      }
+    }
+
+    function revisarRetornoMercadoPago() {
+      if (!mpResultado) return;
+
+      if (mpResultado === 'success') {
+        pintarResultadoPago(
+          'success',
+          'Pago recibido ✅',
+          'Pago recibido. Tu reserva quedó confirmada.'
+        );
+      } else if (mpResultado === 'failure') {
+        pintarResultadoPago(
+          'failure',
+          'Pago no completado',
+          'El pago no se pudo completar. El turno no queda confirmado.'
+        );
+      } else if (mpResultado === 'pending') {
+        pintarResultadoPago(
+          'pending',
+          'Pago pendiente',
+          'El pago está pendiente. Te avisaremos cuando se confirme.'
+        );
+      }
+
+      if (!clubId || !reservaIdRetorno) return;
+
+      const reservaRef = doc(db, 'clubs', clubId, 'reservas', reservaIdRetorno);
+      onSnapshot(reservaRef, (documento) => {
+        if (!documento.exists()) return;
+        revisarEstadoReservaRetornada({ id: documento.id, ...documento.data() });
+      }, (error) => {
+        console.warn('No se pudo revisar el estado de la reserva después del pago:', error);
+      });
+    }
+
+
     function iniciarAppCliente() {
       const clubRef = doc(db, 'clubs', clubId);
 
@@ -1573,6 +1719,7 @@
       document.getElementById('mensaje-error').style.display = 'block';
     } else {
       iniciarAppCliente();
+      revisarRetornoMercadoPago();
     }
   </script>
 </body>
