@@ -2366,13 +2366,27 @@ document.addEventListener('click', function (ev) {
     const simplificar=arr=>(Array.isArray(arr)?arr:[]).map(x=>({id:x&&x.id,actualizadoEn:x&&x.actualizadoEn,stock:x&&x.stock,estado:x&&x.estado,fijo:x&&x.fijo,asistencia:x&&x.asistencia,pagoEfectivo:x&&x.pagoEfectivo,pagoTransferencia:x&&x.pagoTransferencia}));
     try{return JSON.stringify({reservas:simplificar(reservasGlobales),profes:simplificar(profesoresGlobales),inventario:simplificar(inventarioGlobal),gastos:simplificar(gastosGlobal),ingresos:simplificar(ingresosGlobal),torneos:simplificar(torneosGlobal),config:[canchasOutdoorGlobal,canchasIndoorGlobal,canchasTenisGlobal,precioGlobal,duracionGlobal]});}catch(e){return String(Date.now());}
   }
+  function formatearFechaActividad(fecha){
+    const valor=String(fecha||'');
+    const partes=valor.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    return partes?(partes[3]+'/'+partes[2]+'/'+partes[1]):(valor||'día no identificado');
+  }
+  function detalleTurnoActividad(r, contexto={}){
+    if(!r)return '';
+    const cancha=r.cancha||contexto.cancha||'';
+    const tipo=typeof obtenerTipoCanchaPorNumero==='function'?obtenerTipoCanchaPorNumero(cancha):(r.modalidad||modalidadTurneroActual||'indoor');
+    const modalidad=typeof obtenerLabelModalidad==='function'?obtenerLabelModalidad(tipo):String(tipo||'').toUpperCase();
+    const hora=r.hora||contexto.hora||'--:--';
+    const fecha=formatearFechaActividad(r.fecha||contexto.fecha);
+    return ' en modalidad '+modalidad+', cancha '+cancha+', a las '+hora+', el día '+fecha;
+  }
   function descripcionActividadDesdeCodigo(codigo, contexto){
     const c=String(codigo||'');
     const r=contexto&&contexto.reserva;
-    const turno=r?(' del '+(r.fecha||contexto.fecha||'día seleccionado')+' a las '+(r.hora||'--:--')+(r.cancha?' en cancha '+r.cancha:'')) : '';
+    const turno=r?detalleTurnoActividad(r,contexto):'';
     const reglas=[
       [/accionEliminar|eliminarTurno/,'Se ha borrado un turno'+turno],
-      [/confirmarReservaAdmin/,'Se ha creado un turno'],
+      [/confirmarReservaAdmin/,'Se ha creado un turno'+turno],
       [/cobrarTurno|confirmarCobroClase/,'Se registró o modificó el pago de un turno'],
       [/toggleConfirmarTurno/,'Se modificó la confirmación de asistencia de un turno'],
       [/hacerTurnoFijo/,'Se modificó la condición de turno fijo'],
@@ -2395,11 +2409,10 @@ document.addEventListener('click', function (ev) {
   window.registrarActividadClub=async function(descripcion,datos={}){
     try{
       const clubId=currentClubId||window.CLUB_DOC_ID_ACTUAL;if(!clubId||!descripcion)return;
-      const {db,auth}=await firebaseReady(); const user=auth&&auth.currentUser; const dispositivo=detectarDispositivoActividad();
+      const {db}=await firebaseReady(); const dispositivo=detectarDispositivoActividad();
       await db.collection('clubs').doc(clubId).collection('actividad').add({
         descripcion:textoSeguro(descripcion,300),tipo:textoSeguro(datos.tipo||'modificacion',60),detalle:textoSeguro(datos.detalle||'',500),
         fechaMs:Date.now(),creadoEn:firebase.firestore.FieldValue.serverTimestamp(),
-        usuarioEmail:user&&user.email?user.email:'Administrador',usuarioUid:user&&user.uid?user.uid:'',
         dispositivo:dispositivo.descripcion,tipoDispositivo:dispositivo.tipo,sistema:dispositivo.sistema,navegador:dispositivo.navegador
       });
     }catch(e){console.warn('No se pudo registrar la actividad:',e);}
@@ -2411,8 +2424,8 @@ document.addEventListener('click', function (ev) {
       const clubId=currentClubId||window.CLUB_DOC_ID_ACTUAL;if(!clubId)throw new Error('No se encontró el club actual.');
       const {db}=await firebaseReady(),desde=Date.now()-(ACTIVIDAD_DIAS*24*60*60*1000);
       const snap=await db.collection('clubs').doc(clubId).collection('actividad').where('fechaMs','>=',desde).orderBy('fechaMs','desc').limit(300).get();
-      const items=snap.docs.map(d=>Object.assign({id:d.id},d.data()||{}));
-      lista.innerHTML=items.length?items.map(a=>{const f=new Date(Number(a.fechaMs)||Date.now());const dia=f.toLocaleDateString('es-AR');const hora=f.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});return '<article class="actividad-item"><div class="actividad-icono">'+esc(iconoActividad(a.descripcion))+'</div><div class="actividad-contenido"><p class="actividad-titulo">'+esc(a.descripcion||'Actividad del panel')+'</p><p class="actividad-detalle">'+esc((a.usuarioEmail||'Administrador')+' · '+(a.dispositivo||'Dispositivo no identificado')+(a.detalle?' · '+a.detalle:''))+'</p></div><div class="actividad-fecha">'+esc(dia)+'<small>'+esc(hora)+'</small></div></article>';}).join(''):'<div class="actividad-vacio">No hubo actividad registrada durante las últimas 48 horas.</div>';
+      const items=snap.docs.map(d=>Object.assign({id:d.id},d.data()||{})).filter(a=>String(a.descripcion||'')!=='Se realizó una modificación desde el panel');
+      lista.innerHTML=items.length?items.map(a=>{const f=new Date(Number(a.fechaMs)||Date.now());const dia=f.toLocaleDateString('es-AR');const hora=f.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});const detalle=[a.dispositivo,a.detalle].filter(Boolean).join(' · ');return '<article class="actividad-item"><div class="actividad-icono">'+esc(iconoActividad(a.descripcion))+'</div><div class="actividad-contenido"><p class="actividad-titulo">'+esc(a.descripcion||'Actividad del panel')+'</p>'+(detalle?'<p class="actividad-detalle">'+esc(detalle)+'</p>':'')+'</div><div class="actividad-fecha">'+esc(dia)+'<small>'+esc(hora)+'</small></div></article>';}).join(''):'<div class="actividad-vacio">No hubo actividad registrada durante las últimas 48 horas.</div>';
     }catch(e){console.error(e);lista.innerHTML='<div class="actividad-vacio">No se pudo cargar la actividad. Revisá las reglas de Firestore para la subcolección <strong>actividad</strong>.</div>';}
   };
 
@@ -2458,6 +2471,7 @@ document.addEventListener('click', function (ev) {
     const esRegistro = /(?:agregar|guardar|registrar|confirmar|cobrar|reponer|eliminar|crear|hacerTurnoFijo|toggleConfirmar)/.test(codigo);
     const ejecutar = async () => {
       const estadoAntes=snapshotActividadEstado();
+      const idsReservasAntes=new Set((Array.isArray(reservasGlobales)?reservasGlobales:[]).map(r=>String(r&&r.id)));
       const reservaAntes=typeof reservaSeleccionada==='function'&&reservaSeleccionada()?serializar(reservaSeleccionada()):null;
       try{
         const limpio = codigo.trim().replace(/;+$/,'');
@@ -2465,8 +2479,10 @@ document.addEventListener('click', function (ev) {
         if (/^(?:window\.)?[A-Za-z_$][\w$\.]*\s*\(/.test(limpio)) resultado=await Function('event', 'return (' + limpio + ')').call(elemento, evento);
         else resultado=await Function('event', 'return (async function(){' + codigo + '}).call(this)').call(elemento, evento);
         const estadoDespues=snapshotActividadEstado();
-        if(estadoAntes!==estadoDespues){
-          const descripcion=descripcionActividadDesdeCodigo(codigo,{reserva:reservaAntes,fecha:fechaSeleccionada});
+        if(estadoAntes!==estadoDespues && !/cargarActividadClub/.test(codigo)){
+          const reservaCreada=(Array.isArray(reservasGlobales)?reservasGlobales:[]).find(r=>r&&r.id&&!idsReservasAntes.has(String(r.id)));
+          const reservaContexto=/confirmarReservaAdmin/.test(codigo)?serializar(reservaCreada):reservaAntes;
+          const descripcion=descripcionActividadDesdeCodigo(codigo,{reserva:reservaContexto,fecha:fechaSeleccionada});
           window.registrarActividadClub(descripcion,{tipo:'accion_panel'});
         }
         return resultado;
