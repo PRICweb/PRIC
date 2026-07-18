@@ -1600,15 +1600,28 @@
     function revisarEstadoReservaRetornada(reserva) {
       const estados = estadoPagoReserva(reserva);
 
-      if (
+      const estaConfirmada =
         reserva &&
         (
           reserva.senaPagada === true ||
           estados.estadoPago === 'sena_pagada' ||
           estados.estado === 'confirmado' ||
           estados.status === 'confirmado'
-        )
-      ) {
+        );
+
+      const estaFallida =
+        estados.estadoPago === 'pago_no_aprobado' ||
+        estados.estadoPago === 'pago_monto_invalido' ||
+        estados.estadoPago === 'vencida' ||
+        estados.estado === 'vencida' ||
+        estados.status === 'vencida';
+
+      const estaPendiente =
+        estados.estadoPago === 'pendiente_pago' ||
+        estados.estado === 'pendiente_pago' ||
+        estados.status === 'pendiente_pago';
+
+      if (estaConfirmada) {
         pintarResultadoPago(
           'success',
           'Pago recibido ✅',
@@ -1617,13 +1630,7 @@
         return;
       }
 
-      if (
-        estados.estadoPago === 'pago_no_aprobado' ||
-        estados.estadoPago === 'pago_monto_invalido' ||
-        estados.estadoPago === 'vencida' ||
-        estados.estado === 'vencida' ||
-        estados.status === 'vencida'
-      ) {
+      if (estaFallida) {
         pintarResultadoPago(
           'failure',
           'Pago no completado',
@@ -1632,11 +1639,16 @@
         return;
       }
 
-      if (
-        estados.estadoPago === 'pendiente_pago' ||
-        estados.estado === 'pendiente_pago' ||
-        estados.status === 'pendiente_pago'
-      ) {
+      /*
+        Si Mercado Pago volvió con failure, no dejamos que el estado pendiente_pago
+        de Firebase pise el mensaje de pago no completado. Esa reserva puede seguir
+        como pendiente hasta que venza o hasta que el backend la marque como no aprobada.
+      */
+      if (mpResultado === 'failure') {
+        return;
+      }
+
+      if (estaPendiente) {
         pintarResultadoPago(
           'pending',
           'Pago pendiente',
