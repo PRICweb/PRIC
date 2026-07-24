@@ -1518,7 +1518,25 @@ document.addEventListener('click', function (ev) {
     const id = currentClubId || window.CLUB_DOC_ID_ACTUAL;
     if (!id || !reserva || !reserva.id) throw new Error('Reserva o club inválido.');
     const {db} = await firebaseReady();
-    const clean = serializar(Object.assign({}, reserva, {clubId:id, actualizadoEn:new Date().toISOString()}));
+
+    /*
+      Las reservas creadas/guardadas desde este panel quedan marcadas como admin.
+      Si la reserva ya venía desde la web pública, se conserva su origen para no romper
+      el flujo de WhatsApp automático del backend.
+    */
+    const origenReserva =
+      reserva.origenReserva ||
+      reserva.creadaDesde ||
+      reserva.fuenteReserva ||
+      "admin";
+
+    const clean = serializar(Object.assign({}, reserva, {
+      clubId: id,
+      origenReserva,
+      creadaDesde: origenReserva,
+      actualizadoEn: new Date().toISOString()
+    }));
+
     await db.collection('clubs').doc(id).collection('reservas').doc(String(reserva.id)).set(clean, {merge:true});
   }
   async function borrarReservaFirebase(idReserva){
