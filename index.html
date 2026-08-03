@@ -469,9 +469,9 @@ body.panel-activo .turnero-time-cell.fuera-horario:not(.media){
   font-family:"Segoe UI Emoji","Apple Color Emoji",sans-serif!important;
 }
 .gestion-icon-btn:hover{background:#f8fafc!important;filter:none!important}
-.gestion-icon-btn.activa{background:#eaf1fb!important;color:#07152b!important;border-color:#07152b!important}
+.gestion-icon-btn.activa{background:#ffffff!important;color:#07152b!important;border-color:#07152b!important;box-shadow:0 0 0 3px #dbeafe,0 8px 18px rgba(7,21,43,.12)!important}
 .gestion-icon-btn>svg{width:25px;height:25px;display:block;fill:currentColor;flex:0 0 auto}
-.gestion-icon-btn .gestion-emoji{display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:1.35rem;line-height:1;transform:translateY(-1px)}
+.gestion-icon-btn .gestion-emoji{display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:1.35rem;line-height:1}
 
 /* Sistema de avisos propio de la web */
 .web-dialog-overlay{position:fixed;inset:0;z-index:10000;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(15,23,42,.38);backdrop-filter:blur(7px);box-sizing:border-box}
@@ -942,7 +942,11 @@ window.abrirModalReservaAdmin = function (hora, cancha) {
 window.cerrarModalReservaAdmin = function () {
     reservaEnProcesoHora = null;
     const duracion = document.getElementById('admin-duracion');
-    if (duracion) Array.from(duracion.options).forEach(opt => { opt.disabled = false; opt.hidden = false; });
+    if (duracion) {
+        Array.from(duracion.options).forEach(opt => { opt.disabled = false; opt.hidden = false; });
+        delete duracion.dataset.maxDisponible;
+        duracion.removeAttribute('title');
+    }
     const modal = document.getElementById('modal-reserva-admin');
     if (modal) {
         modal.style.display = 'none';
@@ -1082,41 +1086,56 @@ document.addEventListener('click', function (ev) {
     document.body.appendChild(overlay);
     return overlay;
   }
+  const colaDialogosWeb = [];
+  let dialogoWebActivo = false;
+  function procesarColaDialogosWeb(){
+    if (dialogoWebActivo || !colaDialogosWeb.length) return;
+    dialogoWebActivo = true;
+    const pedido = colaDialogosWeb.shift();
+    const opciones = pedido.opciones || {};
+    const resolve = pedido.resolve;
+    const overlay = asegurarDialogoWeb();
+    const titulo = document.getElementById('web-dialog-title');
+    const mensaje = document.getElementById('web-dialog-message');
+    const acciones = document.getElementById('web-dialog-actions');
+    const focoAnterior = document.activeElement;
+    titulo.textContent = opciones.titulo || 'Aviso';
+    mensaje.textContent = String(opciones.mensaje || '');
+    acciones.innerHTML = '';
+    const botones = Array.isArray(opciones.botones) && opciones.botones.length ? opciones.botones : [{texto:'Aceptar',valor:true,clase:'primary'}];
+    let resuelto = false;
+    const cerrar = valor => {
+      if (resuelto) return;
+      resuelto = true;
+      overlay.classList.remove('open');
+      overlay.setAttribute('aria-hidden','true');
+      document.removeEventListener('keydown', onKey);
+      if (focoAnterior && typeof focoAnterior.focus === 'function' && document.contains(focoAnterior)) focoAnterior.focus();
+      dialogoWebActivo = false;
+      resolve(valor);
+      setTimeout(procesarColaDialogosWeb, 0);
+    };
+    const onKey = ev => {
+      if (ev.key === 'Escape') cerrar(opciones.valorEscape ?? false);
+      if (ev.key === 'Enter' && botones.length === 1) cerrar(botones[0].valor);
+    };
+    botones.forEach((b, i) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'web-dialog-btn ' + (b.clase || (i === botones.length - 1 ? 'primary' : 'secondary'));
+      btn.textContent = b.texto;
+      btn.addEventListener('click', () => cerrar(b.valor));
+      acciones.appendChild(btn);
+    });
+    overlay.classList.add('open');
+    overlay.setAttribute('aria-hidden','false');
+    document.addEventListener('keydown', onKey);
+    requestAnimationFrame(() => { const foco = acciones.querySelector('.primary,.danger,.warning,button'); if(foco) foco.focus(); });
+  }
   function dialogoWeb(opciones={}){
     return new Promise(resolve => {
-      const overlay = asegurarDialogoWeb();
-      const titulo = document.getElementById('web-dialog-title');
-      const mensaje = document.getElementById('web-dialog-message');
-      const acciones = document.getElementById('web-dialog-actions');
-      titulo.textContent = opciones.titulo || 'Aviso';
-      mensaje.textContent = String(opciones.mensaje || '');
-      acciones.innerHTML = '';
-      const botones = Array.isArray(opciones.botones) && opciones.botones.length ? opciones.botones : [{texto:'Aceptar',valor:true,clase:'primary'}];
-      let resuelto = false;
-      const cerrar = valor => {
-        if (resuelto) return;
-        resuelto = true;
-        overlay.classList.remove('open');
-        overlay.setAttribute('aria-hidden','true');
-        document.removeEventListener('keydown', onKey);
-        resolve(valor);
-      };
-      const onKey = ev => {
-        if (ev.key === 'Escape') cerrar(opciones.valorEscape ?? false);
-        if (ev.key === 'Enter' && botones.length === 1) cerrar(botones[0].valor);
-      };
-      botones.forEach((b, i) => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'web-dialog-btn ' + (b.clase || (i === botones.length - 1 ? 'primary' : 'secondary'));
-        btn.textContent = b.texto;
-        btn.addEventListener('click', () => cerrar(b.valor));
-        acciones.appendChild(btn);
-      });
-      overlay.classList.add('open');
-      overlay.setAttribute('aria-hidden','false');
-      document.addEventListener('keydown', onKey);
-      requestAnimationFrame(() => { const foco = acciones.querySelector('.primary,.danger,.warning,button'); if(foco) foco.focus(); });
+      colaDialogosWeb.push({opciones, resolve});
+      procesarColaDialogosWeb();
     });
   }
   window.webAlert = function(mensaje, titulo='Aviso'){
@@ -1133,7 +1152,7 @@ document.addEventListener('click', function (ev) {
       valorEscape:false
     });
   };
-  window.alert = function(mensaje){ window.webAlert(String(mensaje || ''), 'Aviso'); };
+  window.alert = function(mensaje){ void window.webAlert(String(mensaje || ''), 'Aviso'); };
 
 
   function marcarCambioLocalPendiente(claves){
@@ -1718,6 +1737,10 @@ document.addEventListener('click', function (ev) {
     const cancha = getValue('admin-cancha-id');
     const tipoEvento = getValue('admin-tipo-evento') || 'Normal';
     const duracion = toInt(getValue('admin-duracion'), duracionGlobal || 90);
+    const selectorDuracion = $('admin-duracion');
+    const maxDisponible = selectorDuracion ? toInt(selectorDuracion.dataset.maxDisponible, 0) : 0;
+    if (duracion < 30 || duracion % 30 !== 0){ alert('La duración seleccionada no es válida.'); return; }
+    if (maxDisponible && duracion > maxDisponible){ alert('Solo hay ' + maxDisponible + ' minutos disponibles antes del turno siguiente.'); return; }
     let profe = null;
     if (tipoEvento === 'Clases'){
       profe = getValue('admin-select-profe');
@@ -1857,17 +1880,27 @@ document.addEventListener('click', function (ev) {
       if (opcion === 'cancelar') return;
       if (opcion === 'una'){
         r.fechasCanceladas = Array.isArray(r.fechasCanceladas) ? r.fechasCanceladas : [];
-        if (!r.fechasCanceladas.includes(fechaInstancia)) r.fechasCanceladas.push(fechaInstancia);
+        const yaEstabaCancelada = r.fechasCanceladas.includes(fechaInstancia);
+        if (!yaEstabaCancelada) r.fechasCanceladas.push(fechaInstancia);
         try{ await guardarReservaSeleccionada(); window.cerrarModalAcciones(); refrescarTodo(); }
-        catch(e){ alert('No se pudo eliminar esta fecha. Detalle: ' + (e.message || e)); }
+        catch(e){
+          if (!yaEstabaCancelada) r.fechasCanceladas = r.fechasCanceladas.filter(f => f !== fechaInstancia);
+          refrescarTodo();
+          alert('No se pudo eliminar esta fecha. Detalle: ' + (e.message || e));
+        }
         return;
       }
     } else {
       if (!(await window.turneroConfirm('¿Seguro que querés eliminar este turno?', {titulo:'Eliminar turno',aceptar:'Eliminar',peligro:true}))) return;
     }
-    reservasGlobales = reservasGlobales.filter(x => String(x.id) !== String(r.id));
+    const indiceOriginal = reservasGlobales.findIndex(x => String(x.id) === String(r.id));
+    if (indiceOriginal >= 0) reservasGlobales.splice(indiceOriginal, 1);
     try{ await borrarReservaFirebase(r.id); window.cerrarModalAcciones(); refrescarTodo(); }
-    catch(e){ alert('No se pudo borrar en Firebase. Detalle: ' + (e.message || e)); }
+    catch(e){
+      if (!reservasGlobales.some(x => String(x.id) === String(r.id))) reservasGlobales.splice(Math.max(0, indiceOriginal), 0, r);
+      refrescarTodo();
+      alert('No se pudo borrar en Firebase. Detalle: ' + (e.message || e));
+    }
   };
   window.eliminarTurno = window.accionEliminar;
   window.agregarConsumoTurno = async function(){
