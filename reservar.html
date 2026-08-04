@@ -939,6 +939,8 @@
     let diasAbiertosGlobal = [0, 1, 2, 3, 4, 5, 6];
     let telefonoClubGlobal = '';
     let reservasGlobales = [];
+    let clubRaizActual = {};
+    let configuracionGeneralActual = {};
     let reservaEnProcesoHora = null;
     let modalidadSeleccionada = '';
     let duracionSeleccionada = null;
@@ -964,7 +966,15 @@
     }
 
     function datosPlanosClub(data) {
-      return Object.assign({}, data || {}, data && data.datosClub && typeof data.datosClub === 'object' ? data.datosClub : {});
+      const raiz = data || {};
+      const legacy = raiz.datosClub && typeof raiz.datosClub === 'object' ? raiz.datosClub : {};
+      return Object.assign({}, raiz, legacy, configuracionGeneralActual || {});
+    }
+
+    function refrescarConfiguracionClubPublica() {
+      aplicarDatosClub(Object.assign({}, clubRaizActual || {}, { datosClub: configuracionGeneralActual || {} }));
+      renderizarCalendarios();
+      renderizarPantallas();
     }
 
     function tiene(obj, clave) {
@@ -1708,12 +1718,20 @@
         }
         document.getElementById('mensaje-error').style.display = 'none';
         document.getElementById('pantalla-jugador').style.display = 'block';
-        aplicarDatosClub({ id: documento.id, ...documento.data() });
-        renderizarCalendarios();
-        renderizarPantallas();
+        clubRaizActual = { id: documento.id, ...documento.data() };
+        refrescarConfiguracionClubPublica();
       }, (error) => {
         console.error('Error leyendo club:', error);
         document.getElementById('mensaje-error').style.display = 'block';
+      });
+
+      const configRef = doc(db, 'clubs', clubId, 'configuracion', 'general');
+      onSnapshot(configRef, (documento) => {
+        configuracionGeneralActual = documento.exists() ? (documento.data() || {}) : {};
+        refrescarConfiguracionClubPublica();
+      }, (error) => {
+        console.error('Error leyendo configuración general:', error);
+        // Se conserva el respaldo legacy del documento principal del club.
       });
 
       const reservasRef = collection(db, 'clubs', clubId, 'reservas');
