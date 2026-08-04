@@ -1,5 +1,3 @@
-<!DOCTYPE html>
-
 <html lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Portal Privado - Administrador de Club</title><script src="https://cdn.jsdelivr.net/npm/chart.js"></script><style>body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background-color:#1a1e24;color:#ffffff;margin:0;padding:20px;display:flex;flex-direction:column;align-items:center}.vista-club{background-color:transparent;width:100%;max-width:900px;padding:0;box-sizing:border-box;margin-bottom:30px}.scroll-interno::-webkit-scrollbar{width:6px}.scroll-interno::-webkit-scrollbar-thumb{background:#44505d;border-radius:4px}.text-neutral-main{color:#ffffff}.text-neutral-sub{color:#9ca3af}.text-neutral-bold{color:#d1d5db;font-weight:bold}.blue-card{background:linear-gradient(145deg,#4b84f3 0%,#3567d6 100%);border:1px solid #6b9dfa;border-radius:12px;color:#ffffff;box-shadow:0 4px 14px rgba(0,0,0,0.25)}.grid-acciones{display:grid;grid-template-columns:repeat(2,1fr);gap:15px;width:100%;margin-bottom:25px}.action-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:25px 10px;cursor:pointer;transition:transform 0.2s,filter 0.2s;font-weight:bold;font-size:1.1em;text-align:center}.action-btn:hover{transform:translateY(-2px);filter:brightness(1.05)}.action-icon{font-size:2.2em;margin-bottom:12px}.btn-translucido{background-color:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#ffffff}.btn-translucido:hover{background-color:rgba(255,255,255,0.25)}.input-form{padding:10px;border-radius:6px;border:1px solid #44505d;background-color:#171d24;color:white;color-scheme:dark;font-family:inherit;width:100%;box-sizing:border-box}table{width:100%;border-collapse:collapse;font-size:0.9em}th{padding:8px;text-align:left;border-bottom:2px solid #44505d;color:#9ca3af}td{padding:8px;border-bottom:1px solid #2c3540}.btn-modal{padding:12px;border-radius:6px;border:none;font-weight:bold;cursor:pointer;color:white;font-size:1em;transition:0.2s;width:100%;box-sizing:border-box}.btn-guardar,.btn-fijar,.btn-cobrar-clase{background-color:#10b981}.btn-guardar:hover,.btn-fijar:hover,.btn-cobrar-clase:hover{background-color:#059669}.btn-cerrar,.btn-stock{background-color:#4b5563;color:white}.btn-cerrar:hover,.btn-stock:hover{background-color:#374151}.btn-gasto,.btn-balance{background-color:#3b82f6;color:white}.btn-gasto:hover,.btn-balance:hover{background-color:#2563eb}.btn-eliminar{background-color:#ef4444}.btn-eliminar:hover{background-color:#dc2626}.btn-whatsapp{background-color:#25d366;color:#171d24}.btn-whatsapp:hover{background-color:#1ebd57}.btn-excepcion{background-color:#f59e0b;color:#171d24}.btn-excepcion:hover{background-color:#d97706}.contenedor-grilla{display:flex;overflow-x:auto;background:#1e252d;border:1px solid #2c3540;border-radius:12px;margin-top:15px;user-select:none;position:relative}.contenedor-grilla::-webkit-scrollbar{height:8px}.contenedor-grilla::-webkit-scrollbar-thumb{background:#44505d;border-radius:4px}.celda-vacia-hover{transition:background-color 0.1s}.celda-vacia-hover:hover{background-color:rgba(59,130,246,0.15)}#linea-tiempo-actual{position:absolute;left:55px;right:0;height:2px;background-color:#3b82f6;z-index:20;display:none;pointer-events:none}#linea-tiempo-actual::before{content:'';position:absolute;left:-4px;top:-4px;width:10px;height:10px;border-radius:50%;background-color:#3b82f6}.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);justify-content:center;align-items:center;z-index:1000;overflow-y:auto;padding:20px 0}.modal-content{background:#1e252d;padding:25px;border-radius:12px;width:90%;max-width:360px;display:flex;flex-direction:column;gap:12px;border:1px solid #44505d;text-align:center;margin:auto}#modal-acciones .modal-content{max-width:580px}.seccion-acordeon{border:1px solid #2c3540;border-radius:8px;margin-bottom:15px;overflow:hidden;background:#171d24}.header-acordeon{display:flex;justify-content:space-between;align-items:center;padding:12px 15px;background:#242c36;cursor:pointer;font-weight:bold;font-size:1.05em;user-select:none;color:#d1d5db}.header-acordeon:hover{background:#2c3540}.contenido-acordeon{padding:15px;display:none}.contenido-acordeon.abierto{display:block;border-top:1px solid #2c3540}body{background:#f7f8fa;color:#0f172a}body.panel-activo{background:#f7f8fa;color:#07152b}.auth-screen{width:100%;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#f7f8fa}.auth-card{width:100%;max-width:430px;background:#ffffff;border:1px solid #dbe1ea;border-radius:22px;padding:28px 22px;box-shadow:0 26px 55px rgba(15,23,42,0.16);box-sizing:border-box;text-align:center}.auth-card h1{margin:0 0 8px 0;font-size:2em;line-height:1.15;color:#07152b;font-weight:800;letter-spacing:-0.03em}.auth-subtitle{max-width:330px;margin:0 auto 24px auto;color:#52627a;line-height:1.35;font-size:1.05em}.auth-tabs{display:none}.auth-form{display:flex;flex-direction:column;gap:13px;text-align:left}.auth-field{display:flex;flex-direction:column;gap:8px}.auth-label{color:#5f6b7d;font-weight:800;font-size:0.9em}.auth-card .input-form{width:100%;padding:14px 15px;border-radius:12px;border:1px solid #d6deea;background:#eaf1fb;color:#000000;font-family:inherit;font-size:0.95em;outline:none;box-sizing:border-box;color-scheme:light}.auth-card .input-form:focus{border-color:#0f172a;box-shadow:0 0 0 3px rgba(15,23,42,0.08)}.auth-primary{width:100%;margin-top:2px;padding:14px 16px;border:none;border-radius:12px;background:#0f172a;color:#ffffff;font-weight:800;font-size:1em;cursor:pointer;transition:transform 0.16s ease,filter 0.16s ease;font-family:inherit}.auth-primary:hover{filter:brightness(1.08);transform:translateY(-1px)}.auth-small{color:#52627a;font-size:.92em;text-align:center;margin:2px 0 0 0}.auth-small button{background:none;border:none;color:#0f172a;cursor:pointer;font-weight:800;padding:0;text-decoration:underline;font-family:inherit;font-size:1em}.auth-status{background:#f8fafc;border:1px solid #dbe1ea;border-radius:14px;padding:16px;text-align:left}.auth-status h3{margin:0 0 8px 0;color:#07152b}.auth-status p{margin:0 0 12px 0;color:#52627a;line-height:1.45}.auth-status .btn-cerrar{background:#0f172a;color:#ffffff;border-radius:12px}.auth-message{min-height:18px;color:#b45309;font-size:.88em;text-align:center;margin:14px 0 0 0}body:not(.panel-activo)#app-content{display:none !important;visibility:hidden !important;pointer-events:none !important}body:not(.panel-activo)#auth-screen{display:flex !important}body.panel-activo #auth-screen{display:none !important;visibility:hidden !important;pointer-events:none !important}body.panel-activo #app-content{display:flex !important;visibility:visible !important;pointer-events:auto !important;min-height:100vh;background:#f7f8fa;box-sizing:border-box;padding:24px 14px}body.panel-activo .vista-club{max-width:980px;background:#ffffff;border:1px solid #dbe1ea;border-radius:22px;padding:22px;box-shadow:0 26px 55px rgba(15,23,42,0.12)}body.panel-activo #pantalla-club>div:first-child{gap:14px;flex-wrap:wrap;padding-bottom:16px;border-bottom:1px solid #e5eaf2}body.panel-activo #pantalla-club h2,body.panel-activo #pantalla-club h3,body.panel-activo #pantalla-club label,body.panel-activo .modal-content h3,body.panel-activo .modal-content label{color:#07152b !important}body.panel-activo #lbl-nombre-club{color:#2563eb !important}body.panel-activo .header-panel-botones{width:auto !important;margin-left:auto;gap:10px !important;padding:0 !important}body.panel-activo .header-panel-botones button{width:44px;height:44px;border-radius:14px !important;border:1px solid #dbe1ea !important;background:#ffffff !important;color:#0f172a !important;box-shadow:0 8px 18px rgba(15,23,42,0.07);display:inline-flex;align-items:center;justify-content:center}body.panel-activo #controles-fecha-club,body.panel-activo .contenedor-grilla,body.panel-activo .modal-content,body.panel-activo .seccion-acordeon{background:#ffffff !important;border:1px solid #dbe1ea !important;color:#07152b !important;box-shadow:0 10px 24px rgba(15,23,42,0.06)}body.panel-activo #controles-fecha-club{border-radius:16px !important}body.panel-activo .contenedor-grilla{border-radius:16px !important}body.panel-activo .header-acordeon{background:#f8fafc !important;color:#07152b !important;border-color:#e5eaf2 !important}body.panel-activo .contenido-acordeon{background:#ffffff !important;border-top:1px solid #e5eaf2 !important;color:#07152b !important}body.panel-activo .modal-overlay{background:rgba(15,23,42,0.25)!important;backdrop-filter:blur(6px)}body.panel-activo .modal-content{border-radius:22px !important;box-shadow:0 26px 55px rgba(15,23,42,0.16)!important}body.panel-activo .input-form{background:#eaf1fb !important;color:#07152b !important;border:1px solid #d6deea !important;border-radius:12px !important;color-scheme:light !important}body.panel-activo th{color:#52627a !important;border-bottom-color:#dbe1ea !important}body.panel-activo td{color:#07152b !important;border-bottom-color:#e5eaf2 !important}body.panel-activo .text-neutral-main,body.panel-activo .text-neutral-bold{color:#07152b !important}body.panel-activo .text-neutral-sub{color:#52627a !important}body.panel-activo .btn-modal{border-radius:12px !important;box-shadow:none !important}body.panel-activo .btn-guardar,body.panel-activo .btn-gasto,body.panel-activo .btn-balance,body.panel-activo .btn-fijar,body.panel-activo .btn-cobrar-clase{background:#0f172a !important;color:#ffffff !important}body.panel-activo .btn-cerrar,body.panel-activo .btn-stock{background:#52627a !important;color:#ffffff !important}body.panel-activo .btn-eliminar{background:#ef4444 !important;color:#ffffff !important}body.panel-activo .btn-whatsapp{background:#25d366 !important;color:#07152b !important}body.panel-activo #lbl-fecha-club,body.panel-activo #controles-fecha-club span,body.panel-activo #controles-fecha-club button{color:#07152b !important}body.panel-activo #controles-fecha-club .btn-modal{color:#ffffff !important}body.panel-activo .contenedor-grilla>div{border-color:#e5eaf2 !important}body.panel-activo .contenedor-grilla>div:first-child,body.panel-activo .contenedor-grilla>div>div:first-child{background:#f8fafc !important;color:#07152b !important;border-color:#e5eaf2 !important}body:not(.panel-activo),body.panel-activo{padding:0 !important;min-height:100vh;overflow-x:hidden}body.panel-activo .modal-content p,body.panel-activo .modal-content small{color:#52627a !important}body.panel-activo .modal-content strong,body.panel-activo #res-precio-total,body.panel-activo #cobrar-clase-total,body.panel-activo #txt-faltante{color:#07152b !important}body.panel-activo *[style*="#1e252d"],body.panel-activo *[style*="#242c36"]{background:#ffffff !important;border-color:#e5eaf2 !important}body.panel-activo *[style*="#2c3540"],body.panel-activo *[style*="#44505d"]{border-color:#e5eaf2 !important}body.panel-activo *[style*="#9ca3af"],body.panel-activo *[style*="#d1d5db"]{color:#52627a !important}body.panel-activo *[style*="color:white"],body.panel-activo *[style*="color:white"],body.panel-activo *[style*="color:#ffffff"]{color:#07152b !important}body.panel-activo .btn-modal[style*="color:#171d24"],body.panel-activo .btn-whatsapp[style*="color:#171d24"]{color:#07152b !important}@media(max-width:600px){body{padding:10px}#controles-fecha-club{flex-direction:column;gap:15px}.header-panel-botones{justify-content:space-around !important}}body.panel-activo #app-content{display:flex !important;flex-direction:row !important;align-items:stretch !important;justify-content:flex-start !important;width:100% !important;min-height:100vh !important;padding:0 !important;background:#f7f8fa !important}#sidebar-admin-club{width:235px;min-width:235px;min-height:100vh;background:#ffffff;border-right:1px solid #e5e7eb;box-sizing:border-box;padding:18px 13px 18px 13px;display:none;flex-direction:column;gap:22px;color:#2b2b2b}body.panel-activo #sidebar-admin-club{display:flex !important}.sidebar-brand-club{padding:0 8px 14px 8px;border-bottom:1px solid #ececec}.sidebar-brand-club h2{margin:0;font-size:25px;line-height:1.03;font-weight:500;color:#2c2c2c;letter-spacing:-0.02em}.sidebar-brand-club .sidebar-club-id{display:block;margin-top:6px;color:#07152b;font-size:14px;letter-spacing:0.04em}.sidebar-menu-club{display:flex;flex-direction:column;gap:14px;flex:1}.sidebar-item-club{width:100%;min-height:58px;border:0;border-radius:12px;background:transparent;color:#333333;display:flex;align-items:center;gap:18px;padding:0 18px;font:500 16px/1.2 'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;cursor:pointer;text-align:left;transition:background .15s ease,color .15s ease,transform .15s ease}.sidebar-item-club:hover{background:#f5f5f5}.sidebar-item-club.active{background:#f2f2f2;color:#07152b}.sidebar-icon-club{width:22px;min-width:22px;display:inline-flex;align-items:center;justify-content:center;font-size:20px;color:inherit}.sidebar-logout-club{margin-top:auto;color:#6b6b6b}body.panel-activo #pantalla-club.vista-club{flex:1 !important;max-width:none !important;min-height:100vh !important;margin:0 !important;border-radius:0 !important;border:0 !important;box-shadow:none !important;padding:24px 28px !important;background:#ffffff !important;overflow-x:auto}body.panel-activo #pantalla-club>div:first-child{border-bottom:1px solid #eeeeee !important}body.panel-activo .header-panel-botones{display:none !important}body.panel-activo #pantalla-club>div:first-child>button.btn-cerrar{display:none !important}body.panel-activo #titulo-turnero-panel{margin:0;color:#2c2c2c !important;font-size:1.7em;font-weight:650}body.panel-activo #lbl-nombre-club{color:#07152b !important}#modal-torneos .modal-content{max-width:900px !important}@media(max-width:760px){body.panel-activo #app-content{flex-direction:column !important}#sidebar-admin-club{width:100%;min-width:0;min-height:auto;padding:14px;border-right:0;border-bottom:1px solid #e5e7eb}.sidebar-brand-club h2{font-size:22px}.sidebar-menu-club{gap:8px}.sidebar-item-club{min-height:48px}body.panel-activo #pantalla-club.vista-club{min-height:auto;padding:18px 14px !important}}</style><style id="panel-admin-secciones-integradas-css">body.panel-activo .sidebar-icon-club svg{width:22px;height:22px;stroke:currentColor;stroke-width:1.9;fill:none;stroke-linecap:round;stroke-linejoin:round;display:block}body.panel-activo .sidebar-item-club{min-height:58px;gap:18px}body.panel-activo .sidebar-item-club.active{background:#f2f2f2!important;color:#07152b!important}body.panel-activo .panel-seccion-club{display:none;flex:1 1 auto;min-height:100vh;width:auto;margin:0;padding:24px 28px;background:#ffffff;color:#07152b;box-sizing:border-box;overflow-x:auto}body.panel-activo .panel-seccion-club.panel-seccion-activa{display:block}.panel-header-club{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;flex-wrap:wrap;border-bottom:1px solid #eeeeee;padding-bottom:16px;margin-bottom:22px}.panel-header-club h2{margin:0;color:#2c2c2c!important;font-size:1.7em;font-weight:650;letter-spacing:-0.02em}.panel-header-club p{margin:4px 0 0 0;color:#52627a;font-size:.95em}.panel-card-club{background:#ffffff;border:1px solid #dbe1ea;border-radius:18px;padding:18px;margin-bottom:18px;box-shadow:0 10px 24px rgba(15,23,42,0.06);box-sizing:border-box}.panel-card-club h3{margin:0 0 14px 0;color:#07152b!important;font-size:1.08rem;font-weight:650}.panel-card-title-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:4px}.panel-grid-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;align-items:end}.panel-grid-2{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}.panel-grid-3{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}.panel-grid-form label{display:block;margin-bottom:6px;color:#52627a!important;font-size:.82em;font-weight:650}.panel-grid-dos{display:grid;grid-template-columns:repeat(2,minmax(260px,1fr));gap:18px}.panel-card-full{grid-column:1 / -1}.panel-actions-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.panel-actions-row .btn-modal{flex:1;min-width:160px}.panel-btn-fit{height:44px;align-self:end}.panel-btn-auto{width:auto!important;padding:9px 13px!important;font-size:.86em!important}.tabla-panel-scroll{width:100%;overflow:auto;border:1px solid #e5eaf2;border-radius:14px;background:#ffffff}.tabla-panel-scroll table{margin:0;min-width:620px}.tabla-panel-scroll th{background:#f8fafc!important;color:#52627a!important;border-bottom:1px solid #dbe1ea!important}.tabla-panel-scroll td{color:#07152b!important;border-bottom:1px solid #e5eaf2!important}.panel-resumen-finanzas{display:grid;grid-template-columns:repeat(3,minmax(160px,1fr));gap:14px;margin-bottom:18px}.panel-stat-card{background:#ffffff;border:1px solid #dbe1ea;border-radius:18px;padding:18px;box-shadow:0 10px 24px rgba(15,23,42,.06)}.panel-stat-card span{display:block;color:#52627a;font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}.panel-stat-card strong{display:block;color:#07152b;font-size:1.55rem;font-weight:650}.panel-muted{color:#52627a;margin:0 0 14px 0;font-size:.93em}.panel-chart-box{height:360px;width:100%;display:flex;align-items:center;justify-content:center}.panel-chart-box canvas{width:100%!important;height:100%!important}@media(max-width:760px){body.panel-activo .panel-seccion-club{min-height:auto;padding:18px 14px}.panel-grid-dos,.panel-resumen-finanzas{grid-template-columns:1fr}.panel-header-club{align-items:flex-start}.panel-card-club{padding:14px;border-radius:14px}.sidebar-icon-club svg{width:20px;height:20px}}</style><style id="panel-club-core-integrado-css">
 body.panel-activo #app-content{display:flex!important;flex-direction:row!important;align-items:stretch!important;justify-content:flex-start!important;width:100%!important;min-height:100vh!important;padding:0!important;background:#f7f8fa!important}
 body.panel-activo #pantalla-club.vista-club,body.panel-activo .panel-seccion-club{flex:1 1 auto!important;max-width:none!important;width:auto!important;min-height:100vh!important;margin:0!important;border-radius:0!important;border:0!important;box-shadow:none!important;padding:24px 28px!important;background:#fff!important;overflow-x:auto!important;box-sizing:border-box!important}
@@ -1285,7 +1283,6 @@ document.addEventListener('click', function (ev) {
 
     refrescarTodoInicial();
     iniciarEscuchasFirebase();
-    limpiarReservasDuplicadasDocumentoPrincipalUnaVez(club).catch(e => console.warn('No se pudo limpiar el espejo antiguo de reservas:', e));
     cargarConfiguracionSeparada().catch(e=>console.warn('Configuración separada:',e));
     activarVista(localStorage.getItem('vistaActivaClub') || 'turnero');
   }
@@ -1599,28 +1596,251 @@ document.addEventListener('click', function (ev) {
     const {db} = await firebaseReady();
     await db.collection('clubs').doc(id).collection('reservas').doc(String(idReserva)).delete();
   }
+  function textoReservaLegacy(valor){
+    return String(valor == null ? '' : valor).trim();
+  }
+
+  function fechaReservaLegacy(valor){
+    if (!valor) return '';
+    if (typeof valor === 'string') {
+      const limpia = valor.trim();
+      const match = limpia.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (match) return `${match[1]}-${match[2]}-${match[3]}`;
+    }
+    try {
+      const fecha = typeof valor.toDate === 'function'
+        ? valor.toDate()
+        : (valor instanceof Date ? valor : new Date(valor));
+      if (!Number.isNaN(fecha.getTime())) return isoFechaDesdeDate(fecha);
+    } catch(e) {}
+    return '';
+  }
+
+  function modalidadReservaLegacy(reserva){
+    const texto = textoReservaLegacy(
+      reserva && (
+        reserva.modalidad ||
+        reserva.tipoCancha ||
+        reserva.deporte ||
+        reserva.categoria
+      )
+    ).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+    if (texto.includes('indoor') || texto.includes('cubierta') || texto.includes('techada')) return 'indoor';
+    if (texto.includes('outdoor') || texto.includes('descubierta') || texto.includes('aire libre')) return 'outdoor';
+    if (texto.includes('tenis')) return 'tenis';
+
+    return obtenerTipoCanchaPorNumero(
+      reserva && (
+        reserva.cancha ||
+        reserva.numeroCancha ||
+        reserva.canchaId ||
+        reserva.canchaNumero
+      )
+    );
+  }
+
+  function hashReservaLegacy(texto){
+    let hash = 2166136261;
+    const valor = String(texto || '');
+    for (let i = 0; i < valor.length; i++) {
+      hash ^= valor.charCodeAt(i);
+      hash = Math.imul(hash, 16777619);
+    }
+    return (hash >>> 0).toString(36);
+  }
+
+  function normalizarReservaLegacy(reserva, indice){
+    const original = serializar(reserva || {}) || {};
+    const fecha = fechaReservaLegacy(
+      original.fecha ||
+      original.fechaReserva ||
+      original.dia
+    );
+    const hora = textoReservaLegacy(
+      original.hora ||
+      original.horaInicio ||
+      original.inicio
+    ).slice(0, 5);
+    const cancha = textoReservaLegacy(
+      original.cancha ||
+      original.numeroCancha ||
+      original.canchaId ||
+      original.canchaNumero ||
+      '1'
+    );
+    const jugador = textoReservaLegacy(
+      original.jugador ||
+      original.clienteNombre ||
+      original.nombreCliente ||
+      original.nombre ||
+      'Sin nombre'
+    );
+    const telefono = textoReservaLegacy(
+      original.telefono ||
+      original.clienteTelefono ||
+      original.telefonoCliente ||
+      original.whatsapp ||
+      ''
+    );
+    const modalidad = modalidadReservaLegacy(original);
+    const duracion = Math.max(30, toInt(original.duracion, duracionGlobal || 90));
+    const claveNatural = [fecha, hora, cancha, jugador.toLowerCase(), telefono].join('|');
+    const idOriginal = textoReservaLegacy(original.id || original.reservaId);
+    const id = normalizarIdFirestore(
+      idOriginal || `legacy-${hashReservaLegacy(claveNatural || String(indice))}`
+    );
+
+    return Object.assign({}, original, {
+      id,
+      clubId: currentClubId || window.CLUB_DOC_ID_ACTUAL || original.clubId || '',
+      fecha,
+      hora,
+      cancha,
+      jugador,
+      telefono,
+      modalidad,
+      duracion,
+      fechasCanceladas: Array.isArray(original.fechasCanceladas) ? original.fechasCanceladas : [],
+      fijo: original.fijo === true,
+      migradaDesdeDatosClub: true,
+      migradaEnClienteISO: new Date().toISOString()
+    });
+  }
+
+  function claveNaturalReserva(reserva){
+    return [
+      fechaReservaLegacy(reserva && reserva.fecha),
+      textoReservaLegacy(reserva && reserva.hora).slice(0, 5),
+      textoReservaLegacy(reserva && reserva.cancha),
+      textoReservaLegacy(reserva && (reserva.jugador || reserva.nombreCliente || reserva.nombre)).toLowerCase(),
+      textoReservaLegacy(reserva && (reserva.telefono || reserva.telefonoCliente))
+    ].join('|');
+  }
+
   async function limpiarReservasDuplicadasDocumentoPrincipalUnaVez(clubData){
     const id = currentClubId || window.CLUB_DOC_ID_ACTUAL;
-    if (!id) return;
-    const marca = 'club-reservas-espejo-eliminado-v1:' + normalizarIdFirestore(id);
+    if (!id) return {migradas:0, omitidas:0, limpiado:false};
+
     try{
-      if (localStorage.getItem(marca) === '1') return;
-      const datosExistentes = datosPlanosClub(clubData || currentClubData || {});
-      if (!tiene(datosExistentes, 'reservas')) {
-        localStorage.setItem(marca, '1');
-        return;
+      const datosRaiz = clubData || currentClubData || {};
+      const datosLegacy = datosRaiz && datosRaiz.datosClub && typeof datosRaiz.datosClub === 'object'
+        ? datosRaiz.datosClub
+        : {};
+      const reservasLegacy = Array.isArray(datosLegacy.reservas)
+        ? datosLegacy.reservas
+        : [];
+
+      if (!reservasLegacy.length) {
+        return {migradas:0, omitidas:0, limpiado:false};
       }
+
       const {db} = await firebaseReady();
-      await db.collection('clubs').doc(id).update({
-        'datosClub.reservas': firebase.firestore.FieldValue.delete()
+      const clubRef = db.collection('clubs').doc(id);
+      const reservasRef = clubRef.collection('reservas');
+      const existentesSnap = await reservasRef.get();
+
+      const idsExistentes = new Set();
+      const clavesExistentes = new Set();
+      existentesSnap.docs.forEach(doc => {
+        const dato = Object.assign({id:doc.id}, serializar(doc.data() || {}));
+        idsExistentes.add(String(doc.id));
+        clavesExistentes.add(claveNaturalReserva(dato));
       });
-      localStorage.setItem(marca, '1');
+
+      const pendientes = [];
+      let omitidas = 0;
+
+      reservasLegacy.forEach((reserva, indice) => {
+        const limpia = normalizarReservaLegacy(reserva, indice);
+
+        // Una reserva sin fecha u hora no se elimina del documento antiguo:
+        // se conserva para poder corregirla manualmente sin perder información.
+        if (!limpia.fecha || !limpia.hora) {
+          console.warn('Reserva antigua no migrada por datos incompletos:', reserva);
+          omitidas++;
+          return;
+        }
+
+        const clave = claveNaturalReserva(limpia);
+        if (idsExistentes.has(String(limpia.id)) || clavesExistentes.has(clave)) {
+          omitidas++;
+          return;
+        }
+
+        idsExistentes.add(String(limpia.id));
+        clavesExistentes.add(clave);
+        pendientes.push(limpia);
+      });
+
+      for (let i = 0; i < pendientes.length; i += 350) {
+        const batch = db.batch();
+        pendientes.slice(i, i + 350).forEach(reserva => {
+          batch.set(
+            reservasRef.doc(String(reserva.id)),
+            Object.assign({}, reserva, {
+              migradaEn: firebase.firestore.FieldValue.serverTimestamp(),
+              actualizadoEn: firebase.firestore.FieldValue.serverTimestamp()
+            }),
+            {merge:true}
+          );
+        });
+        await batch.commit();
+      }
+
+      /*
+       * Verificación posterior:
+       * solo se elimina datosClub.reservas cuando cada reserva válida está
+       * presente en la subcolección por ID o por su clave natural.
+       */
+      const verificacionSnap = await reservasRef.get();
+      const idsVerificados = new Set();
+      const clavesVerificadas = new Set();
+      verificacionSnap.docs.forEach(doc => {
+        const dato = Object.assign({id:doc.id}, serializar(doc.data() || {}));
+        idsVerificados.add(String(doc.id));
+        clavesVerificadas.add(claveNaturalReserva(dato));
+      });
+
+      const reservasValidas = reservasLegacy
+        .map((reserva, indice) => normalizarReservaLegacy(reserva, indice))
+        .filter(reserva => reserva.fecha && reserva.hora);
+
+      const todasMigradas = reservasValidas.every(reserva =>
+        idsVerificados.has(String(reserva.id)) ||
+        clavesVerificadas.has(claveNaturalReserva(reserva))
+      );
+
+      const hayIncompletas = reservasValidas.length !== reservasLegacy.length;
+
+      if (todasMigradas && !hayIncompletas) {
+        await clubRef.update({
+          'datosClub.reservas': firebase.firestore.FieldValue.delete(),
+          'datosClub.reservasMigradasEn': firebase.firestore.FieldValue.serverTimestamp(),
+          'datosClub.reservasMigradasCantidad': reservasLegacy.length
+        });
+      } else {
+        console.warn(
+          'El array antiguo de reservas se conservó porque no todas pudieron verificarse.',
+          {total:reservasLegacy.length, validas:reservasValidas.length, migradas:pendientes.length}
+        );
+      }
+
+      // Incorporar inmediatamente las migradas a la memoria antes del listener.
+      if (pendientes.length) mezclarReservas(pendientes);
+
+      return {
+        migradas: pendientes.length,
+        omitidas,
+        limpiado: todasMigradas && !hayIncompletas
+      };
     }catch(e){
-      // Si no se puede limpiar, no se interrumpe el panel y se reintentará en otro ingreso.
-      console.warn('Limpieza del espejo de reservas:', e);
+      // Ante cualquier error, el array antiguo se conserva. No hay limpieza destructiva.
+      console.error('Migración segura de reservas antiguas:', e);
+      return {migradas:0, omitidas:0, limpiado:false, error:e};
     }
   }
-  function detenerEscuchaReservas(){ if(typeof unsubReservas==='function')unsubReservas();unsubReservas=null; }
+    function detenerEscuchaReservas(){ if(typeof unsubReservas==='function')unsubReservas();unsubReservas=null; }
   function detenerEscuchasFirebase(){ if(typeof unsubClub==='function')unsubClub();if(typeof unsubVista==='function')unsubVista();detenerEscuchaReservas();unsubClub=null;unsubVista=null; }
   async function iniciarEscuchaReservasTurnero(){
     detenerEscuchaReservas(); if((window.__vistaPanelClubActual||'turnero')!=='turnero')return;
@@ -1639,7 +1859,13 @@ document.addEventListener('click', function (ev) {
   async function iniciarEscuchasFirebase(){
     detenerEscuchasFirebase();const id=currentClubId||window.CLUB_DOC_ID_ACTUAL;if(!id)return;const {db}=await firebaseReady();const ref=db.collection('clubs').doc(id);
     unsubClub=ref.onSnapshot(snap=>{if(snap.exists){const remoto=Object.assign({id:snap.id},snap.data()||{});currentClubData=Object.assign({},currentClubData||{},remoto,{id:snap.id});window.CLUB_DATA_ACTUAL=currentClubData;}},e=>console.error('lectura club:',e));
-    await cargarConfiguracionSeparada(); if((window.__vistaPanelClubActual||'turnero')==='turnero')await iniciarEscuchaReservasTurnero();
+    await cargarConfiguracionSeparada();
+    // Migrar primero el array antiguo; recién después iniciar el listener moderno.
+    const resultadoMigracion = await limpiarReservasDuplicadasDocumentoPrincipalUnaVez(currentClubData || {});
+    if (resultadoMigracion && resultadoMigracion.migradas) {
+      console.info(`Reservas antiguas migradas: ${resultadoMigracion.migradas}`);
+    }
+    if((window.__vistaPanelClubActual||'turnero')==='turnero') await iniciarEscuchaReservasTurnero();
   }
 
   function precioPorCancha(cancha, esClase){
