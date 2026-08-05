@@ -2002,12 +2002,15 @@ document.addEventListener('click', function (ev) {
 
       const hayIncompletas = reservasValidas.length !== reservasLegacy.length;
 
+      // Política no destructiva: el sistema nunca elimina automáticamente
+      // datosClub.reservas. Una migración correcta solo deja una marca de control.
+      // La eliminación del respaldo antiguo queda exclusivamente a cargo del administrador.
       if (todasMigradas && !hayIncompletas) {
-        await clubRef.update({
-          'datosClub.reservas': firebase.firestore.FieldValue.delete(),
-          'datosClub.reservasMigradasEn': firebase.firestore.FieldValue.serverTimestamp(),
-          'datosClub.reservasMigradasCantidad': reservasLegacy.length
-        });
+        await clubRef.set({datosClub:{
+          reservasMigradasEn: firebase.firestore.FieldValue.serverTimestamp(),
+          reservasMigradasCantidad: reservasLegacy.length,
+          reservasMigracionVerificada: true
+        }},{merge:true});
       } else {
         console.warn(
           'El array antiguo de reservas se conservó porque no todas pudieron verificarse.',
@@ -2021,7 +2024,7 @@ document.addEventListener('click', function (ev) {
       return {
         migradas: pendientes.length,
         omitidas,
-        limpiado: todasMigradas && !hayIncompletas
+        limpiado: false
       };
     }catch(e){
       // Ante cualquier error, el array antiguo se conserva. No hay limpieza destructiva.
@@ -2206,9 +2209,12 @@ document.addEventListener('click', function (ev) {
     if (!jugador){ alert('Ingresá el nombre.'); return; }
     const inicio = window.aMinutos(reservaEnProcesoHora), fin = inicio + duracion;
     const colision = reservasGlobales.find(r => {
+      if (!r || (window.reservaBloqueaTurneroAdmin && !window.reservaBloqueaTurneroAdmin(r))) return false;
       if (!window.reservaAplicaEnFecha ? r.fecha !== fechaSeleccionada : !window.reservaAplicaEnFecha(r, fechaSeleccionada)) return false;
-      if (String(r.cancha) !== String(cancha)) return false;
-      const ri = window.aMinutos(r.hora), rf = ri + toInt(r.duracion, duracionGlobal || 90);
+      const canchaTurno = typeof canchaEfectivaTurno === 'function' ? canchaEfectivaTurno(r, fechaSeleccionada) : r.cancha;
+      if (String(canchaTurno) !== String(cancha)) return false;
+      const horaTurno = typeof horaEfectivaTurno === 'function' ? horaEfectivaTurno(r, fechaSeleccionada) : r.hora;
+      const ri = window.aMinutos(horaTurno), rf = ri + toInt(r.duracion, duracionGlobal || 90);
       return inicio < rf && fin > ri;
     });
     if (colision){ alert('No se puede agendar aquí. Se pisa con "' + (colision.jugador || 'otro turno') + '".'); return; }
@@ -3308,7 +3314,7 @@ document.addEventListener('click', function (ev) {
     const reservas=resSnap.docs.map(d=>Object.assign({id:d.id},serializar(d.data()||{}))),movimientos=movSnap.docs.map(d=>Object.assign({id:d.id},serializar(d.data()||{})));
     const dias={};
     const asegurar=fecha=>dias[fecha]||(dias[fecha]={fecha,turnos:0,ingresos:0,egresos:0,cobradoTurnos:0});
-    reservas.forEach(r=>{const x=asegurar(String(r.fecha||''));x.turnos++;x.cobradoTurnos+=Number(r.pagoEfectivo||0)+Number(r.pagoTransferencia||0);});
+    reservas.filter(r=>(!window.reservaCuentaEnFinanzasYMetricas || window.reservaCuentaEnFinanzasYMetricas(r))).forEach(r=>{const x=asegurar(String(r.fecha||''));x.turnos++;x.cobradoTurnos+=Number(r.pagoEfectivo||0)+Number(r.pagoTransferencia||0);});
     movimientos.forEach(m=>{const x=asegurar(String(m.fecha||''));const monto=Number(m.importe||m.monto||0);if(m.tipo==='ingreso')x.ingresos+=monto;else x.egresos+=monto;});
     const resumenCol=db.collection('clubs').doc(clubId).collection('resumenDiario'),batch=db.batch();Object.values(dias).filter(x=>x.fecha).forEach(x=>batch.set(resumenCol.doc(x.fecha),Object.assign({},x,{actualizadoEn:firebase.firestore.FieldValue.serverTimestamp()}),{merge:true}));if(Object.keys(dias).length)await batch.commit();
     return {reservas,movimientos};
@@ -3317,9 +3323,9 @@ document.addEventListener('click', function (ev) {
     const periodo=$m('select-periodo-metricas')?.value, key=$m('select-categoria-metricas')?.value;
     if(!periodo||!key){alert('Seleccioná un período y una categoría.');return;}
     const btn=$m('btn-generar-metricas'); if(btn){btn.disabled=true;btn.textContent='Generando...';}
+    const originales={reservas:reservasGlobales,ingresos:ingresosGlobal,gastos:gastosGlobal};
     try{
       const {desde,hasta}=rangoPeriodo(periodo); let buckets=construirIntervalos(desde,hasta), values;
-      const originales={reservas:reservasGlobales,ingresos:ingresosGlobal,gastos:gastosGlobal};
       const scoped=await cargarDatosMetricasRango(desde,hasta);reservasGlobales=scoped.reservas;ingresosGlobal=scoped.movimientos.filter(x=>x.tipo==='ingreso');gastosGlobal=scoped.movimientos.filter(x=>x.tipo==='egreso'||x.tipo==='stock');
       const instant=valorInstantaneo(key);
       if(instant!==null){buckets=[{ini:desde,fin:hasta,label:'Estado actual'}];values=[instant];} else values=buckets.map(b=>datosBucket(key,b));
@@ -3334,9 +3340,11 @@ document.addEventListener('click', function (ev) {
       const canvas=$m('graficoMetricas'); if(!canvas||typeof Chart==='undefined')return;
       if(window.__metricasChart){window.__metricasChart.destroy();window.__metricasChart=null;}
       window.__metricasChart=new Chart(canvas.getContext('2d'),{type:'bar',data:{labels:buckets.map(b=>b.label),datasets:[{label:nombreMetrica[key]||'Valor',data:values,borderWidth:1,borderRadius:6,maxBarThickness:54}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>(nombreMetrica[key]||'Valor')+': '+fmt(key,c.raw)}}},scales:{y:{beginAtZero:true,ticks:{callback:v=>tipoMetrica(key)==='dinero'?moneyMetric(v):(tipoMetrica(key)==='porcentaje'?v+'%':v)}}}}});
-      reservasGlobales=originales.reservas;ingresosGlobal=originales.ingresos;gastosGlobal=originales.gastos;
     }catch(error){console.error('generarMetricas:',error);alert('No se pudieron generar las métricas. Detalle: '+(error.message||error));}
-    finally{if(btn){btn.disabled=false;btn.textContent='Generar';}}
+    finally{
+      reservasGlobales=originales.reservas;ingresosGlobal=originales.ingresos;gastosGlobal=originales.gastos;
+      if(btn){btn.disabled=false;btn.textContent='Generar';}
+    }
   };
   window.actualizarGraficos=function(){ /* Compatibilidad: las métricas ahora solo se generan manualmente. */ };
 })();
@@ -3393,6 +3401,7 @@ function colisionDestino(reserva,fecha,cancha,hora){
   const inicio=window.aMinutos(hora), fin=inicio+(Number(reserva.duracion)||Number(duracionGlobal)||90);
   return listaReservas().find(otra=>{
     if(!otra || String(otra.id)===String(reserva.id)) return false;
+    if(window.reservaBloqueaTurneroAdmin && !window.reservaBloqueaTurneroAdmin(otra)) return false;
     const aplica=typeof window.reservaAplicaEnFecha==='function' ? window.reservaAplicaEnFecha(otra,fecha) : String(otra.fecha)===String(fecha);
     if(!aplica) return false;
     const otraCancha=typeof canchaEfectivaTurno==='function' ? canchaEfectivaTurno(otra,fecha) : String(otra.cancha||'1');
@@ -3453,7 +3462,18 @@ async function confirmarMovimiento(reserva,fecha,origen,destino){
     alcance=await window.dialogoWeb({titulo:'Confirmar cambio de turno',mensaje:`Se realizará este cambio: ${cambio}.`,botones:[{texto:'Cancelar',valor:'cancelar',clase:'secondary'},{texto:'Efectuar cambio',valor:'una',clase:'primary'}],valorEscape:'cancelar'});
   }
   if(alcance==='cancelar') return false;
+  // Revalidar después del diálogo: durante la confirmación pudo ingresar otro turno.
+  const choqueFinal=colisionDestino(reserva,fecha,destino.cancha,destino.hora);
+  if(choqueFinal){
+    throw new Error('El destino dejó de estar disponible porque ahora colisiona con "'+(choqueFinal.jugador||'otro turno')+'".');
+  }
   await guardarMovimiento(reserva,fecha,destino,alcance);
+  if(typeof window.registrarActividadClub==='function'){
+    window.registrarActividadClub('Turno reprogramado',{
+      tipo:'turno_movido',
+      detalle:`${reserva.jugador||'Turno'} · ${nombreCancha(origen.cancha)} ${origen.hora} → ${nombreCancha(destino.cancha)} ${destino.hora} · ${alcance==='siempre'?'desde esta fecha':'solo esta fecha'}`
+    }).catch(()=>{});
+  }
   return true;
 }
 
@@ -3594,8 +3614,8 @@ document.addEventListener('click',function(ev){
   }
 },true);
 
-document.addEventListener('pointercancel',function(){ document.body.style.userSelect=''; limpiarDrag(); },true);
-window.addEventListener('blur',function(){ document.body.style.userSelect=''; limpiarDrag(); });
+document.addEventListener('pointercancel',function(){ bloquearClickHasta=Date.now()+500; document.body.style.userSelect=''; limpiarDrag(); },true);
+window.addEventListener('blur',function(){ bloquearClickHasta=Date.now()+500; document.body.style.userSelect=''; limpiarDrag(); });
 })();
 </script>
 </body></html>
