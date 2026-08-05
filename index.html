@@ -3490,6 +3490,17 @@ document.addEventListener('pointermove',function(ev){
   mostrarPreview(destino,drag.reserva,!!choque);
 },true);
 
+function fijarTarjetaEnDestinoVisual(actual,destino){
+  if(!actual || !actual.card || !destino) return;
+  const leftActual=parseFloat(actual.card.style.left)||actual.card.offsetLeft||0;
+  const topActual=parseFloat(actual.card.style.top)||actual.card.offsetTop||0;
+  const leftDestino=destino.timeCol+(destino.idx*destino.colW)+4;
+  const topDestino=destino.header+(window.aMinutos(destino.hora)/30)*destino.rowH+1;
+  actual.card.style.transform=`translate(${leftDestino-leftActual}px,${topDestino-topActual}px)`;
+  actual.card.classList.add('dragging');
+  mostrarPreview(destino,actual.reserva,false);
+}
+
 document.addEventListener('pointerup',async function(ev){
   if(!drag || ev.pointerId!==drag.pointerId) return;
   const actual=drag;
@@ -3497,20 +3508,43 @@ document.addEventListener('pointerup',async function(ev){
   const destino=actual.destino || (eraDrag ? destinoDesdePunto(ev.clientX,ev.clientY) : null);
   clearTimeout(actual.timer);
   document.body.style.userSelect='';
-  limpiarDrag();
+
   if(!eraDrag){
+    limpiarDrag();
     window.abrirModal(actual.reserva.id,actual.fecha);
     return;
   }
-  bloquearClickHasta=Date.now()+600;
-  if(!destino) return window.renderizarPantallas();
-  if(String(destino.cancha)===String(actual.origen.cancha) && String(destino.hora)===String(actual.origen.hora)) return window.renderizarPantallas();
+
+  bloquearClickHasta=Date.now()+900;
+
+  if(!destino){
+    limpiarDrag();
+    window.renderizarPantallas();
+    return;
+  }
+
+  if(String(destino.cancha)===String(actual.origen.cancha) && String(destino.hora)===String(actual.origen.hora)){
+    limpiarDrag();
+    window.renderizarPantallas();
+    return;
+  }
+
   const choque=colisionDestino(actual.reserva,actual.fecha,destino.cancha,destino.hora);
   if(choque){
+    limpiarDrag();
     alert(`No se puede mover el turno: colisiona con "${choque.jugador||'otro turno'}" (${horaEfectivaTurno(choque,actual.fecha)} hs).`);
-    return window.renderizarPantallas();
+    window.renderizarPantallas();
+    return;
   }
-  await confirmarMovimiento(actual.reserva,actual.fecha,actual.origen,destino);
+
+  // Mantiene la tarjeta encajada visualmente en el destino mientras se confirma.
+  // Solo vuelve al lugar original si el usuario cancela o si falla el guardado.
+  fijarTarjetaEnDestinoVisual(actual,destino);
+  try{
+    await confirmarMovimiento(actual.reserva,actual.fecha,actual.origen,destino);
+  } finally {
+    limpiarDrag();
+  }
 },true);
 
 document.addEventListener('click',function(ev){
