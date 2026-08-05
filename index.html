@@ -3549,6 +3549,19 @@ document.addEventListener('pointerup',async function(ev){
   // Solo vuelve al lugar original si el usuario cancela o si falla el guardado.
   fijarTarjetaEnDestinoVisual(actual,destino);
 
+  // El gesto termina exactamente al soltar. Se libera la captura del puntero y
+  // se anula el estado global antes de abrir el diálogo. De esta forma, cualquier
+  // pointermove posterior no puede seguir desplazando la tarjeta detrás del modal.
+  try {
+    if(actual.card.hasPointerCapture && actual.card.hasPointerCapture(actual.pointerId)){
+      actual.card.releasePointerCapture(actual.pointerId);
+    }
+  } catch(e) {}
+  actual.card.classList.remove('drag-armado');
+  document.body.style.userSelect='';
+  drag=null;
+  quitarPreview();
+
   // Copia completa para poder restaurar exactamente el turno si se cancela o falla Firebase.
   const copiaAnterior = JSON.parse(JSON.stringify(actual.reserva));
   try{
