@@ -1774,6 +1774,10 @@ document.addEventListener('click', function (ev) {
 
     await db.collection('clubs').doc(id).collection('reservas').doc(String(reserva.id)).set(clean, {merge:true});
   }
+  // Exponer el guardado para módulos posteriores (arrastre y reprogramación).
+  // Sin esto, el módulo de arrastre no podía guardar y la tarjeta volvía al origen.
+  window.guardarReservaFirebase = guardarReservaFirebase;
+
   async function borrarReservaFirebase(idReserva){
     const id = currentClubId || window.CLUB_DOC_ID_ACTUAL;
     if (!id || !idReserva) throw new Error('Reserva o club inválido.');
@@ -3413,6 +3417,7 @@ function mostrarPreview(destino,reserva,invalido){
 function limpiarDrag(){
   if(!drag) return;
   clearTimeout(drag.timer);
+  try { if(drag.card.hasPointerCapture && drag.card.hasPointerCapture(drag.pointerId)) drag.card.releasePointerCapture(drag.pointerId); } catch(e) {}
   drag.card.classList.remove('drag-armado','dragging');
   drag.card.style.transform='';
   quitarPreview();
@@ -3434,8 +3439,9 @@ async function guardarMovimiento(reserva,fecha,destino,alcance){
     reserva.modalidad=modalidad;
     if(String(reserva.fecha)!==String(fecha)) reserva.fecha=fecha;
   }
-  if(typeof guardarReservaFirebase!=='function') throw new Error('No se encontró la función de guardado de reservas.');
-  await guardarReservaFirebase(reserva);
+  const guardar = window.guardarReservaFirebase;
+  if(typeof guardar!=='function') throw new Error('No se encontró la función pública de guardado de reservas.');
+  await guardar(reserva);
 }
 async function confirmarMovimiento(reserva,fecha,origen,destino){
   const cambio=`${nombreCancha(origen.cancha)} · ${origen.hora} → ${nombreCancha(destino.cancha)} · ${destino.hora}`;
@@ -3445,9 +3451,9 @@ async function confirmarMovimiento(reserva,fecha,origen,destino){
   } else {
     alcance=await dialogoWeb({titulo:'Confirmar cambio de turno',mensaje:`Se realizará este cambio: ${cambio}.`,botones:[{texto:'Cancelar',valor:'cancelar',clase:'secondary'},{texto:'Efectuar cambio',valor:'una',clase:'primary'}],valorEscape:'cancelar'});
   }
-  if(alcance==='cancelar') return;
-  try { await guardarMovimiento(reserva,fecha,destino,alcance); window.renderizarPantallas(); }
-  catch(error){ console.error('No se pudo mover el turno:',error); alert('No se pudo guardar el cambio. El turno conservará su posición anterior. Detalle: '+(error.message||error)); window.renderizarPantallas(); }
+  if(alcance==='cancelar') return false;
+  await guardarMovimiento(reserva,fecha,destino,alcance);
+  return true;
 }
 
 function iniciarArrastre(ev,card){
@@ -3457,6 +3463,7 @@ function iniciarArrastre(ev,card){
   const fecha=card.dataset.fechaInstancia||fechaSeleccionada;
   drag={card,reserva,fecha,pointerId:ev.pointerId,startX:ev.clientX,startY:ev.clientY,lastX:ev.clientX,lastY:ev.clientY,activo:false,destino:null,origen:{cancha:card.dataset.canchaVisual||String(reserva.cancha||'1'),hora:card.dataset.horaVisual||String(reserva.hora||'00:00')}};
   card.classList.add('drag-armado');
+  try { card.setPointerCapture(ev.pointerId); } catch(e) {}
   drag.timer=setTimeout(()=>{
     if(!drag || drag.card!==card) return;
     drag.activo=true;
@@ -3540,10 +3547,30 @@ document.addEventListener('pointerup',async function(ev){
   // Mantiene la tarjeta encajada visualmente en el destino mientras se confirma.
   // Solo vuelve al lugar original si el usuario cancela o si falla el guardado.
   fijarTarjetaEnDestinoVisual(actual,destino);
+
+  // Copia completa para poder restaurar exactamente el turno si se cancela o falla Firebase.
+  const copiaAnterior = JSON.parse(JSON.stringify(actual.reserva));
   try{
-    await confirmarMovimiento(actual.reserva,actual.fecha,actual.origen,destino);
-  } finally {
+    const guardado = await confirmarMovimiento(actual.reserva,actual.fecha,actual.origen,destino);
+    if(!guardado){
+      Object.keys(actual.reserva).forEach(k=>delete actual.reserva[k]);
+      Object.assign(actual.reserva,copiaAnterior);
+      limpiarDrag();
+      window.renderizarPantallas();
+      return;
+    }
+
+    // El objeto local ya contiene la nueva programación. Se renderiza únicamente
+    // después de que Firebase confirme la escritura, evitando que vuelva al origen.
     limpiarDrag();
+    window.renderizarPantallas();
+  } catch(error){
+    Object.keys(actual.reserva).forEach(k=>delete actual.reserva[k]);
+    Object.assign(actual.reserva,copiaAnterior);
+    limpiarDrag();
+    window.renderizarPantallas();
+    console.error('No se pudo mover el turno:',error);
+    alert('No se pudo guardar el cambio. El turno volvió a su posición anterior. Detalle: '+(error.message||error));
   }
 },true);
 
