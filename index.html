@@ -829,14 +829,13 @@ window.renderizarPantallas = function () {
             contenedorClub.innerHTML = `<div class="turnero-empty-modalidad">No hay canchas cargadas para la modalidad ${escapeTurneroHtml(obtenerLabelModalidad(modalidadTurneroActual))}. Revisá la configuración del club.</div>`;
             return;
         }
-        const dowNumSelectedClub = window.getDayOfWeekFromDate(fechaSeleccionada);
         const reservasAMostrar = [];
         (Array.isArray(reservasGlobales) ? reservasGlobales : []).forEach(r => {
             if (typeof window.reservaBloqueaTurneroAdmin === 'function' && !window.reservaBloqueaTurneroAdmin(r)) return;
-            const canceladas = Array.isArray(r.fechasCanceladas) ? r.fechasCanceladas : [];
-            if (canceladas.includes(fechaSeleccionada)) return;
-            if ((r.fecha || fechaSeleccionada) === fechaSeleccionada) reservasAMostrar.push(r);
-            else if (r.fijo === true && window.getDayOfWeekFromDate(r.fecha) === dowNumSelectedClub && fechaSeleccionada > r.fecha) reservasAMostrar.push(r);
+            const aplica = typeof window.reservaAplicaEnFecha === 'function'
+                ? window.reservaAplicaEnFecha(r, fechaSeleccionada)
+                : String(r.fecha || '') === String(fechaSeleccionada);
+            if (aplica) reservasAMostrar.push(r);
         });
         const minInicio = 0;
         const minFin = 1440;
@@ -1160,6 +1159,7 @@ document.addEventListener('click', function (ev) {
   let currentClubData = null;
   let unsubClub = null;
   let unsubReservas = null;
+  let unsubReservasFijas = null;
   let firebaseInitPromise = null;
   let categoriasInventarioGlobal = [];
   let torneosGlobal = [];
@@ -2118,15 +2118,46 @@ window.guardarDatosClub = guardarDatosClub;
       return {migradas:0, omitidas:0, limpiado:false, error:e};
     }
   }
-    function detenerEscuchaReservas(){ if(typeof unsubReservas==='function')unsubReservas();unsubReservas=null; }
+    function detenerEscuchaReservas(){
+    if(typeof unsubReservas==='function') unsubReservas();
+    if(typeof unsubReservasFijas==='function') unsubReservasFijas();
+    unsubReservas=null;
+    unsubReservasFijas=null;
+  }
   function detenerEscuchasFirebase(){ if(typeof unsubClub==='function')unsubClub();if(typeof unsubVista==='function')unsubVista();detenerEscuchaReservas();unsubClub=null;unsubVista=null; }
   async function iniciarEscuchaReservasTurnero(){
-    detenerEscuchaReservas(); if((window.__vistaPanelClubActual||'turnero')!=='turnero')return;
-    const id=(typeof currentClubId!=='undefined'&&currentClubId)||window.CLUB_DOC_ID_ACTUAL;if(!id)return;const {db}=await firebaseReady();const {desde,hasta}=rangoReservasBase();
-    unsubReservas=db.collection('clubs').doc(id).collection('reservas').where('fecha','>=',desde).where('fecha','<=',hasta).onSnapshot(snap=>{
-      const arr=snap.docs.map(doc=>Object.assign({id:doc.id},serializar(doc.data()||{})));mezclarReservas(arr,{desde,hasta});refrescarVistaActiva('turnero');
-    },e=>{console.error('lectura reservas:',e);alert('No se pudo leer turnos desde Firebase. Detalle: '+(e.message||e));});
-    if(fechaSeleccionada<desde||fechaSeleccionada>hasta)await cargarReservaDiaExtra(fechaSeleccionada);
+    detenerEscuchaReservas();
+    if((window.__vistaPanelClubActual||'turnero')!=='turnero') return;
+    const id=(typeof currentClubId!=='undefined'&&currentClubId)||window.CLUB_DOC_ID_ACTUAL;
+    if(!id) return;
+    const {db}=await firebaseReady();
+    const {desde,hasta}=rangoReservasBase();
+    const col=db.collection('clubs').doc(id).collection('reservas');
+
+    // Turnos normales y fijos cuya fecha base está dentro de las tres semanas activas.
+    unsubReservas=col.where('fecha','>=',desde).where('fecha','<=',hasta).onSnapshot(snap=>{
+      const arr=snap.docs.map(doc=>Object.assign({id:doc.id},serializar(doc.data()||{})));
+      mezclarReservas(arr,{desde,hasta});
+      refrescarVistaActiva('turnero');
+    },e=>{
+      console.error('lectura reservas del rango:',e);
+      alert('No se pudieron leer los turnos del período desde Firebase. Detalle: '+(e.message||e));
+    });
+
+    // Los turnos fijos pueden haber sido creados meses atrás y seguir aplicando hoy.
+    // Se escuchan por separado para que ninguna repetición vigente desaparezca del Turnero.
+    unsubReservasFijas=col.where('fijo','==',true).onSnapshot(snap=>{
+      const fijas=snap.docs.map(doc=>Object.assign({id:doc.id},serializar(doc.data()||{})));
+      const idsFijas=new Set(fijas.map(r=>String(r.id)));
+      reservasGlobales=(Array.isArray(reservasGlobales)?reservasGlobales:[]).filter(r=>r.fijo!==true||idsFijas.has(String(r.id)));
+      mezclarReservas(fijas);
+      refrescarVistaActiva('turnero');
+    },e=>{
+      console.error('lectura turnos fijos:',e);
+      alert('No se pudieron leer los turnos fijos desde Firebase. Detalle: '+(e.message||e));
+    });
+
+    if(fechaSeleccionada<desde||fechaSeleccionada>hasta) await cargarReservaDiaExtra(fechaSeleccionada);
   }
   async function cargarReservaDiaExtra(fecha){
     const {desde,hasta}=rangoReservasBase();if(!fecha||fecha>=desde&&fecha<=hasta||fechasExtrasReservas.has(fecha))return;
@@ -2890,13 +2921,30 @@ window.cargarConfigEnFormulario = function(){
     if (!status || !chip || !btn) return;
 
     const mp = obtenerMercadoPagoClub();
-    const conectado = !!(mp && mp.connected);
+    const conectado = !!(mp && (
+      mp.connected === true ||
+      mp.conectado === true ||
+      mp.status === 'connected' ||
+      mp.estado === 'conectado' ||
+      mp.accessToken ||
+      mp.access_token ||
+      mp.refreshToken ||
+      mp.refresh_token ||
+      mp.userId ||
+      mp.mpUserId ||
+      mp.mercadoPagoUserId ||
+      mp.collectorId ||
+      mp.tokenExpiresAt
+    ));
 
     if (conectado) {
       chip.textContent = 'Conectado';
       chip.style.background = '#dcfce7';
       chip.style.color = '#166534';
-      btn.textContent = 'Reconectar Mercado Pago';
+      btn.textContent = 'Cuenta conectada';
+      btn.disabled = true;
+      btn.style.opacity = '0.78';
+      btn.style.cursor = 'default';
       status.textContent = 'Mercado Pago está conectado para este club. Las señas se crearán con la cuenta vinculada y el dinero ingresará directamente allí.';
       const account=$('mp-config-account');
       if(account){
@@ -2908,6 +2956,9 @@ window.cargarConfigEnFormulario = function(){
       chip.textContent = 'No conectado';
       chip.style.background = '#f1f5f9';
       chip.style.color = '#475569';
+      btn.disabled = false;
+      btn.style.opacity = '';
+      btn.style.cursor = '';
       btn.textContent = 'Conectar Mercado Pago';
       status.textContent = 'Conectá la cuenta de Mercado Pago de este club para cobrar señas directamente en esa cuenta.';
       const account=$('mp-config-account'); if(account) account.textContent='Cuenta vinculada: ninguna.';
