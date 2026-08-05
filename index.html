@@ -1321,6 +1321,7 @@ document.addEventListener('click', function (ev) {
       procesarColaDialogosWeb();
     });
   }
+  window.dialogoWeb = dialogoWeb;
   window.webAlert = function(mensaje, titulo='Aviso'){
     return dialogoWeb({titulo, mensaje, botones:[{texto:'Aceptar',valor:true,clase:'primary'}], valorEscape:true});
   };
@@ -3447,9 +3448,9 @@ async function confirmarMovimiento(reserva,fecha,origen,destino){
   const cambio=`${nombreCancha(origen.cancha)} · ${origen.hora} → ${nombreCancha(destino.cancha)} · ${destino.hora}`;
   let alcance='una';
   if(reserva.fijo===true){
-    alcance=await dialogoWeb({titulo:'Mover turno fijo',mensaje:`Se realizará este cambio: ${cambio}. ¿Debe aplicarse solamente el ${fecha} o también a todas las repeticiones desde esa fecha?`,botones:[{texto:'Cancelar',valor:'cancelar',clase:'secondary'},{texto:'Solo esta vez',valor:'una',clase:'warning'},{texto:'Desde esta fecha',valor:'siempre',clase:'primary'}],valorEscape:'cancelar'});
+    alcance=await window.dialogoWeb({titulo:'Mover turno fijo',mensaje:`Se realizará este cambio: ${cambio}. ¿Debe aplicarse solamente el ${fecha} o también a todas las repeticiones desde esa fecha?`,botones:[{texto:'Cancelar',valor:'cancelar',clase:'secondary'},{texto:'Solo esta vez',valor:'una',clase:'warning'},{texto:'Desde esta fecha',valor:'siempre',clase:'primary'}],valorEscape:'cancelar'});
   } else {
-    alcance=await dialogoWeb({titulo:'Confirmar cambio de turno',mensaje:`Se realizará este cambio: ${cambio}.`,botones:[{texto:'Cancelar',valor:'cancelar',clase:'secondary'},{texto:'Efectuar cambio',valor:'una',clase:'primary'}],valorEscape:'cancelar'});
+    alcance=await window.dialogoWeb({titulo:'Confirmar cambio de turno',mensaje:`Se realizará este cambio: ${cambio}.`,botones:[{texto:'Cancelar',valor:'cancelar',clase:'secondary'},{texto:'Efectuar cambio',valor:'una',clase:'primary'}],valorEscape:'cancelar'});
   }
   if(alcance==='cancelar') return false;
   await guardarMovimiento(reserva,fecha,destino,alcance);
