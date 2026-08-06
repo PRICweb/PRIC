@@ -3204,16 +3204,24 @@ window.cargarConfigEnFormulario = function(){
         btn.textContent = 'Desconectando...';
       }
 
-      const url = `${MP_BACKEND_URL}/mercadopago/disconnect?clubId=${encodeURIComponent(clubId)}`;
-      const respuesta = await fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}});
+      const usuario = firebase.auth().currentUser;
+      if (!usuario) throw new Error('La sesión del administrador no está disponible.');
+      const idToken = await usuario.getIdToken();
+
+      const url = `${MP_BACKEND_URL}/mercadopago/disconnect`;
+      const respuesta = await fetch(url, {
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json',
+          'Authorization':`Bearer ${idToken}`
+        },
+        body:JSON.stringify({clubId})
+      });
       const data = await respuesta.json().catch(() => ({}));
 
       if (!respuesta.ok) {
         throw new Error(data.error || 'El backend no pudo desconectar la cuenta.');
       }
-
-      const clubRef = db.collection('clubs').doc(clubId);
-      await clubRef.set({mercadoPago:{}}, {merge:true});
 
       if (typeof currentClubData!=='undefined' && currentClubData) currentClubData.mercadoPago = {};
       if (window.CLUB_DATA_ACTUAL) window.CLUB_DATA_ACTUAL.mercadoPago = {};
