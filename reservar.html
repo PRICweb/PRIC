@@ -922,9 +922,16 @@
     let canchasIndoorGlobal = 1;
     let canchasOutdoorGlobal = 0;
     let canchasTenisGlobal = 0;
+    let horaLucesGlobal = '18:00';
     let precioIndoorGlobal = '5000';
     let precioOutdoorGlobal = '4000';
     let precioTenisGlobal = '3500';
+    let precioIndoorSinLuzGlobal = '5000';
+    let precioIndoorConLuzGlobal = '5000';
+    let precioOutdoorSinLuzGlobal = '4000';
+    let precioOutdoorConLuzGlobal = '4000';
+    let precioTenisSinLuzGlobal = '3500';
+    let precioTenisConLuzGlobal = '3500';
     let senaIndoorGlobal = 0;
     let senaOutdoorGlobal = 0;
     let senaTenisGlobal = 0;
@@ -1045,9 +1052,39 @@
       canchasIndoorGlobal = tiene(d, 'canchasIndoor') ? Math.max(0, toInt(d.canchasIndoor, 0)) : canchasIndoorGlobal;
       canchasOutdoorGlobal = tiene(d, 'canchasOutdoor') ? Math.max(0, toInt(d.canchasOutdoor, 0)) : canchasOutdoorGlobal;
       canchasTenisGlobal = tiene(d, 'canchasTenis') ? Math.max(0, toInt(d.canchasTenis, 0)) : canchasTenisGlobal;
-      precioIndoorGlobal = tiene(d, 'precioIndoor') ? String(d.precioIndoor || 0) : precioIndoorGlobal;
-      precioOutdoorGlobal = tiene(d, 'precioOutdoor') ? String(d.precioOutdoor || 0) : precioOutdoorGlobal;
-      precioTenisGlobal = tiene(d, 'precioTenis') ? String(d.precioTenis || 0) : precioTenisGlobal;
+      horaLucesGlobal = tiene(d, 'horaLuces') ? String(d.horaLuces || '18:00') : horaLucesGlobal;
+
+      precioIndoorSinLuzGlobal = String(
+        tiene(d, 'precioIndoorSinLuz') ? (d.precioIndoorSinLuz || 0) :
+        (tiene(d, 'precioIndoor') ? (d.precioIndoor || 0) : precioIndoorSinLuzGlobal)
+      );
+      precioIndoorConLuzGlobal = String(
+        tiene(d, 'precioIndoorConLuz') ? (d.precioIndoorConLuz || 0) :
+        (tiene(d, 'precioIndoor') ? (d.precioIndoor || 0) : precioIndoorConLuzGlobal)
+      );
+
+      precioOutdoorSinLuzGlobal = String(
+        tiene(d, 'precioOutdoorSinLuz') ? (d.precioOutdoorSinLuz || 0) :
+        (tiene(d, 'precioOutdoor') ? (d.precioOutdoor || 0) : precioOutdoorSinLuzGlobal)
+      );
+      precioOutdoorConLuzGlobal = String(
+        tiene(d, 'precioOutdoorConLuz') ? (d.precioOutdoorConLuz || 0) :
+        (tiene(d, 'precioOutdoor') ? (d.precioOutdoor || 0) : precioOutdoorConLuzGlobal)
+      );
+
+      precioTenisSinLuzGlobal = String(
+        tiene(d, 'precioTenisSinLuz') ? (d.precioTenisSinLuz || 0) :
+        (tiene(d, 'precioTenis') ? (d.precioTenis || 0) : precioTenisSinLuzGlobal)
+      );
+      precioTenisConLuzGlobal = String(
+        tiene(d, 'precioTenisConLuz') ? (d.precioTenisConLuz || 0) :
+        (tiene(d, 'precioTenis') ? (d.precioTenis || 0) : precioTenisConLuzGlobal)
+      );
+
+      // Alias legacy para cualquier parte antigua de la interfaz que todavía consulte precio*.
+      precioIndoorGlobal = precioIndoorSinLuzGlobal;
+      precioOutdoorGlobal = precioOutdoorSinLuzGlobal;
+      precioTenisGlobal = precioTenisSinLuzGlobal;
       senaIndoorGlobal = tiene(d, 'senaIndoor') ? toNum(d.senaIndoor, 0) : senaIndoorGlobal;
       senaOutdoorGlobal = tiene(d, 'senaOutdoor') ? toNum(d.senaOutdoor, 0) : senaOutdoorGlobal;
       senaTenisGlobal = tiene(d, 'senaTenis') ? toNum(d.senaTenis, 0) : senaTenisGlobal;
@@ -1074,18 +1111,90 @@
     }
 
     function configPagoModalidad(valor) {
-      if (valor === 'indoor') return { precio30: toNum(precioIndoorGlobal, 0), porcentajeSena: toNum(senaIndoorGlobal, 0), nombre: 'Pádel Indoor' };
-      if (valor === 'outdoor') return { precio30: toNum(precioOutdoorGlobal, 0), porcentajeSena: toNum(senaOutdoorGlobal, 0), nombre: 'Pádel Outdoor' };
-      if (valor === 'tenis') return { precio30: toNum(precioTenisGlobal, 0), porcentajeSena: toNum(senaTenisGlobal, 0), nombre: 'Tenis' };
-      return { precio30: 0, porcentajeSena: 0, nombre: 'Modalidad' };
+      if (valor === 'indoor') {
+        return {
+          precioSinLuz30: toNum(precioIndoorSinLuzGlobal, 0),
+          precioConLuz30: toNum(precioIndoorConLuzGlobal, 0),
+          porcentajeSena: toNum(senaIndoorGlobal, 0),
+          nombre: 'Pádel Indoor'
+        };
+      }
+      if (valor === 'outdoor') {
+        return {
+          precioSinLuz30: toNum(precioOutdoorSinLuzGlobal, 0),
+          precioConLuz30: toNum(precioOutdoorConLuzGlobal, 0),
+          porcentajeSena: toNum(senaOutdoorGlobal, 0),
+          nombre: 'Pádel Outdoor'
+        };
+      }
+      if (valor === 'tenis') {
+        return {
+          precioSinLuz30: toNum(precioTenisSinLuzGlobal, 0),
+          precioConLuz30: toNum(precioTenisConLuzGlobal, 0),
+          porcentajeSena: toNum(senaTenisGlobal, 0),
+          nombre: 'Tenis'
+        };
+      }
+      return {
+        precioSinLuz30: 0,
+        precioConLuz30: 0,
+        porcentajeSena: 0,
+        nombre: 'Modalidad'
+      };
     }
 
-    function calcularPagoSena(modalidad, duracion) {
+    function horaLucesConfiguradaValida() {
+      return /^([01]\d|2[0-3]):(00|30)$/.test(String(horaLucesGlobal || ''));
+    }
+
+    function calcularPrecioPorIluminacion(modalidad, horaInicio, duracion) {
       const cfg = configPagoModalidad(modalidad);
-      const total = Math.max(0, Math.round(cfg.precio30 * (toInt(duracion, 90) / 30)));
-      const porcentaje = Math.max(0, Math.min(100, toNum(cfg.porcentajeSena, 0)));
-      const sena = Math.max(0, Math.round(total * porcentaje / 100));
-      return { total, porcentaje, sena, nombre: cfg.nombre };
+      const duracionMinutos = Math.max(0, toInt(duracion, 90));
+      const inicioMinutos = window.aMinutos(horaInicio || '00:00');
+      const lucesMinutos = window.aMinutos(
+        horaLucesConfiguradaValida() ? horaLucesGlobal : '18:00'
+      );
+
+      let total = 0;
+      let minutosSinLuz = 0;
+      let minutosConLuz = 0;
+
+      for (let offset = 0; offset < duracionMinutos; offset += 30) {
+        const minutosTramo = Math.min(30, duracionMinutos - offset);
+        const inicioTramo = inicioMinutos + offset;
+        const usaLuz = inicioTramo >= lucesMinutos;
+
+        if (usaLuz) {
+          minutosConLuz += minutosTramo;
+          total += cfg.precioConLuz30 * (minutosTramo / 30);
+        } else {
+          minutosSinLuz += minutosTramo;
+          total += cfg.precioSinLuz30 * (minutosTramo / 30);
+        }
+      }
+
+      return {
+        total: Math.max(0, Math.round(total)),
+        minutosSinLuz,
+        minutosConLuz,
+        cfg
+      };
+    }
+
+    function calcularPagoSena(modalidad, duracion, horaInicio = reservaEnProcesoHora) {
+      const desglose = calcularPrecioPorIluminacion(modalidad, horaInicio, duracion);
+      const porcentaje = Math.max(0, Math.min(100, toNum(desglose.cfg.porcentajeSena, 0)));
+      const sena = Math.max(0, Math.round(desglose.total * porcentaje / 100));
+
+      return {
+        total: desglose.total,
+        porcentaje,
+        sena,
+        nombre: desglose.cfg.nombre,
+        minutosSinLuz: desglose.minutosSinLuz,
+        minutosConLuz: desglose.minutosConLuz,
+        horaLuces: horaLucesConfiguradaValida() ? horaLucesGlobal : '18:00'
+      };
     }
 
     function formatearPesos(numero) {
@@ -1093,7 +1202,7 @@
     }
 
     function actualizarResumenPagoSena() {
-      const pago = calcularPagoSena(modalidadSeleccionada, duracionSeleccionada);
+      const pago = calcularPagoSena(modalidadSeleccionada, duracionSeleccionada, reservaEnProcesoHora);
       const totalEl = document.getElementById('resumen-precio-total');
       const senaEl = document.getElementById('resumen-monto-sena');
       const notaEl = document.getElementById('resumen-nota-sena');
@@ -1105,7 +1214,11 @@
         } else if (pago.porcentaje <= 0) {
           notaEl.innerText = 'Esta modalidad no tiene seña configurada; la reserva se confirmará sin pago online.';
         } else {
-          notaEl.innerText = `Vas a pagar el ${pago.porcentaje}% como seña. El saldo se abona en el club.`;
+          const partesPrecio = [];
+          if (pago.minutosSinLuz > 0) partesPrecio.push(`${pago.minutosSinLuz} min sin luz`);
+          if (pago.minutosConLuz > 0) partesPrecio.push(`${pago.minutosConLuz} min con luz`);
+          const detalleLuz = partesPrecio.length ? ` (${partesPrecio.join(' + ')})` : '';
+          notaEl.innerText = `Vas a pagar el ${pago.porcentaje}% como seña${detalleLuz}. El saldo se abona en el club.`;
         }
       }
       const btn = document.getElementById('btn-confirmar-reserva');
@@ -1445,7 +1558,7 @@
       const inputTelefono = document.getElementById('input-telefono-jugador').value.trim();
       const btnConfirmar = document.getElementById('btn-confirmar-reserva');
       const duracionElegida = toInt(duracionSeleccionada, duracionSugeridaParaModalidad(modalidadSeleccionada));
-      const pagoSena = calcularPagoSena(modalidadSeleccionada, duracionElegida);
+      const pagoSena = calcularPagoSena(modalidadSeleccionada, duracionElegida, reservaEnProcesoHora);
 
       if (!inputNombre || !inputTelefono) {
         alert('Por favor completá tu nombre y teléfono.');
@@ -1512,6 +1625,9 @@
           precioTotalCalculado: pagoSena.total,
           porcentajeSena: pagoSena.porcentaje,
           montoSena: pagoSena.sena,
+          horaLucesAplicada: pagoSena.horaLuces,
+          minutosSinLuzCalculados: pagoSena.minutosSinLuz,
+          minutosConLuzCalculados: pagoSena.minutosConLuz,
           expiraPagoEnMs: pagoSena.sena > 0 ? Date.now() + TIEMPO_PAGO_SENA_MS : null,
           expiraPagoISO: pagoSena.sena > 0 ? new Date(Date.now() + TIEMPO_PAGO_SENA_MS).toISOString() : null,
           minutosParaPagar: pagoSena.sena > 0 ? 10 : null,
