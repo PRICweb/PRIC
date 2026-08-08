@@ -659,6 +659,172 @@ body.panel-activo .turnero-time-cell.fuera-horario:not(.media){
  .torneo-match-config{text-align:left}
 }
 </style>
+
+<style id="torneos-bracket-minimal-fix-css">
+/* Cuadro eliminatorio: layout fluido por columnas. Evita superposiciones. */
+.torneo-bracket-shell{
+  width:100%;
+  overflow-x:auto;
+  padding:14px 2px 8px!important;
+  box-sizing:border-box;
+}
+.torneo-bracket-flow{
+  display:flex;
+  align-items:stretch;
+  gap:30px;
+  min-width:max-content;
+  padding:2px 6px 12px;
+}
+.torneo-bracket-column{
+  width:360px;
+  min-width:360px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.torneo-bracket-column-title{
+  min-height:34px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#07152b;
+  font-size:.82rem;
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:.055em;
+}
+.torneo-bracket-column-cards{
+  flex:1;
+  min-height:260px;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-around;
+  gap:24px;
+}
+.torneo-bracket-flow .torneo-match-card{
+  width:100%;
+  min-height:0;
+  grid-template-columns:minmax(0,1fr) 112px;
+  border-radius:18px;
+  box-shadow:none;
+  background:#f3f4f6;
+  border-color:#dde2e8;
+}
+.torneo-bracket-flow .torneo-match-main{
+  padding:15px 16px;
+}
+.torneo-bracket-flow .torneo-match-player{
+  font-size:.9rem;
+}
+.torneo-bracket-flow .torneo-match-avatar{
+  width:31px;
+  height:31px;
+  min-width:31px;
+  font-size:.63rem;
+}
+.torneo-bracket-flow .torneo-match-side{
+  padding:10px 8px;
+  gap:7px;
+}
+.torneo-bracket-flow .torneo-match-config{
+  font-size:.65rem;
+  line-height:1.3;
+}
+.torneo-bracket-flow .torneo-match-score-summary{
+  font-size:1rem;
+}
+.torneo-bracket-flow .torneo-match-editor{
+  padding:0 12px 12px;
+}
+.torneo-bracket-flow .torneo-match-editor-inner{
+  border-radius:12px;
+  padding:9px;
+  gap:8px;
+}
+.torneo-bracket-flow .torneo-match-sets{
+  grid-template-columns:repeat(auto-fit,minmax(92px,1fr));
+  gap:6px;
+}
+.torneo-bracket-flow .torneo-match-set{
+  grid-template-columns:minmax(0,1fr) 10px minmax(0,1fr);
+  gap:3px;
+}
+.torneo-bracket-flow .torneo-match-set input{
+  width:100%!important;
+  height:34px!important;
+  padding:4px!important;
+}
+.torneo-bracket-flow .torneo-match-save{
+  min-width:92px!important;
+  padding:8px 10px!important;
+}
+.torneo-bracket-flow .torneo-match-state{
+  font-size:.7rem;
+}
+
+/* Indicador visual sutil entre rondas, sin líneas absolutas. */
+.torneo-bracket-column:not(:last-child){
+  position:relative;
+}
+.torneo-bracket-column:not(:last-child)::after{
+  content:'';
+  position:absolute;
+  right:-16px;
+  top:50%;
+  width:2px;
+  height:54%;
+  transform:translateY(-50%);
+  border-radius:2px;
+  background:#e2e8f0;
+}
+
+/* Inscriptos cerrados: acordeón compacto. */
+.torneo-inscritos-acordeon{
+  margin-top:16px;
+  border:1px solid #dbe1ea;
+  border-radius:14px;
+  overflow:hidden;
+  background:#fff;
+}
+.torneo-inscritos-acordeon>summary{
+  list-style:none;
+  cursor:pointer;
+  padding:13px 15px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  background:#f8fafc;
+  color:#07152b;
+  font-weight:900;
+}
+.torneo-inscritos-acordeon>summary::-webkit-details-marker{display:none}
+.torneo-inscritos-acordeon>summary::after{
+  content:'＋';
+  color:#64748b;
+  font-size:1.08rem;
+}
+.torneo-inscritos-acordeon[open]>summary::after{content:'−'}
+.torneo-inscritos-acordeon-body{
+  padding:12px 14px 14px;
+  background:#fff;
+}
+
+/* Evita que controles internos activen accidentalmente el summary exterior. */
+.torneo-card-body button,
+.torneo-card-body input,
+.torneo-card-body select,
+.torneo-card-body textarea{
+  position:relative;
+  z-index:2;
+}
+
+@media(max-width:760px){
+  .torneo-bracket-column{width:315px;min-width:315px}
+  .torneo-bracket-flow{gap:22px}
+  .torneo-bracket-flow .torneo-match-card{grid-template-columns:1fr 96px}
+}
+</style>
 </head><body><div class="auth-screen" id="auth-screen"><div class="auth-card"><h1>Administración de Clubes</h1><p class="auth-subtitle">Ingresá con tu cuenta para acceder al panel de administración de tu club.</p><div class="auth-tabs"><button class="auth-tab active" id="tab-login" type="button">Iniciar sesión</button><button class="auth-tab" id="tab-register" type="button">Registrarse</button></div><div class="auth-form" id="auth-login"><div class="auth-field"><label class="auth-label" for="login-email">Email:</label><input autocomplete="email" class="input-form" id="login-email" placeholder="" type="email"/></div><div class="auth-field"><label class="auth-label" for="login-password">Contraseña:</label><input autocomplete="current-password" class="input-form" id="login-password" placeholder="" type="password"/></div><button class="auth-primary" id="btn-login-club" type="button">Iniciar sesión</button><p class="auth-small">¿No tenés cuenta? <button id="btn-ir-registro" type="button">Registrate aquí</button></p></div><div class="auth-form" id="auth-register" style="display:none;"><div class="auth-field"><label class="auth-label" for="register-club">Nombre del club:</label><input autocomplete="organization" class="input-form" id="register-club" placeholder="" type="text"/></div><div class="auth-field"><label class="auth-label" for="register-email">Email:</label><input autocomplete="email" class="input-form" id="register-email" placeholder="" type="email"/></div><div class="auth-field"><label class="auth-label" for="register-password">Contraseña:</label><input autocomplete="new-password" class="input-form" id="register-password" placeholder="Mínimo 6 caracteres" type="password"/></div><button class="auth-primary" id="btn-registrar-club" type="button">Registrarse</button><p class="auth-small">¿Ya tenés cuenta? <button id="btn-ir-login" type="button">Iniciá sesión aquí</button></p><p class="auth-small">Tu club quedará pendiente hasta que se apruebe manualmente en Firebase.</p></div><div class="auth-status" id="auth-pending" style="display:none;"><h3>Solicitud pendiente</h3><p>Tu cuenta fue creada correctamente, pero todavía no tiene el rol <strong>club</strong>. Cuando se apruebe desde Firebase vas a poder ingresar.</p><button class="btn-modal btn-cerrar" id="btn-pending-logout" type="button">Cerrar sesión</button></div><p class="auth-message" id="auth-message"></p></div></div><div id="app-content" style="display: none; width: 100%; flex-direction: column; align-items: center;"><aside aria-label="Navegación del panel" id="sidebar-admin-club"><div class="sidebar-brand-club"><h2>Panel<br/>Administración</h2><span class="sidebar-club-id">(ID: <span id="sidebar-club-id">---</span>)</span></div><nav class="sidebar-menu-club"><button class="sidebar-item-club active" data-sidebar-target="turnero" data-vista="turnero" type="button"><span class="sidebar-icon-club"><svg viewbox="0 0 24 24"><path d="M3 9.5 12 3l9 6.5"></path><path d="M5 10v10h14V10"></path><path d="M9 20v-6h6v6"></path></svg></span><span>Turnero</span></button><button class="sidebar-item-club" data-sidebar-target="profes" data-vista="profes" type="button"><span class="sidebar-icon-club"><svg viewbox="0 0 24 24"><path d="M4 19h16"></path><path d="M7 16V9"></path><path d="M12 16V5"></path><path d="M17 16v-3"></path></svg></span><span>Profesores</span></button><button class="sidebar-item-club" data-sidebar-target="inventario" data-vista="inventario" type="button"><span class="sidebar-icon-club"><svg viewbox="0 0 24 24"><path d="M3 9.5 12 3l9 6.5"></path><path d="M5 10v10h14V10"></path><path d="M9 20v-6h6v6"></path></svg></span><span>Inventario</span></button><button class="sidebar-item-club" data-sidebar-target="finanzas" data-vista="finanzas" type="button"><span class="sidebar-icon-club"><svg viewbox="0 0 24 24"><path d="M4 19h16"></path><path d="M7 16V9"></path><path d="M12 16V5"></path><path d="M17 16v-3"></path></svg></span><span>Finanzas</span></button><button class="sidebar-item-club" data-sidebar-target="movimientos" data-vista="movimientos" type="button"><span class="sidebar-icon-club"><svg viewbox="0 0 24 24"><path d="M7 7h11l-3-3"></path><path d="M17 17H6l3 3"></path><path d="M18 7l-3 3"></path><path d="M6 17l3-3"></path></svg></span><span>Movimientos</span></button><button class="sidebar-item-club" data-sidebar-target="metricas" data-vista="metricas" type="button"><span class="sidebar-icon-club"><svg viewbox="0 0 24 24"><path d="M4 19V5"></path><path d="M4 19h16"></path><path d="M8 15l3-3 3 2 4-6"></path></svg></span><span>Métricas</span></button><button class="sidebar-item-club" data-sidebar-target="config" data-vista="config" type="button"><span class="sidebar-icon-club"><svg viewbox="0 0 24 24"><path d="M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5z"></path><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2 3.4-.2-.1a1.7 1.7 0 0 0-2 .4l-.1.1-4-.1-.1-.2a1.7 1.7 0 0 0-1.7-1.1h-.2l-2-3.5.1-.1a1.7 1.7 0 0 0 .3-1.9l-.1-.2 2-3.4.2.1a1.7 1.7 0 0 0 2-.4l.1-.1h4l.1.1a1.7 1.7 0 0 0 2 .4l.2-.1 2 3.5z"></path></svg></span><span>Configuración</span></button><button class="sidebar-item-club" data-sidebar-target="torneos" data-vista="torneos" type="button"><span class="sidebar-icon-club"><svg viewbox="0 0 24 24"><path d="M8 21h8"></path><path d="M12 17v4"></path><path d="M7 4h10v4a5 5 0 0 1-10 0z"></path><path d="M5 5H3v2a4 4 0 0 0 4 4"></path><path d="M19 5h2v2a4 4 0 0 1-4 4"></path></svg></span><span>Torneos</span></button><button class="sidebar-item-club" data-sidebar-target="actividad" data-vista="actividad" type="button"><span class="sidebar-icon-club"><svg viewbox="0 0 24 24"><path d="M12 8v5l3 2"></path><circle cx="12" cy="12" r="9"></circle><path d="M3.6 9H7V5.6"></path></svg></span><span>Actividad</span></button></nav><button class="sidebar-item-club sidebar-logout-club" data-action="window.logoutClub()" type="button"><span class="sidebar-icon-club"><svg viewbox="0 0 24 24"><path d="M10 17l5-5-5-5"></path><path d="M15 12H3"></path><path d="M21 5v14"></path></svg></span><span>Cerrar sesión</span></button></aside><div class="vista-club" id="pantalla-club" style="display: block;"><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; width: 100%;"><h2 id="titulo-turnero-panel">Turnero <span style="font-weight:400; color:#07152b;">/</span><span id="lbl-nombre-club" style="color: #07152b; text-transform: capitalize;">Admin</span></h2><button class="btn-modal btn-cerrar" data-action="window.logoutClub()" style="width:auto; padding: 8px 12px; font-size:.85em;">Cerrar sesión</button></div><div id="controles-fecha-club" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: #242c36; padding: 10px 15px; border-radius: 8px; border: 1px solid #2c3540;"><div style="display: flex; align-items: center; gap: 15px; justify-content: center; flex: 1;"><button data-action="window.cambiarDiaClub(-1)" style="background: transparent; border: none; font-size: 1.8em; color: #9ca3af; cursor: pointer; padding: 0 10px;">❮</button><span id="lbl-fecha-club" style="font-size: 1.2em; font-weight: bold; color: #ffffff; min-width: 100px; text-align: center; text-transform: uppercase;">HOY</span><button data-action="window.cambiarDiaClub(1)" style="background: transparent; border: none; font-size: 1.8em; color: #9ca3af; cursor: pointer; padding: 0 10px;">❯</button></div><div style="display: flex; gap: 10px; justify-content: center; flex: 1; flex-wrap: wrap;"><button class="btn-modal btn-guardar" data-action="window.irAHoyClub()" style="width: auto; padding: 8px 15px; font-size: 0.85em; background-color: #3b82f6; margin: 0;">Hoy</button><div style="position: relative; display: flex; align-items: center;"><button class="btn-modal btn-gasto" data-action="try{ document.getElementById('picker-fecha-club').showPicker(); } catch(e) { document.getElementById('picker-fecha-club').focus(); }" style="width: auto; padding: 8px 15px; font-size: 0.85em; margin: 0;">📅 Calendario</button><input id="picker-fecha-club" onchange="if(this.value) window.seleccionarFecha(this.value)" style="position: absolute; width: 1px; height: 1px; border: none; padding: 0; margin: 0; opacity: 0; bottom: 0; right: 0; pointer-events: none;" type="date"/></div></div></div><div id="lista-reservas-club"></div></div><section class="panel-seccion-club" data-panel-section="inventario" id="panel-inventario-club"><div class="panel-header-club"><h2>Inventario</h2><p>Gestión de productos, stock y precios de venta.</p></div><div class="panel-card-club" id="card-categorias-inventario"><div class="panel-card-title-row"><h3>Categorías de productos</h3></div><p class="panel-muted">Creá o borrá las categorías que después vas a usar al cargar productos.</p><div class="panel-grid-form panel-grid-categorias-inv"><input class="input-form" id="input-nueva-categoria-inv" placeholder="Nueva categoría. Ej: Bebidas" type="text"/><button class="btn-modal btn-gasto panel-btn-fit" data-action="window.crearCategoriaInventario()" id="btn-crear-categoria-inv" type="button">Crear categoría</button></div><div class="lista-categorias-inv" id="lista-categorias-inventario"></div></div><div class="panel-card-club"><div class="panel-card-title-row"><h3>Stock actual</h3><button class="btn-modal btn-gasto panel-btn-auto" data-action="window.abrirModalAgregarProducto()" type="button">Agregar producto</button></div><div class="tabla-panel-scroll"><table><thead><tr><th>Producto</th><th style="text-align:center;">Stock</th><th style="text-align:right;">Precio</th><th style="text-align:center;">Acciones</th></tr></thead><tbody id="tabla-inventario"></tbody></table></div></div></section><div class="modal-overlay" id="modal-agregar-producto" style="z-index: 1100;"><div class="modal-content" style="max-width: 720px; text-align: left;"><h3 style="margin: 0; border-bottom: 1px solid #e5eaf2; padding-bottom: 12px;">Agregar producto</h3><div class="panel-grid-form panel-grid-3" style="margin-top: 12px;"><input class="input-form" id="inv-nombre" placeholder="Nombre de producto" type="text"/><select class="input-form" id="inv-categoria"><option disabled="" selected="" value="">Categoría...</option></select><input class="input-form" id="inv-stock" min="0" placeholder="Stock inicial" type="number"/><input class="input-form" id="inv-costo" min="0" placeholder="Costo unitario $" type="number"/><input class="input-form" id="inv-precio" min="0" placeholder="Precio venta $" type="number"/></div><div class="panel-actions-row"><button class="btn-modal btn-gasto" data-action="window.agregarInventario()" id="btn-guardar-producto-inv" type="button">Añadir al inventario</button><button class="btn-modal btn-cerrar" data-action="window.cerrarModalAgregarProducto()" type="button">Cancelar</button></div></div></div><section class="panel-seccion-club" data-panel-section="finanzas" id="panel-finanzas-club"><div class="panel-header-club"><h2>Finanzas</h2><p>Balance, exportación y registro financiero del club.</p></div><div class="panel-card-club finanzas-periodo-card"><div class="panel-card-title-row"><h3>Período del balance</h3></div><div class="finanzas-periodo-grid"><div><label>Desde</label><input class="input-form" id="fin-filtro-desde" onchange="window.aplicarFiltroFinanzas()" type="date"/></div><div><label>Hasta</label><input class="input-form" id="fin-filtro-hasta" onchange="window.aplicarFiltroFinanzas()" type="date"/></div><button class="btn-modal btn-balance" data-action="window.finanzasPeriodoHoy()" type="button">Hoy</button><button class="btn-modal btn-cerrar" data-action="window.limpiarFiltroFinanzas()" type="button">Limpiar período</button></div><p id="fin-periodo-label">Mostrando todos los movimientos.</p></div><div class="panel-resumen-finanzas"><div class="panel-stat-card"><span>Ingresos</span><strong id="fin-total-ingresos">$0</strong></div><div class="panel-stat-card"><span>Gastos</span><strong id="fin-total-gastos">$0</strong></div><div class="panel-stat-card"><span>Neto</span><strong id="fin-balance-neto">$0</strong></div></div><div class="panel-card-club panel-card-historial"><div class="panel-card-title-row"><h3>Historial de transacciones</h3></div><div class="tabla-panel-scroll historial-transacciones-scroll"><table><thead><tr><th>Fecha</th><th>Detalle</th><th style="text-align:right;">Efectivo</th><th style="text-align:right;">Transferencia</th><th style="text-align:right;">Monto</th></tr></thead><tbody id="tabla-historial"></tbody></table></div></div><div class="panel-card-club panel-exportar-balance"><h3>Exportar balance</h3><p class="panel-muted">Seleccioná un rango de fechas para descargar el balance en formato PDF.</p><div class="panel-grid-form panel-grid-3"><div><label>Desde</label><input class="input-form" id="exportar-desde" type="date"/></div><div><label>Hasta</label><input class="input-form" id="exportar-hasta" type="date"/></div><button class="btn-modal btn-balance panel-btn-fit" data-action="window.exportarBalancePDF()" id="btn-exportar-balance" type="button">Descargar PDF</button></div></div></section><section class="panel-seccion-club" data-panel-section="movimientos" id="panel-movimientos-club"><div class="panel-header-club"><h2>Movimientos</h2><p>Ventas de mostrador, egresos e ingresos extraordinarios.</p></div><div class="panel-grid-dos panel-movimientos-vertical"><div class="panel-card-club panel-card-full"><h3>Venta en mostrador</h3><div class="panel-movimiento-grid"><select class="input-form" id="mov-select-prod"></select><input class="input-form" id="mov-cant" min="1" placeholder="Cantidad" type="number"/><input class="input-form" id="mov-monto" min="0" placeholder="Monto total $" type="number"/><button class="btn-modal btn-guardar panel-btn-fit" data-action="window.venderProductoMostradorMov()" type="button">Registrar</button></div></div><div class="panel-card-club panel-card-full"><h3>Egreso extraordinario</h3><div class="panel-movimiento-grid"><input class="input-form panel-movimiento-detalle" id="gasto-titulo" placeholder="Detalle del egreso. Ej: luz, alquiler" type="text"/><input class="input-form" id="gasto-importe" placeholder="Importe egresado $" type="number"/><button class="btn-modal btn-gasto panel-btn-fit" data-action="window.agregarGasto()" id="btn-agregar-gasto" type="button">Registrar</button></div></div><div class="panel-card-club panel-card-full"><h3>Ingreso extraordinario</h3><div class="panel-movimiento-grid"><input class="input-form" id="ingreso-titulo" placeholder="Detalle del ingreso" type="text"/><input class="input-form" id="ingreso-efectivo" placeholder="Efectivo $" type="number"/><input class="input-form" id="ingreso-transferencia" placeholder="Transferencia $" type="number"/><button class="btn-modal btn-guardar panel-btn-fit" data-action="window.agregarIngresoLibre()" type="button">Registrar</button></div></div></div></section><section class="panel-seccion-club" data-panel-section="metricas" id="panel-metricas-club"><div class="panel-header-club"><h2>Métricas</h2><p>Analizá turnos, cobranzas, rentabilidad, profesores e inventario por período.</p></div><div class="panel-card-club"><div class="metricas-controles-grid"><div><label>Período de tiempo</label><select class="input-form" id="select-periodo-metricas"><option value="hoy">Hoy</option><option value="ayer">Ayer</option><option value="7d">Últimos 7 días</option><option value="14d">Últimos 14 días</option><option selected="" value="30d">Últimos 30 días</option><option value="mes_actual">Mes actual</option><option value="mes_anterior">Mes anterior</option><option value="3m">Últimos 3 meses</option><option value="6m">Últimos 6 meses</option><option value="1y">Últimos 12 meses</option><option value="2y">Últimos 24 meses</option><option value="todo">Todo el historial</option></select></div><div><label>Categoría a analizar</label><select class="input-form" id="select-categoria-metricas"><option selected="" value="ingresos_brutos">Ingresos brutos</option><optgroup label="Finanzas"><option value="ingresos_brutos">Ingresos brutos</option><option value="ingresos_efectivo">Ingresos en efectivo</option><option value="ingresos_transferencia">Ingresos por transferencia</option><option value="gastos">Gastos totales</option><option value="ganancia_neta">Ganancia neta</option><option value="ticket_promedio">Ticket promedio</option><option value="ingresos_turnos">Ingresos por turnos</option><option value="ingresos_clases">Ingresos por clases</option><option value="ventas_productos">Ingresos por productos</option><option value="ingresos_extraordinarios">Ingresos extraordinarios</option></optgroup><optgroup label="Turnos y canchas"><option value="turnos_totales">Turnos totales</option><option value="turnos_confirmados">Turnos confirmados</option><option value="turnos_pendientes">Turnos sin confirmar</option><option value="turnos_fijos">Turnos fijos</option><option value="turnos_basicos">Turnos no fijos</option><option value="clases_totales">Clases de profesores</option><option value="turnos_indoor">Turnos de pádel indoor</option><option value="turnos_outdoor">Turnos de pádel outdoor</option><option value="turnos_tenis">Turnos de tenis</option><option value="horas_reservadas">Horas reservadas</option><option value="ocupacion_estimada">Ocupación estimada</option></optgroup><optgroup label="Cobranzas"><option value="cobrado_total">Total cobrado</option><option value="saldo_pendiente">Saldo pendiente de cobro</option><option value="turnos_pagados">Turnos completamente pagados</option><option value="turnos_deuda">Turnos con deuda</option></optgroup><optgroup label="Profesores"><option value="clases_cobradas">Clases cobradas</option><option value="clases_pendientes">Clases pendientes</option><option value="facturacion_clases">Facturación de clases</option></optgroup><optgroup label="Inventario"><option value="unidades_vendidas">Unidades vendidas</option><option value="reposiciones_stock">Gastos en reposición de stock</option><option value="stock_actual">Stock actual</option><option value="valor_stock_costo">Valor del stock a costo</option><option value="valor_stock_venta">Valor potencial del stock a precio de venta</option></optgroup></select></div><div class="metricas-generar-wrap"><button class="btn-modal metricas-generar-btn" data-action="window.generarMetricas()" id="btn-generar-metricas" type="button">Generar</button></div></div></div><div class="metricas-resumen" id="metricas-resumen" style="display:none;"><div class="metricas-mini-card"><span>Total del período</span><strong id="metricas-total-periodo">—</strong></div><div class="metricas-mini-card"><span>Promedio por intervalo</span><strong id="metricas-promedio-periodo">—</strong></div><div class="metricas-mini-card"><span>Mejor intervalo</span><strong id="metricas-mejor-periodo">—</strong></div></div><div class="panel-card-club" id="metricas-grafico-card" style="display:none;"><div class="panel-card-title-row"><h3 id="metricas-titulo-grafico">Resultado</h3><p class="metricas-estado" id="metricas-rango-texto"></p></div><div class="panel-chart-box"><canvas id="graficoMetricas"></canvas></div></div><div class="panel-card-club" id="metricas-tabla-card" style="display:none;"><h3>Detalle del período</h3><div class="tabla-panel-scroll"><table><thead><tr><th>Intervalo</th><th id="th-linea" style="text-align:right;">Valor</th><th id="th-barras" style="text-align:right;">Acumulado</th></tr></thead><tbody id="tabla-datos-metricas"></tbody></table></div></div></section><section class="panel-seccion-club" data-panel-section="config" id="panel-config-club" style="display:none;"><div class="modal-content"><h3 aria-hidden="true" style="display:none !important; margin:0; padding:0; border:0;"></h3><div class="scroll-interno" style="text-align: left; display: flex; flex-direction: column; gap: 15px; max-height: 70vh; overflow-y: auto; padding-right: 5px;"><div class="seccion-acordeon" style="margin-bottom: 0;"><div class="header-acordeon" data-action="window.toggleAcordeon('ac-config-info')"><span>Información</span><span id="flecha-ac-config-info">🔽</span></div><div class="contenido-acordeon" id="ac-config-info" style="display:none;"><div style="display: flex; gap: 10px; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap;"><div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: #d1d5db;">Primer Turno:</label><input class="input-form" id="input-primer-turno" step="1800" style="margin-top: 4px;" type="time"/></div><div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: #d1d5db;">Último Turno:</label><input class="input-form" id="input-ultimo-turno" step="1800" style="margin-top: 4px;" type="time"/></div><div style="flex: 1; min-width: 140px;"><label style="font-size: 0.85em; color: #d1d5db;">Encendido de luces:</label><input class="input-form" id="input-hora-luces" step="1800" style="margin-top: 4px;" type="time"/><small class="config-precio-ayuda">Solo se permiten horarios en punto o y media.</small></div></div><div style="margin-bottom: 12px;"><label style="font-size: 0.85em; color: #d1d5db;">Días que abre el club:</label><div class="checkbox-dias" style="display: flex; gap: 8px; margin-top: 5px; flex-wrap: wrap; color: #d1d5db; font-size: 0.9em;"><label><input id="dia-1" type="checkbox"/> Lu</label><label><input id="dia-2" type="checkbox"/> Ma</label><label><input id="dia-3" type="checkbox"/> Mi</label><label><input id="dia-4" type="checkbox"/> Ju</label><label><input id="dia-5" type="checkbox"/> Vi</label><label><input id="dia-6" type="checkbox"/> Sá</label><label><input id="dia-0" type="checkbox"/> Do</label></div></div><div class="config-info-contacto-mp">
   <div class="config-info-campos">
     <div class="config-info-campo">
@@ -3698,8 +3864,20 @@ function htmlInscritos(t){
     if(esLiga&&t.estado!=='inscripcion'){
       const tabla=tablaLiga(t);
       lista='<div class="torneo-inscripto liga-posiciones torneo-inscripto-cabecera"><span>Pos.</span><strong>Pareja</strong><span>PTS</span><span>PJ</span><span>PG</span><span>PP</span><span>DG</span></div>'+tabla.map((x,i)=>'<div class="torneo-inscripto liga-posiciones"><span><strong>'+(i+1)+'</strong></span><strong>'+esc(x.nombre)+'</strong><span>'+x.pts+'</span><span>'+x.pj+'</span><span>'+x.pg+'</span><span>'+x.pp+'</span><span>'+(x.f-x.c)+'</span></div>').join('');
-    }else lista=ins.length?ins.map(p=>{const jugadores=(p.jugador1&&p.jugador2)?(p.jugador1+' / '+p.jugador2):(p.jugadores||p.nombre||'Sin datos');return '<div class="torneo-inscripto"><strong>'+esc(jugadores)+'</strong><span>'+esc(p.contacto||'Sin contacto')+'</span>'+(t.estado==='inscripcion'?'<button class="btn-modal btn-eliminar" data-action="window.eliminarInscriptoTorneo(\''+t.id+'\',\''+p.id+'\')">Eliminar</button>':'')+'</div>';}).join(''):'<div class="torneo-empty">Todavía no hay parejas inscriptas.</div>';
-    return '<div class="torneo-section"><h4>'+(esLiga&&t.estado!=='inscripcion'?'Tabla de posiciones':'Inscriptos')+' ('+ins.length+'/'+toInt(t.limiteParejas,16)+')</h4>'+(abierta?'<div class="torneo-inscripcion-form"><input class="input-form" id="ins-jugador1-'+t.id+'" placeholder="Jugador 1"><input class="input-form" id="ins-jugador2-'+t.id+'" placeholder="Jugador 2"><input class="input-form" id="ins-contacto-'+t.id+'" placeholder="Contacto"><button class="btn-modal btn-guardar" data-action="window.agregarInscriptoTorneo(\''+t.id+'\')">Agregar</button></div>':'')+'<div class="torneo-inscritos">'+lista+'</div></div>';
+    }else{
+      lista=ins.length?ins.map(p=>{
+        const jugadores=(p.jugador1&&p.jugador2)?(p.jugador1+' / '+p.jugador2):(p.jugadores||p.nombre||'Sin datos');
+        return '<div class="torneo-inscripto"><strong>'+esc(jugadores)+'</strong><span>'+esc(p.contacto||'Sin contacto')+'</span>'+(t.estado==='inscripcion'&&abierta?'<button class="btn-modal btn-eliminar" data-action="window.eliminarInscriptoTorneo(\''+t.id+'\',\''+p.id+'\')">Eliminar</button>':'')+'</div>';
+      }).join(''):'<div class="torneo-empty">Todavía no hay parejas inscriptas.</div>';
+    }
+
+    const titulo=(esLiga&&t.estado!=='inscripcion'?'Tabla de posiciones':'Inscriptos')+' ('+ins.length+'/'+toInt(t.limiteParejas,16)+')';
+
+    if(abierta){
+      return '<div class="torneo-section"><h4>'+titulo+'</h4><div class="torneo-inscripcion-form"><input class="input-form" id="ins-jugador1-'+t.id+'" placeholder="Jugador 1"><input class="input-form" id="ins-jugador2-'+t.id+'" placeholder="Jugador 2"><input class="input-form" id="ins-contacto-'+t.id+'" placeholder="Contacto"><button class="btn-modal btn-guardar" data-action="window.agregarInscriptoTorneo(\''+t.id+'\')">Agregar</button></div><div class="torneo-inscritos">'+lista+'</div></div>';
+    }
+
+    return '<details class="torneo-inscritos-acordeon" data-torneo-open-key="inscriptos:'+esc(t.id)+'"><summary><span>'+titulo+'</span></summary><div class="torneo-inscritos-acordeon-body"><div class="torneo-inscritos">'+lista+'</div></div></details>';
   }
   function htmlLiga(t,historial=false){
     const fechas=t.fechasLiga||[];if(!fechas.length)return '';
@@ -3707,7 +3885,7 @@ function htmlInscritos(t){
     const fechasHtml='<div class="torneo-jornadas">'+fechas.map((f,i)=>{
       const completos=(f.partidos||[]).filter(m=>m.completado).length,total=(f.partidos||[]).length;
       const cards=(f.partidos||[]).map(m=>torneoHtmlPartido(t,m,{prefijo:'sl',guardarAccion:"window.guardarResultadoLiga('"+t.id+"','"+m.id+"')",historial})).join('');
-      return '<details class="torneo-jornada" '+(i===0&&!historial?'open':'')+'><summary><div class="torneo-jornada-resumen"><strong>Fecha '+esc(f.numero)+'</strong><span>'+completos+'/'+total+' partidos</span></div></summary><div class="torneo-jornada-body">'+(f.libreId?'<div class="torneo-liga-libre">Fecha libre: '+esc(parejaNombre(t,f.libreId))+'</div>':'')+cards+'</div></details>';
+      return '<details class="torneo-jornada" data-torneo-open-key="liga:'+esc(t.id)+':fecha:'+esc(f.numero)+'" '+(i===0&&!historial?'open':'')+'><summary><div class="torneo-jornada-resumen"><strong>Fecha '+esc(f.numero)+'</strong><span>'+completos+'/'+total+' partidos</span></div></summary><div class="torneo-jornada-body">'+(f.libreId?'<div class="torneo-liga-libre">Fecha libre: '+esc(parejaNombre(t,f.libreId))+'</div>':'')+cards+'</div></details>';
     }).join('')+'</div>';
     return '<div class="torneo-section"><h4>Fixture de liga · Mejor de '+esc(torneoCantidadSets(t))+' sets · '+esc(torneoGamesObjetivo(t))+' games por set</h4>'+fechasHtml+(terminada&&tabla.length?'<div class="torneo-liga-campeon">Fase regular completa · 1.º: '+esc(tabla[0].nombre)+'</div>':'')+'</div>';
   }
@@ -3723,46 +3901,29 @@ function htmlInscritos(t){
       const tabla=tablaGrupo(t,g),partidos=(t.partidosGrupos||[]).filter(m=>m.grupoId===g.id),completos=partidos.filter(m=>m.completado).length;
       const tablaHtml='<table class="torneo-posiciones"><thead><tr><th>Pareja</th><th>PTS</th><th>PJ</th><th>DG</th></tr></thead><tbody>'+tabla.map(x=>'<tr><td>'+esc(x.nombre)+'</td><td>'+x.pts+'</td><td>'+x.pj+'</td><td>'+(x.f-x.c)+'</td></tr>').join('')+'</tbody></table>';
       const partidosHtml='<div class="torneo-jornada-body">'+partidos.map(m=>torneoHtmlPartido(t,m,{prefijo:'sg',guardarAccion:"window.guardarResultadoGrupo('"+t.id+"','"+m.id+"')",historial:false})).join('')+'</div>';
-      return '<details class="torneo-jornada" '+(i===0?'open':'')+'><summary><div class="torneo-jornada-resumen"><strong>'+esc(g.nombre)+'</strong><span>'+((g.parejas||[]).length)+' parejas · '+completos+'/'+partidos.length+' partidos</span></div></summary><div class="torneo-jornada-body">'+tablaHtml+partidosHtml+'</div></details>';
+      return '<details class="torneo-jornada" data-torneo-open-key="grupo:'+esc(t.id)+':'+esc(g.id)+'" '+(i===0?'open':'')+'><summary><div class="torneo-jornada-resumen"><strong>'+esc(g.nombre)+'</strong><span>'+((g.parejas||[]).length)+' parejas · '+completos+'/'+partidos.length+' partidos</span></div></summary><div class="torneo-jornada-body">'+tablaHtml+partidosHtml+'</div></details>';
     }).join('');
     return '<div class="torneo-section"><h4>Fase de grupos · '+totalGrupos+' grupo'+(totalGrupos===1?'':'s')+' · Mejor de '+esc(torneoCantidadSets(t))+' sets · '+esc(torneoGamesObjetivo(t))+' games por set</h4><div class="torneo-jornadas">'+gruposHtml+'</div></div>';
   }
   function htmlCuadro(t){
     if(!t.rondas||!t.rondas.length)return '';
     const final=t.rondas[t.rondas.length-1],fm=final&&final.partidos&&final.partidos[0],campeon=fm&&fm.completado?parejaNombre(t,fm.ganadorId):'';
-    const cardW=276,cardH=88,roundGap=58,rowGap=28;
-    const primera=(t.rondas[0]&&t.rondas[0].partidos?t.rondas[0].partidos.length:1)||1;
-    const stageH=Math.max(cardH,primera*cardH+(primera-1)*rowGap)+34;
-    const stageW=t.rondas.length*cardW+Math.max(0,t.rondas.length-1)*roundGap;
-    const topOffset=30;
-    function yPos(ri,mi,total){
-      const areaH=stageH-topOffset;
-      if(total<=1)return topOffset+(areaH-cardH)/2;
-      if(ri===0)return topOffset+mi*((areaH-cardH)/(total-1));
-      return topOffset+(mi+0.5)*(areaH/total)-cardH/2;
-    }
-    const coords=[];
-    t.rondas.forEach((r,ri)=>{coords[ri]=(r.partidos||[]).map((m,mi)=>({x:ri*(cardW+roundGap),y:yPos(ri,mi,(r.partidos||[]).length||1)}));});
-    let lineas='';
-    for(let ri=0;ri<t.rondas.length-1;ri++){
-      const curr=coords[ri]||[],next=coords[ri+1]||[];
-      curr.forEach((c,mi)=>{
-        const n=next[Math.floor(mi/2)]; if(!n)return;
-        const x1=c.x+cardW, y1=c.y+cardH/2, x2=n.x, y2=n.y+cardH/2, mid=x1+roundGap/2;
-        lineas+='<span class="torneo-bracket-line h" style="left:'+x1+'px;top:'+y1+'px;width:'+(mid-x1)+'px"></span>';
-        lineas+='<span class="torneo-bracket-line v" style="left:'+mid+'px;top:'+Math.min(y1,y2)+'px;height:'+Math.abs(y2-y1)+'px"></span>';
-        lineas+='<span class="torneo-bracket-line h" style="left:'+mid+'px;top:'+y2+'px;width:'+(x2-mid)+'px"></span>';
-      });
-    }
-    const titulos=t.rondas.map((r,ri)=>'<div class="torneo-bracket-title" style="left:'+(ri*(cardW+roundGap))+'px;top:0">'+esc(nombreRondaBracket(r,(r.partidos||[]).length*2))+'</div>').join('');
-    const partidos=t.rondas.map((r,ri)=>(r.partidos||[]).map((m,mi)=>{
-      const c=coords[ri][mi],dis=!m.pareja1Id||!m.pareja2Id||m.completado?'disabled':'';
-      const g1=m.completado&&String(m.ganadorId)===String(m.pareja1Id),g2=m.completado&&String(m.ganadorId)===String(m.pareja2Id);
-      const boton=!m.completado&&m.pareja1Id&&m.pareja2Id?'<div class="torneo-bracket-save"><button class="btn-modal btn-guardar" data-action="window.guardarResultadoEliminatoria(\''+t.id+'\',\''+r.id+'\',\''+m.id+'\')">Guardar</button></div>':'<div class="torneo-bracket-status">'+(m.completado?'Ganador: '+esc(parejaNombre(t,m.ganadorId)):'A definir')+'</div>';
-      const sets=Array.from({length:torneoCantidadSets(t)},(_,si)=>{const n=si+1,v=torneoValoresSet(m,n);return '<div class="torneo-set-box"><label>S'+n+'</label><input class="input-form" id="sea-'+m.id+'-'+n+'" type="number" min="0" '+dis+' value="'+(v.a==null?'':v.a)+'"><b>–</b><input class="input-form" id="seb-'+m.id+'-'+n+'" type="number" min="0" '+dis+' value="'+(v.b==null?'':v.b)+'"></div>';}).join('');
-      return '<div class="torneo-bracket-card" style="left:'+c.x+'px;top:'+c.y+'px;height:auto;min-height:'+cardH+'px"><span class="torneo-bracket-equipo '+(g1?'ganador':'')+'">'+esc(parejaNombre(t,m.pareja1Id))+'</span><div class="torneo-sets-editor">'+sets+'</div><span class="torneo-bracket-equipo der '+(g2?'ganador':'')+'">'+esc(parejaNombre(t,m.pareja2Id))+'</span>'+boton+'</div>';
-    }).join('')).join('');
-    return '<div class="torneo-section"><h4>'+(t.formato==='liga'?'Cuadro final · Top 8':'Llave eliminatoria')+' · Mejor de '+esc(t.mejorDeSets||3)+' sets · '+esc(torneoGamesObjetivo(t))+' games por set</h4><div class="torneo-bracket-shell"><div class="torneo-bracket-stage" style="width:'+stageW+'px;height:'+stageH+'px">'+lineas+titulos+partidos+'</div></div>'+(campeon?'<div class="torneo-campeon">🏆 Campeón: '+esc(campeon)+'</div>':'')+'</div>';
+    const primeraCantidad=Math.max(1,(t.rondas[0]&&t.rondas[0].partidos||[]).length);
+    const alto=Math.max(300,primeraCantidad*245);
+
+    const columnas=t.rondas.map((r,ri)=>{
+      const partidos=(r.partidos||[]).map(m=>{
+        return torneoHtmlPartido(t,m,{
+          prefijo:'se',
+          guardarAccion:"window.guardarResultadoEliminatoria('"+t.id+"','"+r.id+"','"+m.id+"')",
+          historial:false
+        });
+      }).join('');
+
+      return '<div class="torneo-bracket-column"><div class="torneo-bracket-column-title">'+esc(nombreRondaBracket(r,(r.partidos||[]).length*2))+'</div><div class="torneo-bracket-column-cards" style="height:'+alto+'px">'+partidos+'</div></div>';
+    }).join('');
+
+    return '<div class="torneo-section"><h4>'+(t.formato==='liga'?'Cuadro final · Top 8':'Llave eliminatoria')+' · Mejor de '+esc(torneoCantidadSets(t))+' sets · '+esc(torneoGamesObjetivo(t))+' games por set</h4><div class="torneo-bracket-shell"><div class="torneo-bracket-flow">'+columnas+'</div></div>'+(campeon?'<div class="torneo-campeon">🏆 Campeón: '+esc(campeon)+'</div>':'')+'</div>';
   }
   function htmlTorneo(t,historial=false){
     const esLiga=t.formato==='liga',badge=t.estado==='eliminatorias'?'bracket':(t.estado==='grupos'||t.estado==='liga')?'groups':'open',lim=t.limiteInscripcion?new Date(t.limiteInscripcion).toLocaleString('es-AR'):'Sin límite';let acciones='';
@@ -3772,10 +3933,38 @@ function htmlInscritos(t){
     const cantidadGrupos=(t.grupos||[]).length,detalleFormato=esc(formatoNombreTorneo(t.formato))+(cantidadGrupos?' · '+cantidadGrupos+' grupo'+(cantidadGrupos===1?'':'s'):'')+' · Mejor de '+esc(torneoCantidadSets(t))+' · '+esc(torneoGamesObjetivo(t))+' games/set';
     const cuerpo=(acciones?'<div class="torneo-toolbar">'+acciones+'</div>':'')+htmlInscritos(t)+(esLiga&&(t.estado==='liga'||t.estado==='eliminatorias'||historial)?htmlLiga(t,historial):'')+(!esLiga&&(t.estado==='grupos'||t.estado==='eliminatorias'||historial)?htmlGrupos(t):'')+((t.estado==='eliminatorias'||historial)&&Array.isArray(t.rondas)&&t.rondas.length?htmlCuadro(t):'');
     const summary='<summary><div class="torneo-card-head"><div class="torneo-card-main"><div class="torneo-card-title-row"><h3>'+esc(t.nombre)+'</h3><span class="torneo-badge '+badge+'">'+esc(estadoTorneo(t))+'</span></div><div class="torneo-card-closed-meta"><span>'+metaPrincipal+'</span><span>'+detalleFormato+'</span><span>Cierre de inscripción: '+esc(lim)+'</span>'+fechaFin+'</div></div><div class="torneo-card-actions-top">'+eliminar+'<span class="torneo-card-chevron">⌄</span></div></div></summary>';
-    return '<div class="torneo-curso-card"><details class="torneo-detalle-acordeon">'+summary+'<div class="torneo-card-body">'+cuerpo+'</div></details></div>';
+    return '<div class="torneo-curso-card"><details class="torneo-detalle-acordeon" data-torneo-id="'+esc(t.id)+'" data-torneo-open-key="torneo:'+esc(t.id)+'">'+summary+'<div class="torneo-card-body">'+cuerpo+'</div></details></div>';
   }
   function htmlHistorialTorneo(t){const fecha=t.finalizadoEn?new Date(t.finalizadoEn).toLocaleDateString('es-AR'):(t.fechaHasta||t.fechaDesde||'');const campeon=t.campeonId?parejaNombre(t,t.campeonId):'';return '<details class="torneo-historial-acordeon"><summary><div class="torneo-historial-resumen"><strong>'+esc(t.nombre)+'</strong><span>'+esc(fecha)+(campeon?' · Campeón: '+esc(campeon):'')+'</span></div></summary><div class="torneo-historial-detalle">'+htmlTorneo(t,true)+'</div></details>';}
-  window.renderizarTorneos=function(){torneosGlobal.forEach(t=>{if(t.formato==='todos_contra_todos')t.formato='liga';});const curso=$('torneos-en-curso-lista'),hist=$('torneos-historial-lista');if(curso){const arr=torneosGlobal.filter(t=>t.estado!=='finalizado');curso.innerHTML=arr.length?arr.map(t=>htmlTorneo(t,false)).join(''):'<div class="torneo-empty">No hay torneos en curso.</div>';}if(hist){const arr=torneosGlobal.filter(t=>t.estado==='finalizado');hist.innerHTML=arr.length?arr.map(htmlHistorialTorneo).join(''):'<div class="torneo-empty">Todavía no hay torneos finalizados.</div>';}};
+  window.renderizarTorneos=function(){
+    const abiertos=new Set();
+    $$('[data-torneo-open-key][open]').forEach(el=>{
+      const key=el.getAttribute('data-torneo-open-key');
+      if(key)abiertos.add(key);
+    });
+
+    torneosGlobal.forEach(t=>{if(t.formato==='todos_contra_todos')t.formato='liga';});
+    const curso=$('torneos-en-curso-lista'),hist=$('torneos-historial-lista');
+
+    if(curso){
+      const arr=torneosGlobal.filter(t=>t.estado!=='finalizado');
+      curso.innerHTML=arr.length?arr.map(t=>htmlTorneo(t,false)).join(''):'<div class="torneo-empty">No hay torneos en curso.</div>';
+    }
+    if(hist){
+      const arr=torneosGlobal.filter(t=>t.estado==='finalizado');
+      hist.innerHTML=arr.length?arr.map(htmlHistorialTorneo).join(''):'<div class="torneo-empty">Todavía no hay torneos finalizados.</div>';
+    }
+
+    abiertos.forEach(key=>{
+      const el=$$('[data-torneo-open-key]').find(x=>x.getAttribute('data-torneo-open-key')===key);
+      if(el)el.open=true;
+    });
+  };
+
+  document.addEventListener('click',function(ev){
+    const control=ev.target&&ev.target.closest?ev.target.closest('.torneo-detalle-acordeon summary button, .torneo-detalle-acordeon summary input, .torneo-detalle-acordeon summary select'):null;
+    if(control)ev.stopPropagation();
+  },true);
   window.cambiarTabTorneo=function(tab){if(!['crear','encurso','historial'].includes(tab))tab='encurso';$$('[data-torneo-panel]').forEach(x=>x.classList.toggle('active',x.getAttribute('data-torneo-panel')===tab));$$('[data-torneo-nav]').forEach(x=>x.classList.toggle('is-active',x.getAttribute('data-torneo-nav')===tab));if(tab==='encurso'||tab==='historial')window.renderizarTorneos();};
   ['torneo-fecha-desde','torneo-fecha-hasta','torneo-hora-desde','torneo-hora-hasta','torneo-limite-fecha','torneo-limite-hora','torneo-limite-parejas','torneo-mejor-de-sets','torneo-games-por-set'].forEach(id=>document.addEventListener('input',ev=>{if(ev.target&&ev.target.id===id)window.actualizarResumenTorneo();}));document.addEventListener('change',ev=>{if(ev.target&&ev.target.id==='torneo-parejas-grupo')window.actualizarOpcionesCupoTorneo();if(ev.target&&ev.target.id==='torneo-formato')window.actualizarCamposFormatoTorneo();});
 
