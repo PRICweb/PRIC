@@ -3573,6 +3573,7 @@ function clasesPendientesAgrupadas(){
     }catch(error){console.error('Cobro agrupado profesor:',error);alert('No se pudo guardar el cobro completo. No se modificó ninguna clase. Detalle: '+(error.message||error));}
   }
 window.cargarConfigEnFormulario = function(){
+  setTimeout(()=>{ sincronizarEstadoMercadoPagoBackend(); },0);
     setValue('input-primer-turno', primerTurno); setValue('input-ultimo-turno', ultimoTurno); setValue('input-hora-luces', horaLucesGlobal); setValue('input-telefono-club', telefonoClubGlobal); setValue('input-ubicacion-club', ubicacionClubGlobal); setValue('input-foto-club', fotoClubGlobal);
     [0,1,2,3,4,5,6].forEach(d => { const el=$('dia-'+d); if(el) el.checked = diasAbiertosGlobal.map(Number).includes(d); });
     setValue('input-canchas-in', canchasIndoorGlobal);
@@ -3651,6 +3652,39 @@ window.cargarConfigEnFormulario = function(){
       .filter(([, valor]) => valor);
   }
 
+
+  async function tokenAdminFirebase(){
+    const usuario = firebase.auth().currentUser;
+    if (!usuario) throw new Error('La sesión del administrador no está disponible.');
+    return usuario.getIdToken();
+  }
+
+  async function fetchBackendAdmin(url, opciones = {}, timeoutMs = 15000){
+    const token = await tokenAdminFirebase();
+    const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const timer = controller ? setTimeout(() => controller.abort(), timeoutMs) : null;
+
+    try{
+      const headers = {
+        'Accept':'application/json',
+        ...(opciones.headers || {}),
+        'Authorization':`Bearer ${token}`
+      };
+      return await fetch(url, {
+        ...opciones,
+        headers,
+        ...(controller ? {signal:controller.signal} : {})
+      });
+    }catch(error){
+      if(error && error.name === 'AbortError'){
+        throw new Error('El backend tardó demasiado en responder.');
+      }
+      throw error;
+    }finally{
+      if(timer) clearTimeout(timer);
+    }
+  }
+
   function refrescarEstadoMercadoPago(){
     const status = $('mp-config-status');
     const chip = $('mp-config-chip');
@@ -3707,6 +3741,43 @@ window.cargarConfigEnFormulario = function(){
     }
   }
 
+
+  async function sincronizarEstadoMercadoPagoBackend(){
+    const clubId = (typeof currentClubId!=='undefined'&&currentClubId) || window.CLUB_DOC_ID_ACTUAL;
+    if (!clubId) return;
+
+    try{
+      const url = `${MP_BACKEND_URL}/mercadopago/status?clubId=${encodeURIComponent(clubId)}`;
+      const respuesta = await fetchBackendAdmin(url, {method:'GET'}, 12000);
+      const data = await respuesta.json().catch(() => ({}));
+      if(!respuesta.ok || data.ok !== true) return;
+
+      const account = data.account && typeof data.account === 'object' ? data.account : {};
+      const mp = {
+        connected:data.connected === true,
+        status:data.status || (data.connected ? 'connected' : 'disconnected'),
+        accountName:account.accountName || null,
+        nickname:account.nickname || null,
+        email:account.email || null,
+        userId:account.userId || null,
+        collectorId:account.collectorId || null,
+        countryId:account.countryId || null,
+        siteId:account.siteId || null,
+        permalink:account.permalink || null,
+        accountStatus:account.accountStatus || null,
+        connectedAt:account.connectedAt || null,
+        tokenExpiresAt:account.tokenExpiresAt || null
+      };
+
+      if(typeof currentClubData!=='undefined' && currentClubData) currentClubData.mercadoPago = mp;
+      if(window.CLUB_DATA_ACTUAL) window.CLUB_DATA_ACTUAL.mercadoPago = mp;
+      window.__mercadoPagoConectado = data.connected === true;
+      refrescarEstadoMercadoPago();
+    }catch(error){
+      console.warn('No se pudo sincronizar el estado de Mercado Pago con el backend:', error);
+    }
+  }
+
   window.gestionarMercadoPago = async function(){
     if (window.__mercadoPagoConectado) {
       return window.desconectarMercadoPago();
@@ -3723,6 +3794,7 @@ window.cargarConfigEnFormulario = function(){
 
     const btn = $('btn-conectar-mercadopago');
     const textoOriginal = btn ? btn.textContent : '';
+
     try {
       if (btn) {
         btn.disabled = true;
@@ -3730,14 +3802,25 @@ window.cargarConfigEnFormulario = function(){
       }
 
       const url = `${MP_BACKEND_URL}/mercadopago/connect?clubId=${encodeURIComponent(clubId)}`;
-      const respuesta = await fetch(url);
+      const respuesta = await fetchBackendAdmin(url, {method:'GET'}, 15000);
       const data = await respuesta.json().catch(() => ({}));
 
       if (!respuesta.ok || !data.authUrl) {
         throw new Error(data.error || 'No se pudo generar el enlace de conexión con Mercado Pago.');
       }
 
-      window.location.href = data.authUrl;
+      let destino;
+      try {
+        destino = new URL(String(data.authUrl));
+      } catch (_) {
+        throw new Error('El backend devolvió una URL de Mercado Pago inválida.');
+      }
+
+      if (destino.protocol !== 'https:' || !/mercadopago\./i.test(destino.hostname)) {
+        throw new Error('El backend devolvió una URL de Mercado Pago inválida.');
+      }
+
+      window.location.assign(destino.toString());
     } catch (error) {
       console.error('Conectar Mercado Pago:', error);
       alert('No se pudo conectar Mercado Pago. Detalle: ' + (error.message || error));
@@ -3766,33 +3849,44 @@ window.cargarConfigEnFormulario = function(){
     if (!confirmar) return;
 
     const btn = $('btn-conectar-mercadopago');
+
     try {
       if (btn) {
         btn.disabled = true;
         btn.textContent = 'Desconectando...';
       }
 
-      const usuario = firebase.auth().currentUser;
-      if (!usuario) throw new Error('La sesión del administrador no está disponible.');
-      const idToken = await usuario.getIdToken();
-
       const url = `${MP_BACKEND_URL}/mercadopago/disconnect`;
-      const respuesta = await fetch(url, {
+      const respuesta = await fetchBackendAdmin(url, {
         method:'POST',
-        headers:{
-          'Content-Type':'application/json',
-          'Authorization':`Bearer ${idToken}`
-        },
+        headers:{'Content-Type':'application/json'},
         body:JSON.stringify({clubId})
-      });
+      }, 15000);
+
       const data = await respuesta.json().catch(() => ({}));
 
       if (!respuesta.ok) {
+        if (respuesta.status === 409) {
+          throw new Error(data.error || 'Hay un pago pendiente y Mercado Pago no puede desconectarse todavía.');
+        }
         throw new Error(data.error || 'El backend no pudo desconectar la cuenta.');
       }
 
-      if (typeof currentClubData!=='undefined' && currentClubData) currentClubData.mercadoPago = {};
-      if (window.CLUB_DATA_ACTUAL) window.CLUB_DATA_ACTUAL.mercadoPago = {};
+      if (typeof currentClubData!=='undefined' && currentClubData) {
+        currentClubData.mercadoPago = {
+          connected:false,
+          status:'disconnected',
+          disconnectedAt:new Date().toISOString()
+        };
+      }
+      if (window.CLUB_DATA_ACTUAL) {
+        window.CLUB_DATA_ACTUAL.mercadoPago = {
+          connected:false,
+          status:'disconnected',
+          disconnectedAt:new Date().toISOString()
+        };
+      }
+
       window.__mercadoPagoConectado = false;
       refrescarEstadoMercadoPago();
     } catch (error) {
