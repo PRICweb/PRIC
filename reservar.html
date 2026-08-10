@@ -873,8 +873,9 @@
       collection,
       doc,
       onSnapshot,
+      query,
+      where,
       setDoc,
-      deleteDoc,
       serverTimestamp
     } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
@@ -1289,6 +1290,43 @@
       return '$' + Number(numero || 0).toLocaleString('es-AR');
     }
 
+    async function fetchConTimeout(url, opciones = {}, timeoutMs = 18000) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        return await fetch(url, { ...opciones, signal: controller.signal });
+      } catch (error) {
+        if (error && error.name === 'AbortError') {
+          throw new Error('El servidor de pagos tardó demasiado en responder. Intentá nuevamente.');
+        }
+        throw error;
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+
+    function urlMercadoPagoValida(valor) {
+      try {
+        const u = new URL(String(valor || ''));
+        if (u.protocol !== 'https:') return false;
+        const host = u.hostname.toLowerCase();
+        return host === 'mercadopago.com' ||
+          host.endsWith('.mercadopago.com') ||
+          host === 'mercadopago.com.ar' ||
+          host.endsWith('.mercadopago.com.ar') ||
+          host.startsWith('www.mercadopago.');
+      } catch (_) {
+        return false;
+      }
+    }
+
+    function navegarAMercadoPago(initPoint) {
+      if (!urlMercadoPagoValida(initPoint)) {
+        throw new Error('Mercado Pago devolvió un enlace de pago inválido.');
+      }
+      window.location.assign(initPoint);
+    }
+
     function actualizarResumenPagoSena() {
       const pago = calcularPagoSena(modalidadSeleccionada, duracionSeleccionada, reservaEnProcesoHora);
       const totalEl = document.getElementById('resumen-precio-total');
@@ -1354,21 +1392,13 @@
       return !estadosLibres.includes(estado);
     }
 
-    async function borrarReservaPendienteVencida(reserva) {
-      if (!reserva || !reserva.id || !reservaPagoVencido(reserva)) return;
-      try {
-        await deleteDoc(doc(db, 'clubs', clubId, 'reservas', String(reserva.id)));
-      } catch (error) {
-        console.warn('No se pudo borrar reserva pendiente vencida:', reserva.id, error);
-      }
-    }
-
     function limpiarReservasPendientesVencidas() {
-      const vencidas = reservasGlobales.filter(reservaPagoVencido);
-      if (!vencidas.length) return;
+      // En el cliente público solo se dejan de considerar para disponibilidad.
+      // La limpieza persistente la realiza el backend programado, evitando que
+      // cientos de clientes intenten modificar/eliminar el mismo documento.
+      const cantidadAntes = reservasGlobales.length;
       reservasGlobales = reservasGlobales.filter(r => !reservaPagoVencido(r));
-      renderizarPantallas();
-      vencidas.forEach(borrarReservaPendienteVencida);
+      if (reservasGlobales.length !== cantidadAntes) renderizarPantallas();
     }
 
     function modalidadesDisponibles() {
@@ -1645,6 +1675,7 @@
       const inputNombre = document.getElementById('input-nombre-jugador').value.trim();
       const inputTelefono = document.getElementById('input-telefono-jugador').value.trim();
       const btnConfirmar = document.getElementById('btn-confirmar-reserva');
+      if (!btnConfirmar || btnConfirmar.disabled) return;
       const duracionElegida = toInt(duracionSeleccionada, duracionSugeridaParaModalidad(modalidadSeleccionada));
       const pagoSena = calcularPagoSena(modalidadSeleccionada, duracionElegida, reservaEnProcesoHora);
 
@@ -1731,13 +1762,27 @@
         await setDoc(ref, reserva, { merge: false });
 
         if (pagoSena.sena > 0) {
-          const response = await fetch(`${BACKEND_URL}/reservas/${encodeURIComponent(ref.id)}/pagar-sena`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ clubId })
-          });
+          if (navigator.onLine === false) {
+            throw new Error('No hay conexión a Internet. Verificá la conexión e intentá nuevamente.');
+          }
 
-          const data = await response.json().catch(() => ({}));
+          const response = await fetchConTimeout(
+            `${BACKEND_URL}/reservas/${encodeURIComponent(ref.id)}/pagar-sena`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+              },
+              body: JSON.stringify({ clubId })
+            },
+            18000
+          );
+
+          const contentType = String(response.headers.get('content-type') || '').toLowerCase();
+          const data = contentType.includes('application/json')
+            ? await response.json().catch(() => ({}))
+            : {};
 
           if (!response.ok || !data.ok || !data.initPoint) {
             await setDoc(ref, {
@@ -1750,8 +1795,19 @@
             throw new Error(data.error || 'No se pudo crear el pago de la seña.');
           }
 
+          if (!urlMercadoPagoValida(data.initPoint)) {
+            await setDoc(ref, {
+              status: 'pago_error',
+              estado: 'pago_error',
+              estadoPago: 'pago_error',
+              errorPago: 'Mercado Pago devolvió una URL de pago inválida.',
+              actualizadoEn: serverTimestamp()
+            }, { merge: true });
+            throw new Error('Mercado Pago devolvió un enlace de pago inválido.');
+          }
+
           btnConfirmar.innerText = 'Redirigiendo a Mercado Pago...';
-          window.location.href = data.initPoint;
+          navegarAMercadoPago(data.initPoint);
           return;
         }
 
@@ -1942,20 +1998,70 @@
       });
 
       const reservasRef = collection(db, 'clubs', clubId, 'reservas');
-      onSnapshot(reservasRef, (snap) => {
-        reservasGlobales = [];
-        snap.forEach((documento) => reservasGlobales.push({ id: documento.id, ...documento.data() }));
+      const reservasRango = new Map();
+      const reservasFijas = new Map();
+      let rangoListo = false;
+      let fijasListas = false;
+
+      const recomponerReservas = () => {
+        const unificadas = new Map();
+        reservasRango.forEach((valor, id) => unificadas.set(id, valor));
+        reservasFijas.forEach((valor, id) => unificadas.set(id, valor));
+        reservasGlobales = Array.from(unificadas.values());
         limpiarReservasPendientesVencidas();
         renderizarPantallas();
+      };
+
+      const qRango = query(
+        reservasRef,
+        where('fecha', '>=', fechasValidas[0]),
+        where('fecha', '<=', fechasValidas[fechasValidas.length - 1])
+      );
+
+      onSnapshot(qRango, (snap) => {
+        reservasRango.clear();
+        snap.forEach((documento) => {
+          reservasRango.set(documento.id, { id: documento.id, ...documento.data() });
+        });
+        rangoListo = true;
+        recomponerReservas();
       }, (error) => {
-        console.error('Error leyendo reservas:', error);
-        alert('No se pudieron leer los turnos desde Firebase.');
+        console.error('Error leyendo reservas del período:', error);
+        if (!rangoListo) {
+          document.getElementById('lista-horarios').innerHTML =
+            '<div class="empty-state">No pudimos cargar los horarios. Revisá tu conexión e intentá nuevamente.</div>';
+        }
+      });
+
+      const qFijas = query(reservasRef, where('fijo', '==', true));
+      onSnapshot(qFijas, (snap) => {
+        reservasFijas.clear();
+        snap.forEach((documento) => {
+          reservasFijas.set(documento.id, { id: documento.id, ...documento.data() });
+        });
+        fijasListas = true;
+        recomponerReservas();
+      }, (error) => {
+        console.error('Error leyendo reservas fijas:', error);
+        // Los turnos ordinarios siguen disponibles aunque falle esta consulta.
       });
     }
 
     setInterval(() => {
       limpiarReservasPendientesVencidas();
     }, 30 * 1000);
+
+
+    window.addEventListener('online', () => {
+      renderizarPantallas();
+    });
+
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) {
+        limpiarReservasPendientesVencidas();
+        renderizarPantallas();
+      }
+    });
 
     if (!clubId) {
       document.getElementById('mensaje-error').style.display = 'block';
