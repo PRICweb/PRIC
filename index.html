@@ -2387,10 +2387,46 @@ async function cargarColeccionVista(nombre, destino, opciones={}){
     resultados.forEach(r=>{if(r.status==='fulfilled')r.value.docs.forEach(d=>mapa.set(String(d.id),Object.assign({id:d.id},serializar(d.data()||{}))));});
     reservasGlobales=[...mapa.values()];
   }
+
+  let promesaInventarioActual = null;
+
+  async function asegurarInventarioActualizado(){
+    if(coleccionesCargadas.has('inventario')) return inventarioGlobal;
+    if(promesaInventarioActual) return promesaInventarioActual;
+
+    promesaInventarioActual = (async()=>{
+      const actualizado = await cargarColeccionVista('inventario', inventarioGlobal);
+      inventarioGlobal = Array.isArray(actualizado) ? actualizado : [];
+      coleccionesCargadas.add('inventario');
+      guardarCacheLocalClub(snapshotDatos());
+
+      // Si el modal de turno está abierto, refrescar solo sus opciones/lista.
+      if($('modal-acciones') && $('modal-acciones').style.display !== 'none' && reservaSeleccionada()){
+        window.renderizarModalTurnoAcciones();
+      }
+
+      // Si Inventario/Movimientos están visibles, actualizar esas vistas también.
+      const vista = window.__vistaPanelClubActual;
+      if(vista === 'inventario' || vista === 'movimientos'){
+        window.renderizarInventario();
+      }
+
+      return inventarioGlobal;
+    })();
+
+    try{
+      return await promesaInventarioActual;
+    } finally {
+      promesaInventarioActual = null;
+    }
+  }
+
+  window.asegurarInventarioActualizado = asegurarInventarioActualizado;
+
 async function cargarDatosVista(vista){
     try{
       if(vista==='inventario'||vista==='movimientos'){
-        if(!coleccionesCargadas.has('inventario')){inventarioGlobal=await cargarColeccionVista('inventario',inventarioGlobal);coleccionesCargadas.add('inventario');}
+        await asegurarInventarioActualizado();
         if(!coleccionesCargadas.has('movimientos')){
           const respaldo=[...(ingresosGlobal||[]).map(x=>Object.assign({},x,{tipo:x.tipo||'ingreso'})),...(gastosGlobal||[]).map(x=>Object.assign({},x,{tipo:x.tipo||'egreso'}))];
           const mov=await cargarColeccionVista('movimientos',respaldo,{orderBy:'fechaRegistro',limit:200});
@@ -2758,6 +2794,13 @@ window.guardarDatosClub = guardarDatosClub;
     detenerEscuchasFirebase();const id=(typeof currentClubId!=='undefined'&&currentClubId)||window.CLUB_DOC_ID_ACTUAL;if(!id)return;const {db}=await firebaseReady();const ref=db.collection('clubs').doc(id);
     unsubClub=ref.onSnapshot(snap=>{if(snap.exists){const remoto=Object.assign({id:snap.id},snap.data()||{});currentClubData=Object.assign({},currentClubData||{},remoto,{id:snap.id});window.CLUB_DATA_ACTUAL=currentClubData;}},e=>console.error('lectura club:',e));
     await cargarConfiguracionSeparada();
+
+    // El inventario se precarga al iniciar el panel para que Gestión de Turno
+    // siempre use la colección actual de Firebase aunque nunca se abra Inventario.
+    asegurarInventarioActualizado().catch(e=>{
+      console.error('Precarga inventario:', e);
+    });
+
     // Migrar primero el array antiguo; recién después iniciar el listener moderno.
     const resultadoMigracion = await limpiarReservasDuplicadasDocumentoPrincipalUnaVez(currentClubData || {});
     if (resultadoMigracion && resultadoMigracion.migradas) {
@@ -3040,17 +3083,43 @@ window.guardarDatosClub = guardarDatosClub;
     return reserva.fijo === true && window.getDayOfWeekFromDate(reserva.fecha) === window.getDayOfWeekFromDate(fecha) && fecha > reserva.fecha;
   };
 
-  window.abrirModal = function(id, fechaInstancia){
+  window.abrirModal = async function(id, fechaInstancia){
     const r = reservasGlobales.find(x => String(x && x.id) === String(id));
     if (!r){ alert('No se encontró el turno seleccionado.'); return; }
+
     reservaSeleccionadaId = r.id;
     reservaSeleccionadaFecha = fechaInstanciaTurno(r, fechaInstancia || fechaSeleccionada);
+
     const e = estadoInstanciaTurno(r, reservaSeleccionadaFecha);
     setValue('pago-efectivo', e.pagoEfectivo || '');
     setValue('pago-transferencia', e.pagoTransferencia || '');
     setValue('pago-descuento', e.descuento || '');
+
     window.renderizarModalTurnoAcciones();
     show('modal-acciones');
+
+    if(!coleccionesCargadas.has('inventario')){
+      const sel=$('select-consumo-turno');
+      if(sel){
+        sel.innerHTML='<option value="">Cargando productos...</option>';
+        sel.disabled=true;
+      }
+
+      try{
+        await asegurarInventarioActualizado();
+      }catch(e){
+        console.error('Inventario al abrir turno:', e);
+        if(sel){
+          sel.innerHTML='<option value="">No se pudieron cargar los productos</option>';
+        }
+        return;
+      }finally{
+        if(sel) sel.disabled=false;
+      }
+
+      // Re-render con la colección ya actualizada de Firebase.
+      if(reservaSeleccionada()) window.renderizarModalTurnoAcciones();
+    }
   };
   window.cerrarModalAcciones = function(){ reservaSeleccionadaId = null; reservaSeleccionadaFecha = null; hide('modal-acciones'); window.renderizarPantallas(); };
   window.renderizarModalTurnoAcciones = function(){
@@ -3362,7 +3431,18 @@ window.agregarInventario = async function(){
     if(precio<costo&&!(await window.turneroConfirm('El precio de venta es menor al costo. ¿Guardar igualmente?')))return;
     const producto={id:newId('producto'),nombre,categoria,stock,costo,precio,creadoEn:new Date().toISOString()};
     const cats=categoriasInventario();if(!cats.some(c=>c.toLowerCase()===categoria.toLowerCase()))cats.push(categoria);
-    try{await guardarProductoYCategoriasSeguro(producto,cats);inventarioGlobal.push(producto);setCategorias(cats);marcarCambioLocalPendiente(['inventario','categoriasInventario']);window.cerrarModalAgregarProducto();window.renderizarInventario();}
+    try{
+      await guardarProductoYCategoriasSeguro(producto,cats);
+      inventarioGlobal.push(producto);
+      coleccionesCargadas.add('inventario');
+      setCategorias(cats);
+      marcarCambioLocalPendiente(['inventario','categoriasInventario']);
+      window.cerrarModalAgregarProducto();
+      window.renderizarInventario();
+      if($('modal-acciones') && $('modal-acciones').style.display !== 'none'){
+        window.renderizarOpcionesConsumoTurno();
+      }
+    }
     catch(e){alert('No se pudo guardar el producto. No se modificaron los datos. Detalle: '+(e.message||e));}
   }
 window.renderizarInventario = function(){
