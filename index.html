@@ -1698,6 +1698,7 @@ document.addEventListener('click', function (ev) {
   let unsubClub = null;
   let unsubReservas = null;
   let unsubReservasFijas = null;
+  let unsubInventario = null;
   let firebaseInitPromise = null;
   let categoriasInventarioGlobal = [];
   let torneosGlobal = [];
@@ -2749,7 +2750,15 @@ window.guardarDatosClub = guardarDatosClub;
     unsubReservas=null;
     unsubReservasFijas=null;
   }
-  function detenerEscuchasFirebase(){ if(typeof unsubClub==='function')unsubClub();if(typeof unsubVista==='function')unsubVista();detenerEscuchaReservas();unsubClub=null;unsubVista=null; }
+  function detenerEscuchasFirebase(){
+    if(typeof unsubClub==='function') unsubClub();
+    if(typeof unsubVista==='function') unsubVista();
+    if(typeof unsubInventario==='function') unsubInventario();
+    detenerEscuchaReservas();
+    unsubClub=null;
+    unsubVista=null;
+    unsubInventario=null;
+  }
   async function iniciarEscuchaReservasTurnero(){
     detenerEscuchaReservas();
     if((window.__vistaPanelClubActual||'turnero')!=='turnero') return;
@@ -2790,6 +2799,44 @@ window.guardarDatosClub = guardarDatosClub;
     mezclarReservas(snap.docs.map(d=>Object.assign({id:d.id},serializar(d.data()||{}))),{desde:fecha,hasta:fecha});fechasExtrasReservas.add(fecha);refrescarVistaActiva('turnero');
   }
   window.cargarReservaDiaExtra=cargarReservaDiaExtra;
+
+  async function iniciarEscuchaInventario(){
+    if(typeof unsubInventario==='function') unsubInventario();
+    unsubInventario=null;
+
+    const clubId=(typeof currentClubId!=='undefined'&&currentClubId)||window.CLUB_DOC_ID_ACTUAL;
+    if(!clubId) return;
+
+    const {db}=await firebaseReady();
+    const col=db.collection('clubs').doc(clubId).collection('inventario');
+
+    unsubInventario=col.onSnapshot(snap=>{
+      const actualizado=snap.docs.map(d=>Object.assign({id:d.id},serializar(d.data()||{})));
+
+      inventarioGlobal=actualizado;
+      coleccionesCargadas.add('inventario');
+      hashesColecciones.inventario=new Map(actualizado.map(p=>[String(p.id),hashDato(p)]));
+      guardarCacheLocalClub(snapshotDatos());
+
+      // Refrescar únicamente lo que pueda estar visible.
+      const modalAcciones=$('modal-acciones');
+      if(modalAcciones && modalAcciones.style.display!=='none' && reservaSeleccionada()){
+        window.renderizarOpcionesConsumoTurno();
+        window.calcularFaltante();
+      }
+
+      const vista=window.__vistaPanelClubActual;
+      if(vista==='inventario'||vista==='movimientos'){
+        window.renderizarInventario();
+      }
+    },e=>{
+      console.error('lectura inventario en tiempo real:',e);
+      // No se borra el inventario local: se conserva el último estado válido.
+    });
+  }
+
+  window.iniciarEscuchaInventario=iniciarEscuchaInventario;
+
   async function iniciarEscuchasFirebase(){
     detenerEscuchasFirebase();const id=(typeof currentClubId!=='undefined'&&currentClubId)||window.CLUB_DOC_ID_ACTUAL;if(!id)return;const {db}=await firebaseReady();const ref=db.collection('clubs').doc(id);
     unsubClub=ref.onSnapshot(snap=>{if(snap.exists){const remoto=Object.assign({id:snap.id},snap.data()||{});currentClubData=Object.assign({},currentClubData||{},remoto,{id:snap.id});window.CLUB_DATA_ACTUAL=currentClubData;}},e=>console.error('lectura club:',e));
@@ -2797,8 +2844,15 @@ window.guardarDatosClub = guardarDatosClub;
 
     // El inventario se precarga al iniciar el panel para que Gestión de Turno
     // siempre use la colección actual de Firebase aunque nunca se abra Inventario.
-    asegurarInventarioActualizado().catch(e=>{
+    try{
+      await asegurarInventarioActualizado();
+    }catch(e){
       console.error('Precarga inventario:', e);
+    }
+
+    // Mantener el inventario sincronizado aunque el administrador nunca abra esa sección.
+    iniciarEscuchaInventario().catch(e=>{
+      console.error('Listener inventario:', e);
     });
 
     // Migrar primero el array antiguo; recién después iniciar el listener moderno.
@@ -3433,7 +3487,9 @@ window.agregarInventario = async function(){
     const cats=categoriasInventario();if(!cats.some(c=>c.toLowerCase()===categoria.toLowerCase()))cats.push(categoria);
     try{
       await guardarProductoYCategoriasSeguro(producto,cats);
-      inventarioGlobal.push(producto);
+      const idxProducto=inventarioGlobal.findIndex(p=>String(p.id)===String(producto.id));
+      if(idxProducto>=0) inventarioGlobal[idxProducto]=producto;
+      else inventarioGlobal.push(producto);
       coleccionesCargadas.add('inventario');
       setCategorias(cats);
       marcarCambioLocalPendiente(['inventario','categoriasInventario']);
