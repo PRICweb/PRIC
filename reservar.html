@@ -874,10 +874,13 @@
       doc,
       onSnapshot,
       query,
-      where,
-      setDoc,
-      serverTimestamp
+      where
     } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+    import {
+      initializeAppCheck,
+      ReCaptchaEnterpriseProvider,
+      getToken as getAppCheckToken
+    } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app-check.js";
 
     // Firebase del panel administrador adjunto.
     const firebaseConfig = {
@@ -893,8 +896,38 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
+    let appCheckInstance = null;
+    const APP_CHECK_SITE_KEY = String(window.PRIC_APPCHECK_SITE_KEY || '').trim();
+    if (APP_CHECK_SITE_KEY) {
+      try {
+        appCheckInstance = initializeAppCheck(app, {
+          provider: new ReCaptchaEnterpriseProvider(APP_CHECK_SITE_KEY),
+          isTokenAutoRefreshEnabled: true
+        });
+      } catch (error) {
+        console.warn('No se pudo inicializar App Check:', error);
+      }
+    }
+    async function tokenAppCheckPublico() {
+      if (!appCheckInstance) return '';
+      try { return (await getAppCheckToken(appCheckInstance, false))?.token || ''; }
+      catch (error) { console.warn('No se pudo obtener token App Check:', error); return ''; }
+    }
+    function nuevaClaveIdempotencia() {
+      if (window.crypto?.randomUUID) return window.crypto.randomUUID();
+      const bytes = new Uint8Array(16);
+      window.crypto?.getRandomValues?.(bytes);
+      return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('') + '-' + Date.now().toString(36);
+    }
+    async function fetchBackendPublico(url, opciones = {}, timeoutMs = 18000) {
+      const token = await tokenAppCheckPublico();
+      const headers = {'Accept':'application/json', ...(opciones.headers || {})};
+      if (token) headers['X-Firebase-AppCheck'] = token;
+      return fetchConTimeout(url, {...opciones, headers}, timeoutMs);
+    }
+
     const BACKEND_URL = 'https://us-central1-pric-60f50.cloudfunctions.net/api';
-    const TIEMPO_PAGO_SENA_MS = 10 * 60 * 1000;
+    const TIEMPO_PAGO_SENA_MS = 5 * 60 * 1000;
 
     const urlParams = new URLSearchParams(window.location.search);
     const clubId = urlParams.get('club') || '';
@@ -971,6 +1004,7 @@
     let clubRaizActual = {};
     let configuracionGeneralActual = {};
     let reservaEnProcesoHora = null;
+    let reservaEnProcesoIdempotencyKey = null;
     let modalidadSeleccionada = '';
     let duracionSeleccionada = null;
 
@@ -1650,6 +1684,7 @@
       }
 
       reservaEnProcesoHora = hora;
+      reservaEnProcesoIdempotencyKey = nuevaClaveIdempotencia();
       let pF = fechaSeleccionada.split('-');
       document.getElementById('reserva-fecha-display').innerText = `${pF[2]}/${pF[1]}/${pF[0]}`;
       document.getElementById('reserva-hora-display').innerText = `${hora} hs`;
@@ -1665,6 +1700,7 @@
 
     window.cerrarModalReservaJugador = function() {
       reservaEnProcesoHora = null;
+      reservaEnProcesoIdempotencyKey = null;
       document.getElementById('modal-reserva-jugador').style.display = 'none';
       const btnConfirmar = document.getElementById('btn-confirmar-reserva');
       btnConfirmar.disabled = false;
@@ -1677,152 +1713,47 @@
       const btnConfirmar = document.getElementById('btn-confirmar-reserva');
       if (!btnConfirmar || btnConfirmar.disabled) return;
       const duracionElegida = toInt(duracionSeleccionada, duracionSugeridaParaModalidad(modalidadSeleccionada));
-      const pagoSena = calcularPagoSena(modalidadSeleccionada, duracionElegida, reservaEnProcesoHora);
-
-      if (!inputNombre || !inputTelefono) {
-        alert('Por favor completá tu nombre y teléfono.');
-        return;
-      }
-
-      if (!modalidadSeleccionada || !reservaEnProcesoHora) {
-        alert('Elegí modalidad, duración y horario antes de reservar.');
-        return;
-      }
-
-      if (pagoSena.sena > 0 && !mercadoPagoConectadoGlobal) {
-        alert('Este club todavía no tiene Mercado Pago conectado. No se puede cobrar la seña online.');
-        return;
-      }
-
-      const libres = canchasLibresPara(reservaEnProcesoHora, duracionElegida, modalidadSeleccionada);
-      if (!libres.length) {
-        alert('Ese horario acaba de ser ocupado. Elegí otro horario.');
-        window.cerrarModalReservaJugador();
-        renderizarPantallas();
-        return;
-      }
-
-      const canchaAsignada = libres[0].numero;
-      const canchaAsignadaLabel = libres[0].label || labelModalidad(modalidadSeleccionada);
-
+      if (!inputNombre || !inputTelefono) { alert('Por favor completá tu nombre y teléfono.'); return; }
+      if (!modalidadSeleccionada || !reservaEnProcesoHora) { alert('Elegí modalidad, duración y horario antes de reservar.'); return; }
+      if (![60, 90, 120].includes(duracionElegida)) { alert('La duración pública debe ser de 60, 90 o 120 minutos.'); return; }
+      if (!reservaEnProcesoIdempotencyKey) reservaEnProcesoIdempotencyKey = nuevaClaveIdempotencia();
       btnConfirmar.disabled = true;
-      btnConfirmar.innerText = pagoSena.sena > 0 ? 'Creando pago...' : 'Guardando reserva...';
-
-      const ref = doc(collection(db, 'clubs', clubId, 'reservas'));
-
+      btnConfirmar.innerText = 'Confirmando disponibilidad...';
       try {
-        const reserva = {
-          id: ref.id,
-          clubId,
-          fecha: fechaSeleccionada,
-          hora: reservaEnProcesoHora,
-          cancha: String(canchaAsignada),
-          canchaNombre: canchaAsignadaLabel,
-          modalidad: modalidadSeleccionada,
-          duracion: duracionElegida,
-          jugador: inputNombre,
-          telefono: inputTelefono,
-          tipoEvento: 'Normal',
-          esClase: false,
-          profe: null,
-          fijo: false,
-          fechasCanceladas: [],
-          asistencia: false,
-          pagoEfectivo: 0,
-          pagoTransferencia: 0,
-          descuento: 0,
-          consumos: [],
-          origen: 'cliente',
-          origenReserva: 'web',
-          creadaDesde: 'web_reservas',
-          creadoDesdePanelAdmin: false,
-          whatsappClienteEnviado: false,
-          whatsappClubEnviado: false,
-          status: pagoSena.sena > 0 ? 'pendiente_pago' : 'confirmado',
-          estado: pagoSena.sena > 0 ? 'pendiente_pago' : 'confirmado',
-          estadoPago: pagoSena.sena > 0 ? 'pendiente_pago' : 'sin_sena',
-          precioTotalCalculado: pagoSena.total,
-          porcentajeSena: pagoSena.porcentaje,
-          montoSena: pagoSena.sena,
-          horaLucesAplicada: pagoSena.horaLuces,
-          minutosSinLuzCalculados: pagoSena.minutosSinLuz,
-          minutosConLuzCalculados: pagoSena.minutosConLuz,
-          precioCanchaSinRedondear: pagoSena.totalSinRedondear,
-          precioCanchaCalculado: pagoSena.total,
-          precioDuracionBase: pagoSena.duracionBase,
-          expiraPagoEnMs: pagoSena.sena > 0 ? Date.now() + TIEMPO_PAGO_SENA_MS : null,
-          expiraPagoISO: pagoSena.sena > 0 ? new Date(Date.now() + TIEMPO_PAGO_SENA_MS).toISOString() : null,
-          minutosParaPagar: pagoSena.sena > 0 ? 10 : null,
-          fechaRegistro: new Date().toISOString(),
-          creadoEnCliente: new Date().toISOString(),
-          creadoEn: serverTimestamp(),
-          actualizadoEn: serverTimestamp()
-        };
-
-        await setDoc(ref, reserva, { merge: false });
-
-        if (pagoSena.sena > 0) {
-          if (navigator.onLine === false) {
-            throw new Error('No hay conexión a Internet. Verificá la conexión e intentá nuevamente.');
-          }
-
-          const response = await fetchConTimeout(
-            `${BACKEND_URL}/reservas/${encodeURIComponent(ref.id)}/pagar-sena`,
-            {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-              },
-              body: JSON.stringify({ clubId })
-            },
-            18000
-          );
-
-          const contentType = String(response.headers.get('content-type') || '').toLowerCase();
-          const data = contentType.includes('application/json')
-            ? await response.json().catch(() => ({}))
-            : {};
-
-          if (!response.ok || !data.ok || !data.initPoint) {
-            await setDoc(ref, {
-              status: 'pago_error',
-              estado: 'pago_error',
-              estadoPago: 'pago_error',
-              errorPago: data.error || 'No se pudo crear el pago de la seña.',
-              actualizadoEn: serverTimestamp()
-            }, { merge: true });
-            throw new Error(data.error || 'No se pudo crear el pago de la seña.');
-          }
-
-          if (!urlMercadoPagoValida(data.initPoint)) {
-            await setDoc(ref, {
-              status: 'pago_error',
-              estado: 'pago_error',
-              estadoPago: 'pago_error',
-              errorPago: 'Mercado Pago devolvió una URL de pago inválida.',
-              actualizadoEn: serverTimestamp()
-            }, { merge: true });
-            throw new Error('Mercado Pago devolvió un enlace de pago inválido.');
-          }
-
+        if (navigator.onLine === false) throw new Error('No hay conexión a Internet. Verificá la conexión e intentá nuevamente.');
+        const createResponse = await fetchBackendPublico(`${BACKEND_URL}/public/reservas/crear`, {
+          method:'POST',
+          headers:{'Content-Type':'application/json','X-Idempotency-Key':reservaEnProcesoIdempotencyKey},
+          body:JSON.stringify({clubId,modalidad:modalidadSeleccionada,fecha:fechaSeleccionada,hora:reservaEnProcesoHora,duracion:duracionElegida,jugador:inputNombre,telefono:inputTelefono,idempotencyKey:reservaEnProcesoIdempotencyKey})
+        }, 18000);
+        const createData = await createResponse.json().catch(() => ({}));
+        if (!createResponse.ok || createData.ok !== true || !createData.reservaId) {
+          if (createResponse.status === 409) { window.cerrarModalReservaJugador(); renderizarPantallas(); }
+          throw new Error(createData.error || 'No se pudo crear la reserva.');
+        }
+        if (createData.requierePago) {
+          btnConfirmar.innerText = 'Creando pago...';
+          const payResponse = await fetchBackendPublico(`${BACKEND_URL}/reservas/${encodeURIComponent(createData.reservaId)}/pagar-sena`, {
+            method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({clubId})
+          }, 18000);
+          const payData = await payResponse.json().catch(() => ({}));
+          if (!payResponse.ok || !payData.ok || !payData.initPoint) throw new Error(payData.error || 'La reserva quedó retenida, pero no se pudo iniciar Mercado Pago.');
+          if (!urlMercadoPagoValida(payData.initPoint)) throw new Error('Mercado Pago devolvió un enlace de pago inválido.');
           btnConfirmar.innerText = 'Redirigiendo a Mercado Pago...';
-          navegarAMercadoPago(data.initPoint);
+          navegarAMercadoPago(payData.initPoint);
           return;
         }
-
-        document.getElementById('exito-cancha').innerText = canchaAsignadaLabel;
-        document.getElementById('exito-hora').innerText = reservaEnProcesoHora;
+        document.getElementById('exito-cancha').innerText = createData.canchaNombre || `Cancha ${createData.cancha || ''}`;
+        document.getElementById('exito-hora').innerText = createData.mercadoPagoDesconectado ? `${reservaEnProcesoHora} · Reserva confirmada sin seña online` : reservaEnProcesoHora;
         window.cerrarModalReservaJugador();
         document.getElementById('modal-exito-reserva').style.display = 'flex';
       } catch (error) {
-        console.error('Error al guardar la reserva o crear el pago:', error);
-        alert(error && error.message ? error.message : 'Ocurrió un error al guardar tu reserva.');
+        console.error('Error creando reserva:', error);
+        alert(error?.message || 'Ocurrió un error al guardar tu reserva.');
         btnConfirmar.disabled = false;
-        btnConfirmar.innerText = pagoSena.sena > 0 ? 'Pagar seña y reservar' : 'Confirmar reserva';
+        btnConfirmar.innerText = 'Confirmar reserva';
       }
     };
-
 
     function limpiarParametrosPagoUrl() {
       const url = new URL(window.location.href);
