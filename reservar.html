@@ -866,7 +866,8 @@
     </div>
   </div>
 
-  <script type="module">
+  <script src="./payment-status.js"></script>
+<script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import {
       getFirestore,
@@ -1807,87 +1808,13 @@
     }
 
     function revisarEstadoReservaRetornada(reserva) {
-      const estados = estadoPagoReserva(reserva);
-
-      const estaConfirmada =
-        reserva &&
-        (
-          reserva.senaPagada === true ||
-          estados.estadoPago === 'sena_pagada' ||
-          estados.estado === 'confirmado' ||
-          estados.status === 'confirmado'
-        );
-
-      const estaFallida =
-        estados.estadoPago === 'pago_no_aprobado' ||
-        estados.estadoPago === 'pago_monto_invalido' ||
-        estados.estadoPago === 'vencida' ||
-        estados.estado === 'vencida' ||
-        estados.status === 'vencida';
-
-      const estaPendiente =
-        estados.estadoPago === 'pendiente_pago' ||
-        estados.estado === 'pendiente_pago' ||
-        estados.status === 'pendiente_pago';
-
-      if (estaConfirmada) {
-        pintarResultadoPago(
-          'success',
-          'Pago recibido ✅',
-          'Pago recibido. Tu reserva quedó confirmada.'
-        );
-        return;
-      }
-
-      if (estaFallida) {
-        pintarResultadoPago(
-          'failure',
-          'Pago no completado',
-          'El pago no se pudo completar. El turno no queda confirmado.'
-        );
-        return;
-      }
-
-      /*
-        Si Mercado Pago volvió con failure, no dejamos que el estado pendiente_pago
-        de Firebase pise el mensaje de pago no completado. Esa reserva puede seguir
-        como pendiente hasta que venza o hasta que el backend la marque como no aprobada.
-      */
-      if (mpResultado === 'failure') {
-        return;
-      }
-
-      if (estaPendiente) {
-        pintarResultadoPago(
-          'pending',
-          'Pago pendiente',
-          'El pago está pendiente. Te avisaremos cuando se confirme.'
-        );
-      }
+      const message = window.PRICPaymentStatus.message(reserva, mpResultado);
+      pintarResultadoPago(message.type, message.title, message.text);
     }
-
     function revisarRetornoMercadoPago() {
       if (!mpResultado) return;
 
-      if (mpResultado === 'success') {
-        pintarResultadoPago(
-          'success',
-          'Pago recibido ✅',
-          'Pago recibido. Tu reserva quedó confirmada.'
-        );
-      } else if (mpResultado === 'failure') {
-        pintarResultadoPago(
-          'failure',
-          'Pago no completado',
-          'El pago no se pudo completar. El turno no queda confirmado.'
-        );
-      } else if (mpResultado === 'pending') {
-        pintarResultadoPago(
-          'pending',
-          'Pago pendiente',
-          'El pago está pendiente. Te avisaremos cuando se confirme.'
-        );
-      }
+      revisarEstadoReservaRetornada(null);
 
       if (!clubId || !reservaIdRetorno) return;
 
