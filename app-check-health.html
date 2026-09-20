@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="es"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PRIC · Comprobación de App Check</title>
+<body><h1>Comprobación de App Check</h1><p>Esta prueba no inicia sesión, no crea reservas y no realiza pagos ni envía mensajes.</p><ul id="results"></ul>
+<script type="module">
+const config={apiKey:'AIzaSyDqWKo3ZtPChbtf38osMiKwQpCRNvsN7ak',authDomain:'pric-60f50.firebaseapp.com',projectId:'pric-60f50',appId:'1:475470852361:web:8acfa8b1e2963426ef23d8'};
+for(const version of ['10.8.1','10.12.5']){
+ const row=document.createElement('li');row.textContent=version+': comprobando…';document.querySelector('#results').append(row);
+ try{const appSdk=await import('https://www.gstatic.com/firebasejs/'+version+'/firebase-app.js');const sdk=await import('https://www.gstatic.com/firebasejs/'+version+'/firebase-app-check.js');
+ const app=appSdk.initializeApp(config,'pric-verification-'+version);const check=sdk.initializeAppCheck(app,{provider:new sdk.ReCaptchaEnterpriseProvider('6LdrLrItAAAAAG5KQoJM5Qci6y3trwbmj3a4TesH'),isTokenAutoRefreshEnabled:false});
+ const result=await sdk.getToken(check,false);
+ const response=await fetch('https://us-central1-pric-60f50.cloudfunctions.net/api/public/app-check-status',{headers:{'X-Firebase-AppCheck':result.token}});
+ const data=await response.json();if(!response.ok||data.verified!==true)throw Error('El servidor no validó el token');
+ row.textContent=version+': token emitido y aceptado por el servidor';row.dataset.status='verified';
+ }catch(error){row.textContent=version+': no se pudo verificar ('+error.message+')';row.dataset.status='failed';}
+}
+</script></body></html>
