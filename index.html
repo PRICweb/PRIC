@@ -1907,13 +1907,15 @@ document.addEventListener('click', function (ev) {
     if (!firebaseInitPromise){
       firebaseInitPromise = (async () => {
         if (!window.firebase || !firebase.auth || !firebase.firestore){
-          const v = '8.10.1';
-          await loadScriptOnce('https://www.gstatic.com/firebasejs/' + v + '/firebase-app.js');
-          await loadScriptOnce('https://www.gstatic.com/firebasejs/' + v + '/firebase-auth.js');
-          await loadScriptOnce('https://www.gstatic.com/firebasejs/' + v + '/firebase-firestore.js');
+          const v = '10.12.5';
+          await loadScriptOnce('https://www.gstatic.com/firebasejs/' + v + '/firebase-app-compat.js');
+          await loadScriptOnce('https://www.gstatic.com/firebasejs/' + v + '/firebase-auth-compat.js');
+          await loadScriptOnce('https://www.gstatic.com/firebasejs/' + v + '/firebase-firestore-compat.js');
         }
         if (!window.firebase) throw new Error('Firebase SDK no quedó disponible.');
         if (!firebase.apps || !firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+        if(!firebase.appCheck)await loadScriptOnce('https://www.gstatic.com/firebasejs/10.12.5/firebase-app-check-compat.js');
+        firebase.appCheck().activate(new firebase.appCheck.ReCaptchaEnterpriseProvider('6LdrLrItAAAAAG5KQoJM5Qci6y3trwbmj3a4TesH'),true);
         db = firebase.firestore();
         auth = firebase.auth();
         return {db, auth};
@@ -2046,9 +2048,10 @@ document.addEventListener('click', function (ev) {
       if (cred.user && cred.user.updateProfile) await cred.user.updateProfile({displayName:nombre});
       const clubId = normalizarIdFirestore(nombre);
       const ref = db.collection('clubs').doc(clubId);
-      const snap = await ref.get();
-      if (snap.exists) throw new Error('Ya existe un club con ese nombre.');
-      await ref.set({nombre, emailAdmin:email, estado:'pendiente', datosClub:{}, creadoEn:firebase.firestore.FieldValue.serverTimestamp(), actualizadoEn:firebase.firestore.FieldValue.serverTimestamp()}, {merge:false});
+      const batch=db.batch();
+      batch.set(ref,{nombre, emailAdmin:cred.user.email, estado:'pendiente', datosClub:{}, creadoEn:firebase.firestore.FieldValue.serverTimestamp(), actualizadoEn:firebase.firestore.FieldValue.serverTimestamp()});
+      batch.set(db.collection('clubMemberships').doc(cred.user.uid),{clubId});
+      await batch.commit();
       mostrarPendiente('Club creado correctamente. Queda pendiente hasta que se apruebe en Firebase.');
     }catch(e){
       console.error('registrarClub:', e);
