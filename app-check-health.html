@@ -3,7 +3,7 @@
 <body><h1>Comprobación de App Check</h1><p>Esta prueba no inicia sesión, no crea reservas y no realiza pagos ni envía mensajes.</p><ul id="results"></ul>
 <script type="module">
 const config={apiKey:'AIzaSyDqWKo3ZtPChbtf38osMiKwQpCRNvsN7ak',authDomain:'pric-60f50.firebaseapp.com',projectId:'pric-60f50',appId:'1:475470852361:web:8acfa8b1e2963426ef23d8'};
-for(const version of ['10.8.1','10.12.5']){
+for(const version of ['10.12.5']){
  const row=document.createElement('li');row.textContent=version+': comprobando…';document.querySelector('#results').append(row);
  try{const appSdk=await import('https://www.gstatic.com/firebasejs/'+version+'/firebase-app.js');const sdk=await import('https://www.gstatic.com/firebasejs/'+version+'/firebase-app-check.js');
  const app=appSdk.initializeApp(config,'pric-verification-'+version);const check=sdk.initializeAppCheck(app,{provider:new sdk.ReCaptchaEnterpriseProvider('6LdrLrItAAAAAG5KQoJM5Qci6y3trwbmj3a4TesH'),isTokenAutoRefreshEnabled:false});
