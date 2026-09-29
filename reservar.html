@@ -957,6 +957,12 @@
     let canchasIndoorGlobal = 1;
     let canchasOutdoorGlobal = 0;
     let canchasTenisGlobal = 0;
+    let canchasTenisIndoorGlobal = 0;
+    let canchasTenisOutdoorGlobal = 0;
+    let horariosPorDiaGlobal = {};
+    let cierresClubGlobal = [];
+    let anticipacionMaximaDiasGlobal = 30;
+    let senaModalidadesGlobal = {};
     let horaLucesGlobal = '18:00';
     let precioIndoorGlobal = '5000';
     let precioOutdoorGlobal = '4000';
@@ -1109,6 +1115,13 @@
       canchasIndoorGlobal = tiene(d, 'canchasIndoor') ? Math.max(0, toInt(d.canchasIndoor, 0)) : canchasIndoorGlobal;
       canchasOutdoorGlobal = tiene(d, 'canchasOutdoor') ? Math.max(0, toInt(d.canchasOutdoor, 0)) : canchasOutdoorGlobal;
       canchasTenisGlobal = tiene(d, 'canchasTenis') ? Math.max(0, toInt(d.canchasTenis, 0)) : canchasTenisGlobal;
+      canchasTenisIndoorGlobal = tiene(d,'canchasTenisIndoor') ? Math.max(0,toInt(d.canchasTenisIndoor,0)) : canchasTenisIndoorGlobal;
+      canchasTenisOutdoorGlobal = tiene(d,'canchasTenisOutdoor') ? Math.max(0,toInt(d.canchasTenisOutdoor,0)) : (canchasTenisIndoorGlobal===0?canchasTenisGlobal:canchasTenisOutdoorGlobal);
+      horariosPorDiaGlobal = d.horariosPorDia && typeof d.horariosPorDia==='object' ? d.horariosPorDia : horariosPorDiaGlobal;
+      cierresClubGlobal = Array.isArray(d.cierresClub) ? d.cierresClub : cierresClubGlobal;
+      anticipacionMaximaDiasGlobal = tiene(d,'anticipacionMaximaDias') ? Math.max(0,toInt(d.anticipacionMaximaDias,30)) : anticipacionMaximaDiasGlobal;
+      fechasValidas=[];for(let i=0;i<=anticipacionMaximaDiasGlobal;i++){const f=new Date();f.setHours(12,0,0,0);f.setDate(f.getDate()+i);fechasValidas.push(`${f.getFullYear()}-${String(f.getMonth()+1).padStart(2,'0')}-${String(f.getDate()).padStart(2,'0')}`);}
+      senaModalidadesGlobal = d.senaModalidades && typeof d.senaModalidades==='object' ? d.senaModalidades : senaModalidadesGlobal;
       horaLucesGlobal = tiene(d, 'horaLuces') ? String(d.horaLuces || '18:00') : horaLucesGlobal;
 
       precioIndoorSinLuzGlobal = String(
@@ -1183,13 +1196,18 @@
     }
 
     function labelModalidad(valor) {
-      if (valor === 'indoor') return 'Pádel Indoor';
-      if (valor === 'outdoor') return 'Pádel Outdoor';
-      if (valor === 'tenis') return 'Tenis';
+      if (valor === 'padel_indoor' || valor === 'indoor') return 'Pádel Indoor';
+      if (valor === 'padel_outdoor' || valor === 'outdoor') return 'Pádel Outdoor';
+      if (valor === 'tenis_indoor') return 'Tenis Indoor';
+      if (valor === 'tenis_outdoor' || valor === 'tenis') return 'Tenis Outdoor';
       return 'Modalidad';
     }
 
     function configPagoModalidad(valor) {
+      const original=valor;
+      if(valor==='padel_indoor') valor='indoor';
+      if(valor==='padel_outdoor') valor='outdoor';
+      if(valor==='tenis_indoor'||valor==='tenis_outdoor') valor='tenis';
       if (valor === 'indoor') {
         return {
           precios: {
@@ -1438,9 +1456,11 @@
 
     function modalidadesDisponibles() {
       const opciones = [];
-      if (canchasIndoorGlobal > 0) opciones.push({ value: 'indoor', label: 'Pádel Indoor', detalle: `${canchasIndoorGlobal} cancha${canchasIndoorGlobal === 1 ? '' : 's'}` });
-      if (canchasOutdoorGlobal > 0) opciones.push({ value: 'outdoor', label: 'Pádel Outdoor', detalle: `${canchasOutdoorGlobal} cancha${canchasOutdoorGlobal === 1 ? '' : 's'}` });
-      if (canchasTenisGlobal > 0) opciones.push({ value: 'tenis', label: 'Tenis', detalle: `${canchasTenisGlobal} cancha${canchasTenisGlobal === 1 ? '' : 's'}` });
+      if (canchasIndoorGlobal > 0) opciones.push({ value: 'padel_indoor', label: 'Pádel Indoor', detalle: `${canchasIndoorGlobal} cancha${canchasIndoorGlobal === 1 ? '' : 's'}` });
+      if (canchasOutdoorGlobal > 0) opciones.push({ value: 'padel_outdoor', label: 'Pádel Outdoor', detalle: `${canchasOutdoorGlobal} cancha${canchasOutdoorGlobal === 1 ? '' : 's'}` });
+      if (canchasTenisIndoorGlobal > 0) opciones.push({ value: 'tenis_indoor', label: 'Tenis Indoor', detalle: `${canchasTenisIndoorGlobal} cancha${canchasTenisIndoorGlobal === 1 ? '' : 's'}` });
+      if (canchasTenisOutdoorGlobal > 0) opciones.push({ value: 'tenis_outdoor', label: 'Tenis Outdoor', detalle: `${canchasTenisOutdoorGlobal} cancha${canchasTenisOutdoorGlobal === 1 ? '' : 's'}` });
+      if (!canchasTenisIndoorGlobal && !canchasTenisOutdoorGlobal && canchasTenisGlobal > 0) opciones.push({value:'tenis_outdoor',label:'Tenis Outdoor',detalle:`${canchasTenisGlobal} cancha${canchasTenisGlobal===1?'':'s'}`});
       return opciones;
     }
 
@@ -1521,38 +1541,12 @@
     };
 
     function getCanchas() {
-      const canchas = [];
-      for (let i = 1; i <= canchasIndoorGlobal; i++) {
-        canchas.push({
-          numero: i,
-          modalidad: 'indoor',
-          label: nombresIndoorGlobal[i - 1] || nombresCanchasGlobal[i - 1] || `Cancha ${i} Indoor`,
-          precio: precioIndoorGlobal,
-          duracionBase: duracionIndoorGlobal || duracionGlobal || 90
-        });
-      }
-      const inicioOutdoor = canchasIndoorGlobal + 1;
-      for (let i = 0; i < canchasOutdoorGlobal; i++) {
-        const numero = inicioOutdoor + i;
-        canchas.push({
-          numero,
-          modalidad: 'outdoor',
-          label: nombresOutdoorGlobal[i] || nombresCanchasGlobal[numero - 1] || `Cancha ${numero} Outdoor`,
-          precio: precioOutdoorGlobal,
-          duracionBase: duracionOutdoorGlobal || duracionGlobal || 90
-        });
-      }
-      const inicioTenis = canchasIndoorGlobal + canchasOutdoorGlobal + 1;
-      for (let i = 0; i < canchasTenisGlobal; i++) {
-        const numero = inicioTenis + i;
-        canchas.push({
-          numero,
-          modalidad: 'tenis',
-          label: nombresTenisGlobal[i] || nombresCanchasGlobal[numero - 1] || `Cancha ${numero} Tenis`,
-          precio: precioTenisGlobal,
-          duracionBase: duracionTenisGlobal || 60
-        });
-      }
+      const canchas=[];let numero=1;
+      for(let i=0;i<canchasIndoorGlobal;i++,numero++)canchas.push({numero,modalidad:'padel_indoor',label:nombresIndoorGlobal[i]||`Pádel Indoor ${i+1}`,precio:precioIndoorGlobal,duracionBase:duracionIndoorGlobal||90});
+      for(let i=0;i<canchasOutdoorGlobal;i++,numero++)canchas.push({numero,modalidad:'padel_outdoor',label:nombresOutdoorGlobal[i]||`Pádel Outdoor ${i+1}`,precio:precioOutdoorGlobal,duracionBase:duracionOutdoorGlobal||90});
+      const ti=canchasTenisIndoorGlobal, to=canchasTenisOutdoorGlobal||(!ti?canchasTenisGlobal:0);
+      for(let i=0;i<ti;i++,numero++)canchas.push({numero,modalidad:'tenis_indoor',label:`Tenis Indoor ${i+1}`,precio:precioTenisGlobal,duracionBase:duracionTenisGlobal||60});
+      for(let i=0;i<to;i++,numero++)canchas.push({numero,modalidad:'tenis_outdoor',label:nombresTenisGlobal[i]||`Tenis Outdoor ${i+1}`,precio:precioTenisGlobal,duracionBase:duracionTenisGlobal||60});
       return canchas;
     }
 
@@ -1586,9 +1580,9 @@
     }
 
     function duracionSugeridaParaModalidad(modalidad) {
-      if (modalidad === 'tenis') return duracionTenisGlobal || 60;
-      if (modalidad === 'outdoor') return duracionOutdoorGlobal || duracionGlobal || 90;
-      if (modalidad === 'indoor') return duracionIndoorGlobal || duracionGlobal || 90;
+      if (String(modalidad).startsWith('tenis')) return duracionTenisGlobal || 60;
+      if (modalidad === 'padel_outdoor' || modalidad === 'outdoor') return duracionOutdoorGlobal || duracionGlobal || 90;
+      if (modalidad === 'padel_indoor' || modalidad === 'indoor') return duracionIndoorGlobal || duracionGlobal || 90;
       return duracionGlobal || 90;
     }
 
@@ -1648,7 +1642,11 @@
         return;
       }
 
-      const horariosFiltrados = horariosBase.filter(h => h >= primerTurno && h <= ultimoTurno);
+      const dow=String(dowNumSelected);
+      const intervalos=Array.isArray(horariosPorDiaGlobal[dow])?horariosPorDiaGlobal[dow]:[{desde:primerTurno,hasta:ultimoTurno}];
+      const cerrado=cierresClubGlobal.some(c=>{if(typeof c==='string')return c===fechaSeleccionada;const desde=String(c&&c.desde||c&&c.fecha||''),hasta=String(c&&c.hasta||c&&c.fecha||desde);return desde&&hasta&&fechaSeleccionada>=desde&&fechaSeleccionada<=hasta;});
+      if(cerrado){contenedorHorarios.innerHTML='<div class="empty-state">El club está cerrado en esta fecha.</div>';return;}
+      const horariosFiltrados = horariosBase.filter(h => intervalos.some(i=>h>=String(i.desde||'00:00') && window.aMinutos(h)+duracionSeleccionada<=window.aMinutos(String(i.hasta||'23:59'))));
       let renderizados = 0;
 
       horariosFiltrados.forEach(hora => {
@@ -1841,16 +1839,35 @@
       const actualizar=async()=>{
         if(actualizandoDisponibilidad)return;actualizandoDisponibilidad=true;
         try {
-          const query=new URLSearchParams({clubId,desde:fechasValidas[0],hasta:fechasValidas[fechasValidas.length-1]});
-          const response=await fetchBackendPublico(`${BACKEND_URL}/public/disponibilidad?${query}`);
-          const data=await response.json();if(!response.ok||!data.ok)throw Error('Disponibilidad no disponible');
-          clubRaizActual=data.club;configuracionGeneralActual=data.club.datosClub||{};
-          reservasGlobales=data.reservas;refrescarConfiguracionClubPublica();
+          const pedir=async(desde,hasta)=>{
+            const query=new URLSearchParams({clubId,desde,hasta});
+            const response=await fetchBackendPublico(BACKEND_URL+'/public/disponibilidad?'+query);
+            const data=await response.json().catch(()=>({}));
+            if(!response.ok||!data.ok)throw Error(data.error||'Disponibilidad no disponible');
+            return data;
+          };
+          const firstEnd=fechasValidas[Math.min(30,fechasValidas.length-1)]; const first=await pedir(fechasValidas[0],firstEnd);
+          clubRaizActual=first.club;configuracionGeneralActual=first.club.datosClub||{};
+          reservasGlobales=first.reservas;refrescarConfiguracionClubPublica();
+          const todas=new Map(first.reservas.map(r=>[r.id,r]));
+          const tasks=[];
+          for(let i=Math.max(0,fechasValidas.indexOf(firstEnd)+1);i<fechasValidas.length;i+=31)tasks.push([fechasValidas[i],fechasValidas[Math.min(i+30,fechasValidas.length-1)]]);
+          for(let i=0;i<tasks.length;i+=4){
+            const results=await Promise.all(tasks.slice(i,i+4).map(([a,b])=>pedir(a,b)));
+            for(const data of results)for(const r of data.reservas)todas.set(r.id,r);
+          }
+          reservasGlobales=[...todas.values()];refrescarConfiguracionClubPublica();
           document.getElementById('mensaje-error').style.display='none';
           document.getElementById('pantalla-jugador').style.display='block';
         } catch(error){
           document.getElementById('pantalla-jugador').style.display='none';
-          document.getElementById('mensaje-error').style.display='block';
+          const errorEl=document.getElementById('mensaje-error');
+          if(errorEl){
+            errorEl.textContent=error?.message==='Club no disponible por el momento'
+              ?'Club no disponible por el momento'
+              :'No se pudo cargar la disponibilidad del club. Intentá nuevamente.';
+            errorEl.style.display='block';
+          }
         } finally {actualizandoDisponibilidad=false;}
       };
       actualizar();
