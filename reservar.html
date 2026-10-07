@@ -6,19 +6,19 @@
   <title>Reserva de Canchas</title>
   <style>
     :root {
-      --bg: #f7f8fa;
+      --bg: #ffffff;
       --panel: #ffffff;
       --text: #0f172a;
       --muted: #64748b;
-      --border: #93c5fd;
-      --border-soft: #bfdbfe;
-      --primary: #3b82f6;
-      --primary-hover: #2563eb;
+      --border: var(--primary);
+      --border-soft: var(--primary);
+      --primary: #07152b;
+      --primary-hover: #122b4b;
       --success: #10b981;
       --danger: #ef4444;
-      --input: #f8fbff;
+      --input: #ffffff;
       --shadow: 0 24px 52px rgba(59, 130, 246, 0.11);
-      --blue-soft: #eff6ff;
+      --blue-soft: #ffffff;
       --blue-ring: rgba(59, 130, 246, .16);
     }
 
@@ -83,6 +83,7 @@
     .calendario-strip::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
 
     .dia-item {
+      font:inherit;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -97,6 +98,7 @@
       user-select: none;
     }
 
+    .dia-item:focus-visible,.opcion-card:focus-visible,.horario-card:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
     .dia-item:hover { background: var(--blue-soft); transform: translateY(-1px); }
     .dia-item.activo { background: var(--primary); border-color: var(--primary); color: #ffffff; }
     .dia-nombre { font-size: 0.75em; color: var(--muted); text-transform: uppercase; font-weight: 600; }
@@ -191,6 +193,7 @@
       display: flex;
       flex-direction: column;
       gap: 12px;
+      max-height:calc(100dvh - 40px);overflow-y:auto;overscroll-behavior:contain;
       border: 1px solid var(--border);
       text-align: center;
       box-shadow: 0 26px 55px rgba(59, 130, 246, 0.14);
@@ -476,7 +479,7 @@
     .opcion-card,
     .horario-card,
     .resumen-chip {
-      box-shadow: 0 8px 20px rgba(59, 130, 246, .055);
+      box-shadow: none;
     }
 
     .dia-item:hover,
@@ -491,7 +494,7 @@
       background: var(--primary);
       border-color: var(--primary);
       color: #ffffff;
-      box-shadow: 0 14px 28px rgba(59, 130, 246, .24);
+      box-shadow: none;
     }
 
     .dia-item.activo .dia-nombre,
@@ -767,8 +770,54 @@
         grid-template-columns: repeat(3, minmax(0, 1fr));
       }
     }
+    .reservation-date-time{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 10px;color:#52627a;font-size:13px;line-height:1.5}
+    .reservation-date-time>span{white-space:nowrap}.reservation-date-time strong{color:var(--primary)}
+    .reservation-terms-link{display:block;margin:14px 0 0;padding:0;background:#fff;border:0;color:var(--primary);font:14px 'Segoe UI',sans-serif;text-align:left;cursor:pointer}
+    .reservation-confirm-actions{display:grid;grid-template-columns:44px minmax(0,1fr);align-items:center;gap:10px;margin-top:18px}
+    .reservation-confirm-actions .btn-modal{margin:0;width:100%}
+    .reservation-back,.pric-form-dialog .reservation-back{display:grid;place-items:center;width:44px;height:44px;margin:0;padding:9px;border:0;background:#fff;color:var(--primary);cursor:pointer}
+    .reservation-back svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+    .reservation-terms-header{display:flex;align-items:center;gap:8px;margin-bottom:20px}.reservation-terms-dialog .reservation-terms-header h3{margin:0;font-size:18px}
+    .pric-form-dialog.reservation-terms-dialog{border-color:var(--primary);color:var(--primary)}
+    .reservation-terms-dialog section{margin:18px 0}.reservation-terms-dialog h4{margin:0 0 8px;color:var(--primary)}
+    .reservation-terms-dialog p{margin:0;color:#52627a;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.6}
+    .reservation-terms-link:focus-visible,.reservation-back:focus-visible{outline:2px solid var(--primary);outline-offset:3px}
+    @media(max-width:767px){
+      #modal-reserva-jugador{align-items:center;padding:10px}
+      #modal-reserva-jugador>.modal-content,#modal-terminos-reserva{
+        box-sizing:border-box;width:calc(100vw - 20px)!important;max-width:none!important;
+        height:calc(100dvh - 20px);max-height:calc(100dvh - 20px);
+        min-height:0;overflow-y:auto;overscroll-behavior:contain;
+        border-radius:18px;padding:20px 16px 16px;
+      }
+      #modal-reserva-jugador>.modal-content{height:auto;gap:10px}
+      #modal-reserva-jugador>.modal-content>*{flex-shrink:0}
+      #modal-reserva-jugador .resumen-seleccion{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) minmax(0,1fr);gap:6px}
+      #modal-reserva-jugador .resumen-chip{padding:8px;min-width:0}
+      #modal-reserva-jugador .resumen-chip strong{font-size:13px;overflow-wrap:anywhere}
+      #modal-reserva-jugador .resumen-chip small{font-size:11px}
+      #modal-reserva-jugador .resumen-pago{padding:12px}
+      #modal-reserva-jugador .reservation-confirm-actions{margin-top:8px}
+      #modal-terminos-reserva{margin:auto}
+      #modal-terminos-reserva .reservation-terms-header{position:sticky;top:-20px;background:#fff;z-index:1;padding:8px 0}
+    }
+    .pric-form-dialog.reservation-notice{width:calc(100vw - 20px)!important;max-width:390px!important;border-color:var(--primary);border-radius:18px;padding:20px;background:#fff;color:var(--primary)}
+    .reservation-notice p{white-space:pre-wrap;overflow-wrap:anywhere;margin:0 0 20px}
+    .reservation-notice .primary{width:100%;min-height:44px}
+    /* Shared white surface and public club contact row. */
+    body,.vista-jugador,.modal-content,.paso-reserva,.resumen-chip,.empty-state,.input-form{background:#fff}
+    .vista-jugador *, .modal-content *{border-color:var(--primary)}
+    .modal-content{border-color:var(--primary)!important}
+    .vista-jugador{border:0;box-shadow:none;border-radius:0}
+    .header-publico h2{text-transform:none;color:var(--primary)}
+    .pric-club-contact{display:flex;align-items:center;gap:16px;margin:7px 0;color:#07152b;min-width:0}
+    .pric-club-contact[hidden]{display:none}
+    .pric-club-contact a,.pric-club-contact .contact-unconfigured{color:inherit;text-decoration:none;display:flex;align-items:center;gap:6px;min-height:36px}
+    .pric-club-contact svg{width:23px;height:23px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+    .pric-club-location{flex:1;min-width:0;font-size:13px;overflow-wrap:anywhere}
+    .pric-club-contact a:focus-visible{outline:2px solid #07152b;outline-offset:3px}
   </style>
-</head>
+<link rel="stylesheet" href="pric-design.css?v=20261006-publicacion"><script src="media-client.js"></script></head>
 <body>
   <div id="mensaje-error">
     <strong>Error:</strong> No se especificó el club en la URL o el club no existe.<br />
@@ -778,6 +827,7 @@
   <div id="pantalla-jugador" class="vista-jugador" style="display:none;">
     <div class="header-publico">
       <h2 id="titulo-club">Cargando club...</h2>
+      <nav id="pric-club-contact" class="pric-club-contact" aria-label="Contacto del club" hidden></nav>
       <p id="subtitulo-club">Elegí modalidad, duración, día y horario.</p>
     </div>
 
@@ -790,9 +840,13 @@
         <div id="opciones-modalidad" class="opciones-grid"></div>
       </section>
 
+      <section class="paso-reserva" id="paso-cantidad" style="display:none;">
+        <div class="paso-header"><h3>2. Elegí la cantidad de canchas</h3><span>Mismo día, horario y duración</span></div>
+        <div id="opciones-cantidad" class="opciones-grid"></div>
+      </section>
       <section class="paso-reserva" id="paso-duracion" style="display:none;">
         <div class="paso-header">
-          <h3>2. Elegí la duración</h3>
+          <h3>3. Elegí la duración</h3>
           <span>Turno a reservar</span>
         </div>
         <div id="opciones-duracion" class="opciones-grid"></div>
@@ -800,7 +854,7 @@
 
       <section class="paso-reserva calendario-bloque" id="paso-fecha-horario" style="display:none;">
         <div class="paso-header">
-          <h3>3. Elegí día y horario</h3>
+          <h3>4. Elegí día y horario</h3>
           <span>Horarios disponibles</span>
         </div>
         <div id="calendario-jugador" class="calendario-strip"></div>
@@ -811,10 +865,10 @@
 
   <div id="modal-reserva-jugador" class="modal-overlay">
     <div class="modal-content">
-      <h3 style="margin:0 0 4px 0;">Confirmar reserva</h3>
-      <p style="margin:0;color:#52627a;margin-bottom:10px;line-height:1.5;">
-        Fecha: <strong id="reserva-fecha-display" style="color:#07152b;"></strong><br />
-        Horario: <strong id="reserva-hora-display" style="color:#07152b;"></strong>
+      <h3 id="reservation-confirm-title" style="margin:0 0 4px 0;">Confirmar reserva</h3>
+      <p class="reservation-date-time">
+        <span>Fecha: <strong id="reserva-fecha-display"></strong></span>
+        <span>Horario: <strong id="reserva-hora-display"></strong></span>
       </p>
 
       <div class="resumen-seleccion">
@@ -831,28 +885,35 @@
 
       <div style="text-align:left;display:flex;flex-direction:column;gap:12px;">
         <div>
-          <label style="font-size:.9em;color:#52627a;font-weight:800;">Nombre y apellido:</label>
-          <input type="text" id="input-nombre-jugador" class="input-form" placeholder="Ej: Franco Aramayo" style="margin-top:5px;" />
+          <label style="font-size:.9em;color:#52627a;font-weight:800;" for="input-nombre-jugador">Nombre y apellido:</label>
+          <input type="text" id="input-nombre-jugador" maxlength="120" autocomplete="name" class="input-form" placeholder="Ej: Franco Aramayo" style="margin-top:5px;" />
         </div>
         <div>
-          <label style="font-size:.9em;color:#52627a;font-weight:800;">Teléfono / WhatsApp:</label>
-          <input type="tel" id="input-telefono-jugador" class="input-form" placeholder="Ej: 3511234567" style="margin-top:5px;" />
+          <label style="font-size:.9em;color:#52627a;font-weight:800;" for="input-telefono-jugador">Teléfono / WhatsApp:</label>
+          <input type="tel" id="input-telefono-jugador" maxlength="40" autocomplete="tel" class="input-form" placeholder="Ej: 3511234567" style="margin-top:5px;" />
         </div>
       </div>
 
-      <button class="btn-modal btn-guardar" style="margin-top:18px;" id="btn-confirmar-reserva" onclick="window.confirmarReservaJugador()">Confirmar reserva</button>
-      <button class="btn-modal btn-cerrar" onclick="window.cerrarModalReservaJugador()">Cancelar</button>
+      <button type="button" class="reservation-terms-link" onclick="window.abrirTerminosReserva()">Términos y condiciones</button>
+      <div class="reservation-confirm-actions">
+        <button type="button" class="reservation-back" data-cancel aria-label="Volver a elegir horario" onclick="window.cerrarModalReservaJugador()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5m6-6-6 6 6 6"/></svg></button>
+        <button type="button" class="btn-modal btn-guardar" id="btn-confirmar-reserva" onclick="window.confirmarReservaJugador()">Confirmar reserva</button>
+      </div>
     </div>
   </div>
 
+  <dialog id="modal-terminos-reserva" class="pric-form-dialog reservation-terms-dialog" aria-labelledby="reservation-terms-title">
+    <div class="reservation-terms-header"><button type="button" class="reservation-back" aria-label="Volver a la reserva" onclick="document.getElementById('modal-terminos-reserva').close()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5m6-6-6 6 6 6"/></svg></button><h3 id="reservation-terms-title">Términos y condiciones</h3></div>
+    <div id="reservation-terms-content"></div>
+  </dialog>
   <div id="modal-exito-reserva" class="modal-overlay">
     <div class="modal-content" style="border-color:#10b981;">
-      <h2 style="color:#10b981;margin:0 0 12px 0;">¡Reserva confirmada! ✅</h2>
+      <h2 id="reservation-success-title" style="color:#10b981;margin:0 0 12px 0;">¡Reserva confirmada! ✅</h2>
       <p style="color:#52627a;font-size:1.05em;line-height:1.5;margin:0 0 16px 0;">
         Tu turno quedó reservado en <strong id="exito-cancha" style="color:#07152b;"></strong><br />
         a las <strong id="exito-hora" style="color:#07152b;"></strong> hs.
       </p>
-      <button class="btn-modal btn-confirmado" onclick="document.getElementById('modal-exito-reserva').style.display='none'">Excelente</button>
+      <button class="btn-modal btn-confirmado" data-cancel onclick="document.getElementById('modal-exito-reserva').style.display='none'">Excelente</button>
     </div>
   </div>
 
@@ -862,11 +923,12 @@
       <p id="resultado-pago-mensaje" style="color:#52627a;font-size:1.05em;line-height:1.5;margin:0 0 16px 0;">
         Estamos revisando el estado del pago.
       </p>
-      <button class="btn-modal btn-confirmado" id="btn-resultado-pago" onclick="window.cerrarModalResultadoPago()">Entendido</button>
+      <button class="btn-modal btn-confirmado" id="btn-resultado-pago" data-cancel onclick="window.cerrarModalResultadoPago()">Entendido</button>
     </div>
   </div>
 
-  <script src="./payment-status.js"></script>
+  <script src="./payment-status.js?v=20261006-finalreservas"></script>
+  <script src="./modal-ui.js?v=20261006-reservationback"></script>
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
     import {
@@ -935,13 +997,9 @@
     const mpResultado = String(urlParams.get('mp') || '').toLowerCase();
     const reservaIdRetorno = urlParams.get('reservaId') || '';
 
-    let fechasValidas = [];
-    let fechaActual = new Date();
-    for (let i = 0; i <= 7; i++) {
-      let f = new Date(fechaActual);
-      f.setDate(f.getDate() + i);
-      fechasValidas.push(`${f.getFullYear()}-${String(f.getMonth() + 1).padStart(2, '0')}-${String(f.getDate()).padStart(2, '0')}`);
-    }
+    function relojArgentina(){const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Argentina/Cordoba',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date());const g=t=>parts.find(x=>x.type===t)?.value||'';return {fecha:g('year')+'-'+g('month')+'-'+g('day'),minutos:Number(g('hour'))*60+Number(g('minute'))};}
+    function fechasDesdeHoy(max){const day=relojArgentina().fecha;return Array.from({length:max+1},(_,i)=>new Date(Date.parse(day+'T12:00:00Z')+i*86400000).toISOString().slice(0,10));}
+    let fechasValidas=fechasDesdeHoy(30);
 
     let fechaSeleccionada = fechasValidas[0];
     const horariosBase = [];
@@ -954,46 +1012,46 @@
     let primerTurno = '08:00';
     let ultimoTurno = '21:30';
     let duracionGlobal = 90;
-    let canchasIndoorGlobal = 1;
+    let canchasIndoorGlobal = 0;
     let canchasOutdoorGlobal = 0;
     let canchasTenisGlobal = 0;
     let canchasTenisIndoorGlobal = 0;
     let canchasTenisOutdoorGlobal = 0;
-    let horariosPorDiaGlobal = {};
+    let horariosPorDiaGlobal = {};let preciosTenisModalidadesGlobal={};
     let cierresClubGlobal = [];
     let anticipacionMaximaDiasGlobal = 30;
     let senaModalidadesGlobal = {};
     let horaLucesGlobal = '18:00';
-    let precioIndoorGlobal = '5000';
-    let precioOutdoorGlobal = '4000';
-    let precioTenisGlobal = '3500';
-    let precioIndoorSinLuzGlobal = '5000';
-    let precioIndoorConLuzGlobal = '5000';
-    let precioOutdoorSinLuzGlobal = '4000';
-    let precioOutdoorConLuzGlobal = '4000';
-    let precioTenisSinLuzGlobal = '3500';
-    let precioTenisConLuzGlobal = '3500';
+    let precioIndoorGlobal = '0';
+    let precioOutdoorGlobal = '0';
+    let precioTenisGlobal = '0';
+    let precioIndoorSinLuzGlobal = '0';
+    let precioIndoorConLuzGlobal = '0';
+    let precioOutdoorSinLuzGlobal = '0';
+    let precioOutdoorConLuzGlobal = '0';
+    let precioTenisSinLuzGlobal = '0';
+    let precioTenisConLuzGlobal = '0';
 
-    let precioIndoor60SinLuzGlobal = '10000';
-    let precioIndoor60ConLuzGlobal = '10000';
-    let precioIndoor90SinLuzGlobal = '15000';
-    let precioIndoor90ConLuzGlobal = '15000';
-    let precioIndoor120SinLuzGlobal = '20000';
-    let precioIndoor120ConLuzGlobal = '20000';
+    let precioIndoor60SinLuzGlobal = '0';
+    let precioIndoor60ConLuzGlobal = '0';
+    let precioIndoor90SinLuzGlobal = '0';
+    let precioIndoor90ConLuzGlobal = '0';
+    let precioIndoor120SinLuzGlobal = '0';
+    let precioIndoor120ConLuzGlobal = '0';
 
-    let precioOutdoor60SinLuzGlobal = '8000';
-    let precioOutdoor60ConLuzGlobal = '8000';
-    let precioOutdoor90SinLuzGlobal = '12000';
-    let precioOutdoor90ConLuzGlobal = '12000';
-    let precioOutdoor120SinLuzGlobal = '16000';
-    let precioOutdoor120ConLuzGlobal = '16000';
+    let precioOutdoor60SinLuzGlobal = '0';
+    let precioOutdoor60ConLuzGlobal = '0';
+    let precioOutdoor90SinLuzGlobal = '0';
+    let precioOutdoor90ConLuzGlobal = '0';
+    let precioOutdoor120SinLuzGlobal = '0';
+    let precioOutdoor120ConLuzGlobal = '0';
 
-    let precioTenis60SinLuzGlobal = '7000';
-    let precioTenis60ConLuzGlobal = '7000';
-    let precioTenis90SinLuzGlobal = '10500';
-    let precioTenis90ConLuzGlobal = '10500';
-    let precioTenis120SinLuzGlobal = '14000';
-    let precioTenis120ConLuzGlobal = '14000';
+    let precioTenis60SinLuzGlobal = '0';
+    let precioTenis60ConLuzGlobal = '0';
+    let precioTenis90SinLuzGlobal = '0';
+    let precioTenis90ConLuzGlobal = '0';
+    let precioTenis120SinLuzGlobal = '0';
+    let precioTenis120ConLuzGlobal = '0';
     let senaIndoorGlobal = 0;
     let senaOutdoorGlobal = 0;
     let senaTenisGlobal = 0;
@@ -1010,8 +1068,10 @@
     let reservasGlobales = [];
     let clubRaizActual = {};
     let configuracionGeneralActual = {};
+    let reservaEnProcesoCreada=null,solicitudEnProceso=null,confirmandoReserva=false,cotizacionEnProceso=null;
     let reservaEnProcesoHora = null;
     let reservaEnProcesoIdempotencyKey = null;
+    let cantidadCanchasSeleccionada = 0;
     let modalidadSeleccionada = '';
     let duracionSeleccionada = null;
 
@@ -1093,18 +1153,8 @@
       return new Date(partes[0], partes[1] - 1, partes[2]).getDay();
     };
 
-    function obtenerFechaHoy() {
-      let h = new Date();
-      return `${h.getFullYear()}-${String(h.getMonth() + 1).padStart(2, '0')}-${String(h.getDate()).padStart(2, '0')}`;
-    }
-
-    function validarEsHoraPasada(horaStr) {
-      const hoy = obtenerFechaHoy();
-      if (fechaSeleccionada < hoy) return true;
-      if (fechaSeleccionada > hoy) return false;
-      const ahora = new Date();
-      return window.aMinutos(horaStr) <= (ahora.getHours() * 60) + ahora.getMinutes();
-    }
+    function obtenerFechaHoy(){return relojArgentina().fecha;}
+    function validarEsHoraPasada(horaStr){const now=relojArgentina();return fechaSeleccionada<now.fecha||(fechaSeleccionada===now.fecha&&window.aMinutos(horaStr)<=now.minutos);}
 
     function aplicarDatosClub(data) {
       const d = datosPlanosClub(data);
@@ -1117,10 +1167,12 @@
       canchasTenisGlobal = tiene(d, 'canchasTenis') ? Math.max(0, toInt(d.canchasTenis, 0)) : canchasTenisGlobal;
       canchasTenisIndoorGlobal = tiene(d,'canchasTenisIndoor') ? Math.max(0,toInt(d.canchasTenisIndoor,0)) : canchasTenisIndoorGlobal;
       canchasTenisOutdoorGlobal = tiene(d,'canchasTenisOutdoor') ? Math.max(0,toInt(d.canchasTenisOutdoor,0)) : (canchasTenisIndoorGlobal===0?canchasTenisGlobal:canchasTenisOutdoorGlobal);
+      preciosTenisModalidadesGlobal=d.preciosTenisModalidades||{};
       horariosPorDiaGlobal = d.horariosPorDia && typeof d.horariosPorDia==='object' ? d.horariosPorDia : horariosPorDiaGlobal;
       cierresClubGlobal = Array.isArray(d.cierresClub) ? d.cierresClub : cierresClubGlobal;
-      anticipacionMaximaDiasGlobal = tiene(d,'anticipacionMaximaDias') ? Math.max(0,toInt(d.anticipacionMaximaDias,30)) : anticipacionMaximaDiasGlobal;
-      fechasValidas=[];for(let i=0;i<=anticipacionMaximaDiasGlobal;i++){const f=new Date();f.setHours(12,0,0,0);f.setDate(f.getDate()+i);fechasValidas.push(`${f.getFullYear()}-${String(f.getMonth()+1).padStart(2,'0')}-${String(f.getDate()).padStart(2,'0')}`);}
+      anticipacionMaximaDiasGlobal = tiene(d,'anticipacionMaximaDias') ? Math.max(0,Math.min(730,toInt(d.anticipacionMaximaDias,30))) : anticipacionMaximaDiasGlobal;
+      fechasValidas=fechasDesdeHoy(anticipacionMaximaDiasGlobal);
+      if(!fechasValidas.includes(fechaSeleccionada))fechaSeleccionada=fechasValidas[0];
       senaModalidadesGlobal = d.senaModalidades && typeof d.senaModalidades==='object' ? d.senaModalidades : senaModalidadesGlobal;
       horaLucesGlobal = tiene(d, 'horaLuces') ? String(d.horaLuces || '18:00') : horaLucesGlobal;
 
@@ -1191,8 +1243,23 @@
       nombresTenisGlobal = Array.isArray(d.nombresTenis) ? d.nombresTenis : nombresTenisGlobal;
       nombresCanchasGlobal = Array.isArray(d.nombresCanchas) ? d.nombresCanchas : [].concat(nombresIndoorGlobal, nombresOutdoorGlobal, nombresTenisGlobal);
 
-      document.getElementById('titulo-club').innerText = nombreClubGlobal ? `Reservas - ${nombreClubGlobal}` : `Reservas - ${clubId}`;
+      let gallery=document.getElementById('pric-reservation-gallery');if(!gallery){gallery=document.createElement('div');gallery.id='pric-reservation-gallery';gallery.className='pric-public-gallery';document.getElementById('subtitulo-club').after(gallery);}gallery.replaceChildren();for(const [label,url]of [['Club',d.fotoClub],...Object.entries(d.fotoModalidades||{})]){if(typeof url!=='string'||!url.startsWith('https://firebasestorage.googleapis.com/'))continue;const item=document.createElement('figure'),photo=document.createElement('img'),caption=document.createElement('figcaption');photo.src=url;photo.loading='lazy';photo.alt=label==='Club'?'Imagen principal del club':labelModalidad(label);caption.textContent=photo.alt;item.append(photo,caption);gallery.append(item);}
+      document.getElementById('titulo-club').innerText = nombreClubGlobal ? `PRIC - ${nombreClubGlobal}` : `PRIC - ${clubId}`;
+      actualizarContactoClub(d);
       actualizarSelectorModalidades();
+    }
+
+
+    function actualizarContactoClub(d){
+      const row=document.getElementById('pric-club-contact');row.replaceChildren();
+      const safeUrl=value=>{try{const url=new URL(String(value||''));return ['https:','http:'].includes(url.protocol)&&!url.username&&!url.password?url.href:'';}catch{return '';}};
+      const icons={whatsapp:'<path d="M20.5 11.5a8.5 8.5 0 0 1-12.7 7.4L3 20l1.2-4.6a8.5 8.5 0 1 1 16.3-3.9Z"/><path d="M8 7.5c-.8.3-1 1.5-.6 2.5 1.1 2.8 3.3 4.7 6.2 5.3 1 .2 2-.5 2.1-1.3l-2-1.1-.9.8c-1.5-.5-2.7-1.6-3.4-3l.7-1-1.1-2.2Z"/>',instagram:'<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".6"/>',location:'<path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z"/><circle cx="12" cy="10" r="2.5"/>'};
+      function add(kind,href,label,text){const link=document.createElement(href?'a':'span');if(href){link.href=href;link.target='_blank';link.rel='noopener noreferrer';}else{link.className='contact-unconfigured';link.setAttribute('aria-disabled','true');link.title='El club todavía no configuró este enlace';}link.setAttribute('aria-label',label);link.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true">'+icons[kind]+'</svg>';if(text){const span=document.createElement('span');span.textContent=text;link.append(span);link.classList.add('pric-club-location');}row.append(link);}
+      const phone=String(d.telefono||d.telefonoClub||'').replace(/\D/g,'');
+      add('whatsapp',phone.length>=8&&phone.length<=15?'https://wa.me/'+phone:'','Escribir al club por WhatsApp');
+      add('instagram',safeUrl(d.instagram),'Instagram del club');
+      add('location',safeUrl(d.googleMaps),'Ver ubicación del club',String(d.ubicacion||d.direccion||'Ubicación'));
+      row.hidden=!row.children.length;
     }
 
     function labelModalidad(valor) {
@@ -1204,7 +1271,7 @@
     }
 
     function configPagoModalidad(valor) {
-      const original=valor;
+      const policy=senaModalidadesGlobal?.[valor];const deposit=fallback=>policy?.modo==='sin_sena'?0:Math.max(0,Math.min(100,toNum(policy?.porcentaje,fallback)));const specific=preciosTenisModalidadesGlobal[valor];if(specific)return {precios:specific,porcentajeSena:deposit(toNum(senaTenisGlobal,0)),nombre:valor==='tenis_indoor'?'Tenis Indoor':'Tenis Outdoor'};
       if(valor==='padel_indoor') valor='indoor';
       if(valor==='padel_outdoor') valor='outdoor';
       if(valor==='tenis_indoor'||valor==='tenis_outdoor') valor='tenis';
@@ -1215,7 +1282,7 @@
             90: { sinLuz: toNum(precioIndoor90SinLuzGlobal, 0), conLuz: toNum(precioIndoor90ConLuzGlobal, 0) },
             120: { sinLuz: toNum(precioIndoor120SinLuzGlobal, 0), conLuz: toNum(precioIndoor120ConLuzGlobal, 0) }
           },
-          porcentajeSena: toNum(senaIndoorGlobal, 0),
+          porcentajeSena: deposit(toNum(senaIndoorGlobal, 0)),
           nombre: 'Pádel Indoor'
         };
       }
@@ -1226,7 +1293,7 @@
             90: { sinLuz: toNum(precioOutdoor90SinLuzGlobal, 0), conLuz: toNum(precioOutdoor90ConLuzGlobal, 0) },
             120: { sinLuz: toNum(precioOutdoor120SinLuzGlobal, 0), conLuz: toNum(precioOutdoor120ConLuzGlobal, 0) }
           },
-          porcentajeSena: toNum(senaOutdoorGlobal, 0),
+          porcentajeSena: deposit(toNum(senaOutdoorGlobal, 0)),
           nombre: 'Pádel Outdoor'
         };
       }
@@ -1237,7 +1304,7 @@
             90: { sinLuz: toNum(precioTenis90SinLuzGlobal, 0), conLuz: toNum(precioTenis90ConLuzGlobal, 0) },
             120: { sinLuz: toNum(precioTenis120SinLuzGlobal, 0), conLuz: toNum(precioTenis120ConLuzGlobal, 0) }
           },
-          porcentajeSena: toNum(senaTenisGlobal, 0),
+          porcentajeSena: deposit(toNum(senaTenisGlobal, 0)),
           nombre: 'Tenis'
         };
       }
@@ -1327,9 +1394,9 @@
       const sena = Math.max(0, Math.round(desglose.total * porcentaje / 100));
 
       return {
-        total: desglose.total,
+        total: desglose.total * Math.max(1,cantidadCanchasSeleccionada),
         porcentaje,
-        sena,
+        sena: sena * Math.max(1,cantidadCanchasSeleccionada),
         nombre: desglose.cfg.nombre,
         minutosSinLuz: desglose.minutosSinLuz,
         minutosConLuz: desglose.minutosConLuz,
@@ -1361,13 +1428,12 @@
     function urlMercadoPagoValida(valor) {
       try {
         const u = new URL(String(valor || ''));
-        if (u.protocol !== 'https:') return false;
+        if (u.protocol !== 'https:'||u.username||u.password||(u.port&&u.port!=='443')) return false;
         const host = u.hostname.toLowerCase();
         return host === 'mercadopago.com' ||
           host.endsWith('.mercadopago.com') ||
           host === 'mercadopago.com.ar' ||
-          host.endsWith('.mercadopago.com.ar') ||
-          host.startsWith('www.mercadopago.');
+          host.endsWith('.mercadopago.com.ar');
       } catch (_) {
         return false;
       }
@@ -1388,8 +1454,10 @@
       if (totalEl) totalEl.innerText = formatearPesos(pago.total);
       if (senaEl) senaEl.innerText = formatearPesos(pago.sena);
       if (notaEl) {
+        notaEl.hidden = false;
         if (!mercadoPagoConectadoGlobal) {
-          notaEl.innerText = 'El club todavía no tiene Mercado Pago conectado. Avisale al club para poder cobrar señas online.';
+          notaEl.innerText = '';
+          notaEl.hidden = true;
         } else if (pago.porcentaje <= 0) {
           notaEl.innerText = 'Esta modalidad no tiene seña configurada; la reserva se confirmará sin pago online.';
         } else {
@@ -1499,7 +1567,8 @@
       const horarios = document.getElementById('lista-horarios');
       if (!pasoDuracion || !pasoFechaHorario || !contenedor) return;
 
-      if (!modalidadSeleccionada) {
+      actualizarOpcionesCantidad();
+      if (!modalidadSeleccionada || !cantidadCanchasSeleccionada) {
         pasoDuracion.style.display = 'none';
         pasoFechaHorario.style.display = 'none';
         if (horarios) horarios.innerHTML = '';
@@ -1508,7 +1577,7 @@
 
       pasoDuracion.style.display = 'flex';
       const sugerida = duracionSugeridaParaModalidad(modalidadSeleccionada);
-      const opciones = Array.from(new Set([sugerida, 60, 90, 120].filter(v => Number.isFinite(Number(v)) && Number(v) > 0))).sort((a, b) => a - b);
+      const opciones = [60,90,120];
       if (!duracionSeleccionada || !opciones.includes(duracionSeleccionada)) duracionSeleccionada = sugerida;
 
       contenedor.innerHTML = opciones.map(min => {
@@ -1526,14 +1595,23 @@
     }
 
     window.seleccionarModalidadReserva = function(valor) {
+      if(modalidadSeleccionada!==valor)cantidadCanchasSeleccionada=0;
       modalidadSeleccionada = valor;
       duracionSeleccionada = duracionSugeridaParaModalidad(valor);
       actualizarSelectorModalidades();
       renderizarCalendarios();
       renderizarPantallas();
-      desplazarAPaso('paso-duracion');
+      desplazarAPaso('paso-cantidad');
     };
 
+    function actualizarOpcionesCantidad(){
+      const step=document.getElementById('paso-cantidad'),box=document.getElementById('opciones-cantidad');
+      step.style.display=modalidadSeleccionada?'flex':'none';
+      const max=getCanchas().filter(c=>c.modalidad===modalidadSeleccionada).length;
+      if(cantidadCanchasSeleccionada>max)cantidadCanchasSeleccionada=0;
+      box.innerHTML=Array.from({length:max},(_,i)=>i+1).map(n=>'<button type="button" class="opcion-card '+(n===cantidadCanchasSeleccionada?'activa':'')+'" onclick="window.seleccionarCantidadCanchas('+n+')"><strong>'+n+' cancha'+(n===1?'':'s')+'</strong></button>').join('');
+    }
+    window.seleccionarCantidadCanchas=function(n){const max=getCanchas().filter(c=>c.modalidad===modalidadSeleccionada).length;if(!Number.isInteger(n)||n<1||n>max)return;cantidadCanchasSeleccionada=n;actualizarOpcionesDuracion();desplazarAPaso('paso-duracion');};
     window.seleccionarDuracionReserva = function(minutos) {
       duracionSeleccionada = toInt(minutos, duracionSugeridaParaModalidad(modalidadSeleccionada));
       actualizarOpcionesDuracion();
@@ -1579,12 +1657,7 @@
       });
     }
 
-    function duracionSugeridaParaModalidad(modalidad) {
-      if (String(modalidad).startsWith('tenis')) return duracionTenisGlobal || 60;
-      if (modalidad === 'padel_outdoor' || modalidad === 'outdoor') return duracionOutdoorGlobal || duracionGlobal || 90;
-      if (modalidad === 'padel_indoor' || modalidad === 'indoor') return duracionIndoorGlobal || duracionGlobal || 90;
-      return duracionGlobal || 90;
-    }
+    function duracionSugeridaParaModalidad(modalidad){const tennis=String(modalidad).startsWith('tenis');const value=tennis?duracionTenisGlobal:modalidad==='padel_outdoor'?duracionOutdoorGlobal:duracionIndoorGlobal;return [60,90,120].includes(value)?value:tennis?60:90;}
 
     function resumenModalidades(canchas) {
       const grupos = { indoor: 0, outdoor: 0, tenis: 0 };
@@ -1596,37 +1669,31 @@
       return partes.join(' / ');
     }
 
-    function renderizarCalendarios() {
-      const calJugador = document.getElementById('calendario-jugador');
-      calJugador.innerHTML = '';
-      const diasCortos = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-
-      fechasValidas.forEach((fechaISO, index) => {
-        const partes = fechaISO.split('-');
-        const f = new Date(partes[0], partes[1] - 1, partes[2]);
-        const nombreDia = index === 0 ? 'Hoy' : diasCortos[f.getDay()];
-        const esActivo = fechaISO === fechaSeleccionada ? 'activo' : '';
-        calJugador.innerHTML += `<div class="dia-item ${esActivo}" onclick="window.seleccionarFecha('${fechaISO}')"><span class="dia-nombre">${nombreDia}</span><span class="dia-numero">${String(f.getDate()).padStart(2, '0')}</span></div>`;
-      });
+    function renderizarCalendarios(){
+      const calendar=document.getElementById('calendario-jugador'),left=calendar.scrollLeft,days=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+      calendar.innerHTML=fechasValidas.map((date,index)=>{const [y,m,d]=date.split('-'),name=index===0?'Hoy':days[new Date(Number(y),Number(m)-1,Number(d)).getDay()],active=date===fechaSeleccionada;return '<button type="button" aria-pressed="'+active+'" aria-label="'+name+' '+d+'/'+m+'" class="dia-item '+(active?'activo':'')+'" onclick="window.seleccionarFecha(\''+date+'\')"><span class="dia-nombre">'+name+'</span><span class="dia-numero">'+d+'</span></button>';}).join('');
+      calendar.scrollLeft=left;
     }
 
     window.seleccionarFecha = function(fechaISO) {
       fechaSeleccionada = fechaISO;
       renderizarCalendarios();
       renderizarPantallas();
+      return actualizarDisponibilidadReserva?.();
     };
 
     window.renderizarPantallas = function() {
       const contenedorHorarios = document.getElementById('lista-horarios');
       if (!contenedorHorarios) return;
       contenedorHorarios.innerHTML = '';
+      if(disponibilidadFechaCargada!==fechaSeleccionada){const text=document.createElement('p');text.className='empty-state';text.textContent=errorDisponibilidad||'Actualizando horarios…';contenedorHorarios.append(text);if(errorDisponibilidad){const retry=document.createElement('button');retry.type='button';retry.className='btn-modal btn-guardar';retry.textContent='Reintentar';retry.onclick=()=>actualizarDisponibilidadReserva?.();contenedorHorarios.append(retry);}return;}
 
       if (!getCanchas().length) {
         contenedorHorarios.innerHTML = '<div class="empty-state">Este club todavía no tiene canchas configuradas.</div>';
         return;
       }
 
-      if (!modalidadSeleccionada) {
+      if (!modalidadSeleccionada || !cantidadCanchasSeleccionada) {
         contenedorHorarios.innerHTML = '<div class="empty-state">Primero elegí una modalidad.</div>';
         return;
       }
@@ -1637,22 +1704,23 @@
       }
 
       const dowNumSelected = window.getDayOfWeekFromDate(fechaSeleccionada);
-      if (!diasAbiertosGlobal.includes(dowNumSelected)) {
+      const dayIntervals=horariosPorDiaGlobal[String(dowNumSelected)];
+      if (Array.isArray(dayIntervals)?dayIntervals.length===0:!diasAbiertosGlobal.includes(dowNumSelected)) {
         contenedorHorarios.innerHTML = '<div class="empty-state">El club se encuentra cerrado este día.</div>';
         return;
       }
 
       const dow=String(dowNumSelected);
       const intervalos=Array.isArray(horariosPorDiaGlobal[dow])?horariosPorDiaGlobal[dow]:[{desde:primerTurno,hasta:ultimoTurno}];
-      const cerrado=cierresClubGlobal.some(c=>{if(typeof c==='string')return c===fechaSeleccionada;const desde=String(c&&c.desde||c&&c.fecha||''),hasta=String(c&&c.hasta||c&&c.fecha||desde);return desde&&hasta&&fechaSeleccionada>=desde&&fechaSeleccionada<=hasta;});
+      const cerrado=cierresClubGlobal.some(c=>{if(typeof c==='string')return c===fechaSeleccionada;const desde=String(c&&c.desde||c&&c.fecha||''),hasta=String(c&&c.hasta||c&&c.fecha||desde);return desde&&hasta&&fechaSeleccionada>=desde&&fechaSeleccionada<=hasta&&(!c.horaDesde||!c.horaHasta||c.todoElDia===true);});
       if(cerrado){contenedorHorarios.innerHTML='<div class="empty-state">El club está cerrado en esta fecha.</div>';return;}
-      const horariosFiltrados = horariosBase.filter(h => intervalos.some(i=>h>=String(i.desde||'00:00') && window.aMinutos(h)+duracionSeleccionada<=window.aMinutos(String(i.hasta||'23:59'))));
+      const horariosFiltrados = horariosBase.filter(h => !cierresClubGlobal.some(c=>typeof c==='object'&&c.horaDesde&&c.horaHasta&&fechaSeleccionada>=String(c.desde||c.fecha||'')&&fechaSeleccionada<=String(c.hasta||c.fecha||c.desde||'')&&window.aMinutos(h)<window.aMinutos(c.horaHasta)&&window.aMinutos(h)+duracionSeleccionada>window.aMinutos(c.horaDesde)) && intervalos.some(i=>h>=String(i.desde||'00:00') && window.aMinutos(h)+duracionSeleccionada<=window.aMinutos(String(i.hasta||'23:59'))));
       let renderizados = 0;
 
       horariosFiltrados.forEach(hora => {
         if (validarEsHoraPasada(hora)) return;
         const libres = canchasLibresPara(hora, duracionSeleccionada, modalidadSeleccionada);
-        if (!libres.length) return;
+        if (libres.length < Math.max(1,cantidadCanchasSeleccionada)) return;
 
         const btn = document.createElement('button');
         btn.type = 'button';
@@ -1670,33 +1738,64 @@
 
 
 
+    for(const [id,title]of [['modal-reserva-jugador','reservation-confirm-title'],['modal-exito-reserva','reservation-success-title'],['modal-resultado-pago','resultado-pago-titulo']]){const box=document.querySelector('#'+id+' .modal-content');box.setAttribute('role','dialog');box.setAttribute('aria-modal','true');box.setAttribute('aria-labelledby',title);}
+    document.addEventListener('keydown',e=>{
+      if(document.querySelector('dialog[open]'))return;
+      const overlays=[...document.querySelectorAll('.modal-overlay')].filter(el=>el.getBoundingClientRect().height>0),overlay=overlays.at(-1);if(!overlay)return;
+      if(e.key==='Escape'){e.preventDefault();e.stopPropagation();overlay.querySelector('[data-cancel]')?.click();return;}
+      if(e.key!=='Tab')return;
+      const box=overlay.querySelector('.modal-content'),items=[...box.querySelectorAll('button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),a[href]')].filter(el=>el.getBoundingClientRect().height>0);
+      if(!items.length){e.preventDefault();box.focus();return;}const first=items[0],last=items.at(-1),focused=document.activeElement;
+      if(!box.contains(focused)||focused===box||(e.shiftKey&&focused===first)){e.preventDefault();(e.shiftKey?last:first).focus();}
+      else if(!e.shiftKey&&focused===last){e.preventDefault();first.focus();}
+    },true);
+    function mostrarAvisoReserva(message){
+      const dialog=document.createElement('dialog'),title=document.createElement('h3'),text=document.createElement('p'),button=document.createElement('button');
+      dialog.className='pric-form-dialog reservation-notice';dialog.setAttribute('role','alertdialog');
+      title.id='reservation-notice-title-'+Date.now();title.textContent='Revisá la reserva';dialog.setAttribute('aria-labelledby',title.id);
+      text.id=title.id+'-message';text.textContent=String(message||'');dialog.setAttribute('aria-describedby',text.id);
+      button.type='button';button.className='primary';button.textContent='Aceptar';button.onclick=()=>dialog.close();
+      dialog.append(title,text,button);dialog.addEventListener('close',()=>dialog.remove(),{once:true});document.body.append(dialog);dialog.showModal();
+    }
     window.abrirModalReservaJugador = function(hora) {
-      if (!modalidadSeleccionada || !duracionSeleccionada) {
-        alert('Primero elegí modalidad y duración.');
+      if (!modalidadSeleccionada || !cantidadCanchasSeleccionada || !duracionSeleccionada) {
+        mostrarAvisoReserva('Primero elegí modalidad y duración.');
         return;
       }
+      if(validarEsHoraPasada(hora)){mostrarAvisoReserva('Ese horario ya pasó. Elegí otro.');renderizarPantallas();return;}
       const libres = canchasLibresPara(hora, duracionSeleccionada, modalidadSeleccionada);
-      if (!libres.length) {
-        alert('Ese horario ya no está disponible. Elegí otro.');
+      if (libres.length < cantidadCanchasSeleccionada) {
+        mostrarAvisoReserva('Ese horario ya no está disponible. Elegí otro.');
         renderizarPantallas();
         return;
       }
 
+      reservaEnProcesoCreada=null;solicitudEnProceso=null;
+      for(const id of ['input-nombre-jugador','input-telefono-jugador'])document.getElementById(id).readOnly=false;
       reservaEnProcesoHora = hora;
       reservaEnProcesoIdempotencyKey = nuevaClaveIdempotencia();
       let pF = fechaSeleccionada.split('-');
       document.getElementById('reserva-fecha-display').innerText = `${pF[2]}/${pF[1]}/${pF[0]}`;
       document.getElementById('reserva-hora-display').innerText = `${hora} hs`;
-      document.getElementById('resumen-modalidad').innerText = labelModalidad(modalidadSeleccionada);
+      document.getElementById('resumen-modalidad').innerText = labelModalidad(modalidadSeleccionada)+' · '+cantidadCanchasSeleccionada+' cancha'+(cantidadCanchasSeleccionada===1?'':'s');
       document.getElementById('resumen-duracion').innerText = `${duracionSeleccionada} min`;
       document.getElementById('resumen-horario').innerText = `${hora} hs`;
-      actualizarResumenPagoSena();
+      cotizacionEnProceso=actualizarResumenPagoSena();
       document.getElementById('input-nombre-jugador').value = '';
       document.getElementById('input-telefono-jugador').value = '';
       document.getElementById('modal-reserva-jugador').style.display = 'flex';
-      setTimeout(() => document.getElementById('input-nombre-jugador').focus(), 160);
+
     };
 
+    window.abrirTerminosReserva=function(){
+      const config=datosPlanosClub(clubRaizActual),content=document.getElementById('reservation-terms-content');content.replaceChildren();
+      for(const [title,key]of [['Cancelación','politicaCancelacion'],['Devolución','politicaDevolucion']]){
+        const text=String(config[key]||'').trim();if(!text)continue;
+        const section=document.createElement('section'),heading=document.createElement('h4'),paragraph=document.createElement('p');heading.textContent=title;paragraph.textContent=text;section.append(heading,paragraph);content.append(section);
+      }
+      if(!content.children.length){const p=document.createElement('p');p.textContent='El club todavía no publicó sus políticas.';content.append(p);}
+      document.getElementById('modal-terminos-reserva').showModal();
+    };
     window.cerrarModalReservaJugador = function() {
       reservaEnProcesoHora = null;
       reservaEnProcesoIdempotencyKey = null;
@@ -1710,34 +1809,42 @@
       const inputNombre = document.getElementById('input-nombre-jugador').value.trim();
       const inputTelefono = document.getElementById('input-telefono-jugador').value.trim();
       const btnConfirmar = document.getElementById('btn-confirmar-reserva');
-      if (!btnConfirmar || btnConfirmar.disabled) return;
+      if (!btnConfirmar || btnConfirmar.disabled || confirmandoReserva) return;
       const duracionElegida = toInt(duracionSeleccionada, duracionSugeridaParaModalidad(modalidadSeleccionada));
-      if (!inputNombre || !inputTelefono) { alert('Por favor completá tu nombre y teléfono.'); return; }
-      if (!modalidadSeleccionada || !reservaEnProcesoHora) { alert('Elegí modalidad, duración y horario antes de reservar.'); return; }
-      if (![60, 90, 120].includes(duracionElegida)) { alert('La duración pública debe ser de 60, 90 o 120 minutos.'); return; }
+      if (!inputNombre || !inputTelefono) { mostrarAvisoReserva('Por favor completá tu nombre y teléfono.'); return; }
+      if(inputNombre.length<2||inputNombre.length>120){mostrarAvisoReserva('Ingresá un nombre de entre 2 y 120 caracteres.');return;}
+      const phoneDigits=inputTelefono.replace(/\D/g,'');if(phoneDigits.length<8||phoneDigits.length>15){mostrarAvisoReserva('Ingresá un teléfono válido, de entre 8 y 15 dígitos.');return;}
+      if (!modalidadSeleccionada || !cantidadCanchasSeleccionada || !reservaEnProcesoHora) { mostrarAvisoReserva('Elegí modalidad, duración y horario antes de reservar.'); return; }
+      if (![60, 90, 120].includes(duracionElegida)) { mostrarAvisoReserva('La duración pública debe ser de 60, 90 o 120 minutos.'); return; }
       if (!reservaEnProcesoIdempotencyKey) reservaEnProcesoIdempotencyKey = nuevaClaveIdempotencia();
+      solicitudEnProceso ||= {clubId,precioEsperado:cotizacionEnProceso.total,senaEsperada:cotizacionEnProceso.sena,cantidadCanchas:cantidadCanchasSeleccionada,modalidad:modalidadSeleccionada,fecha:fechaSeleccionada,hora:reservaEnProcesoHora,duracion:duracionElegida,jugador:inputNombre,telefono:inputTelefono,idempotencyKey:reservaEnProcesoIdempotencyKey};
+      const solicitud=solicitudEnProceso;confirmandoReserva=true;
       btnConfirmar.disabled = true;
-      btnConfirmar.innerText = 'Confirmando disponibilidad...';
+      btnConfirmar.innerText = reservaEnProcesoCreada?'Reintentando pago...':'Confirmando disponibilidad...';
+      for(const id of ['input-nombre-jugador','input-telefono-jugador'])document.getElementById(id).readOnly=true;
       try {
         if (navigator.onLine === false) throw new Error('No hay conexión a Internet. Verificá la conexión e intentá nuevamente.');
         try {sessionStorage.setItem('pric-storage-check','1');sessionStorage.removeItem('pric-storage-check');} catch {throw new Error('Habilitá el almacenamiento del navegador antes de reservar. Es necesario para consultar la confirmación al volver del pago.');}
-        const createResponse = await fetchBackendPublico(`${BACKEND_URL}/public/reservas/crear`, {
-          method:'POST',
-          headers:{'Content-Type':'application/json','X-Idempotency-Key':reservaEnProcesoIdempotencyKey},
-          body:JSON.stringify({clubId,modalidad:modalidadSeleccionada,fecha:fechaSeleccionada,hora:reservaEnProcesoHora,duracion:duracionElegida,jugador:inputNombre,telefono:inputTelefono,idempotencyKey:reservaEnProcesoIdempotencyKey})
-        }, 18000);
-        const createData = await createResponse.json().catch(() => ({}));
-        if (!createResponse.ok || createData.ok !== true || !createData.reservaId) {
-          if (createResponse.status === 409) { window.cerrarModalReservaJugador(); renderizarPantallas(); }
-          throw new Error(createData.error || 'No se pudo crear la reserva.');
+        let createData=reservaEnProcesoCreada;
+        if(!createData){
+          const createResponse=await fetchBackendPublico(BACKEND_URL+'/public/reservas/crear',{method:'POST',headers:{'Content-Type':'application/json','X-Idempotency-Key':solicitud.idempotencyKey},body:JSON.stringify(solicitud)},18000);
+          createData=await createResponse.json().catch(()=>({}));
+          if(!createResponse.ok||createData.ok!==true||!createData.reservaId){
+            if(createResponse.status>=400&&createResponse.status<500){solicitudEnProceso=null;for(const id of ['input-nombre-jugador','input-telefono-jugador'])document.getElementById(id).readOnly=false;}
+            if(createResponse.status===409){window.cerrarModalReservaJugador();iniciarAppCliente();}
+            throw new Error(createData.error||'No se pudo crear la reserva.');
+          }
         }
         if (createData.receiptToken) sessionStorage.setItem(`pric-receipt:${clubId}:${createData.reservaId}`,createData.receiptToken);
+        if(solicitud.idempotencyKey!==reservaEnProcesoIdempotencyKey){mostrarAvisoReserva(createData.requierePago?'Cerraste la confirmación. No se inició el pago; las canchas se liberarán al vencer la retención.':'La reserva que enviaste quedó confirmada para '+solicitud.fecha+' a las '+solicitud.hora+'. Contactá al club si querés cancelarla.');return;}
+        reservaEnProcesoCreada=createData;
         if (createData.requierePago) {
           btnConfirmar.innerText = 'Creando pago...';
           const payResponse = await fetchBackendPublico(`${BACKEND_URL}/reservas/${encodeURIComponent(createData.reservaId)}/pagar-sena`, {
-            method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({clubId})
+            method:'POST', headers:{'Content-Type':'application/json','X-Reservation-Token':createData.receiptToken||''}, body:JSON.stringify({clubId})
           }, 18000);
           const payData = await payResponse.json().catch(() => ({}));
+          if(solicitud.idempotencyKey!==reservaEnProcesoIdempotencyKey){mostrarAvisoReserva('Cerraste la confirmación. No se abrió el pago; las canchas se liberarán al vencer la retención.');return;}
           if (!payResponse.ok || !payData.ok || !payData.initPoint) throw new Error(payData.error || 'La reserva quedó retenida, pero no se pudo iniciar Mercado Pago.');
           if (!urlMercadoPagoValida(payData.initPoint)) throw new Error('Mercado Pago devolvió un enlace de pago inválido.');
           btnConfirmar.innerText = 'Redirigiendo a Mercado Pago...';
@@ -1745,25 +1852,27 @@
           return;
         }
         document.getElementById('exito-cancha').innerText = createData.canchaNombre || `Cancha ${createData.cancha || ''}`;
-        document.getElementById('exito-hora').innerText = createData.mercadoPagoDesconectado ? `${reservaEnProcesoHora} · Reserva confirmada sin seña online` : reservaEnProcesoHora;
+        document.getElementById('exito-hora').innerText = createData.mercadoPagoDesconectado ? `${solicitud.hora} · Reserva confirmada sin seña online` : solicitud.hora;
         window.cerrarModalReservaJugador();
         document.getElementById('modal-exito-reserva').style.display = 'flex';
       } catch (error) {
         console.error('Error creando reserva:', error);
-        alert(error?.message || 'Ocurrió un error al guardar tu reserva.');
+        mostrarAvisoReserva(error?.message || 'Ocurrió un error al guardar tu reserva.');
         btnConfirmar.disabled = false;
-        btnConfirmar.innerText = 'Confirmar reserva';
-      }
+        if(solicitud.idempotencyKey===reservaEnProcesoIdempotencyKey)btnConfirmar.innerText = reservaEnProcesoCreada?.requierePago?'Reintentar pago':'Reintentar confirmación';
+      }finally{confirmandoReserva=false;}
     };
 
     function limpiarParametrosPagoUrl() {
       const url = new URL(window.location.href);
       url.searchParams.delete('mp');
       url.searchParams.delete('reservaId');
-      window.history.replaceState({}, document.title, url.toString());
+      window.history.replaceState(history.state, document.title, url.toString());
     }
 
+    let consultaRetornoActiva=false;
     window.cerrarModalResultadoPago = function() {
+      consultaRetornoActiva=false;
       const modal = document.getElementById('modal-resultado-pago');
       if (modal) modal.style.display = 'none';
       limpiarParametrosPagoUrl();
@@ -1793,7 +1902,7 @@
       mensajeEl.innerText = mensaje;
 
       if (boton) {
-        boton.style.background = estilo.boton;
+        boton.style.background = '#07152b';
         boton.style.color = '#ffffff';
       }
 
@@ -1813,6 +1922,7 @@
     }
     function revisarRetornoMercadoPago() {
       if (!mpResultado) return;
+      consultaRetornoActiva=true;
 
       revisarEstadoReservaRetornada(null);
 
@@ -1822,56 +1932,44 @@
       if(!token){pintarResultadoPago('pending','Verificá con el club','No podemos consultar esta reserva desde este dispositivo. Si pagaste, contactá al club antes de volver a pagar.');return;}
       let intentos=0;
       const consultar=async()=>{
+        if(!consultaRetornoActiva)return;
         try {
           const response=await fetchBackendPublico(`${BACKEND_URL}/public/reserva-estado?clubId=${encodeURIComponent(clubId)}&reservaId=${encodeURIComponent(reservaIdRetorno)}`,{headers:{'X-Reservation-Token':token}});
           const data=await response.json();if(!response.ok||!data.ok)throw Error('No se pudo verificar');
+          if(!consultaRetornoActiva)return;
           revisarEstadoReservaRetornada(data.reserva);
-          if(data.reserva.senaPagada||data.reserva.estadoPago==='pago_requiere_revision')return;
-        } catch {pintarResultadoPago('pending','Confirmación pendiente','No pudimos verificar la reserva. Si pagaste, no repitas el pago; contactá al club.');}
+          if(['success','failure'].includes(window.PRICPaymentStatus.message(data.reserva,mpResultado).type)||['pago_requiere_revision','pago_monto_invalido','vencida'].includes(data.reserva.estadoPago)){consultaRetornoActiva=false;return;}
+        } catch {if(!consultaRetornoActiva)return;pintarResultadoPago('pending','Confirmación pendiente','No pudimos verificar la reserva. Si pagaste, no repitas el pago; contactá al club.');}
         if(++intentos<60)setTimeout(consultar,5000);
       };
       consultar();
     }
 
-    let actualizandoDisponibilidad=false;
-    let intervaloDisponibilidad=null;
-    function iniciarAppCliente() {
+    let actualizandoDisponibilidad=false,disponibilidadFechaCargada=null,errorDisponibilidad='',actualizarDisponibilidadReserva=null;
+    let intervaloDisponibilidad=null,gestoReservaActivo=false,terminarGestoReserva=null;
+    window.addEventListener('pointerdown',e=>{if(e.target.closest?.('#pantalla-jugador'))gestoReservaActivo=true;},{capture:true,passive:true});
+    const terminarGesto=()=>{gestoReservaActivo=false;const resolve=terminarGestoReserva;terminarGestoReserva=null;if(resolve)setTimeout(()=>{if(gestoReservaActivo)terminarGestoReserva=resolve;else resolve();},350);};
+    window.addEventListener('pointerup',terminarGesto,{capture:true,passive:true});window.addEventListener('pointercancel',terminarGesto,{capture:true,passive:true});window.addEventListener('blur',terminarGesto);
+    function iniciarAppCliente(){
       const actualizar=async()=>{
         if(actualizandoDisponibilidad)return;actualizandoDisponibilidad=true;
-        try {
-          const pedir=async(desde,hasta)=>{
-            const query=new URLSearchParams({clubId,desde,hasta});
-            const response=await fetchBackendPublico(BACKEND_URL+'/public/disponibilidad?'+query);
-            const data=await response.json().catch(()=>({}));
-            if(!response.ok||!data.ok)throw Error(data.error||'Disponibilidad no disponible');
-            return data;
-          };
-          const firstEnd=fechasValidas[Math.min(30,fechasValidas.length-1)]; const first=await pedir(fechasValidas[0],firstEnd);
-          clubRaizActual=first.club;configuracionGeneralActual=first.club.datosClub||{};
-          reservasGlobales=first.reservas;refrescarConfiguracionClubPublica();
-          const todas=new Map(first.reservas.map(r=>[r.id,r]));
-          const tasks=[];
-          for(let i=Math.max(0,fechasValidas.indexOf(firstEnd)+1);i<fechasValidas.length;i+=31)tasks.push([fechasValidas[i],fechasValidas[Math.min(i+30,fechasValidas.length-1)]]);
-          for(let i=0;i<tasks.length;i+=4){
-            const results=await Promise.all(tasks.slice(i,i+4).map(([a,b])=>pedir(a,b)));
-            for(const data of results)for(const r of data.reservas)todas.set(r.id,r);
-          }
-          reservasGlobales=[...todas.values()];refrescarConfiguracionClubPublica();
-          document.getElementById('mensaje-error').style.display='none';
-          document.getElementById('pantalla-jugador').style.display='block';
-        } catch(error){
-          document.getElementById('pantalla-jugador').style.display='none';
-          const errorEl=document.getElementById('mensaje-error');
-          if(errorEl){
-            errorEl.textContent=error?.message==='Club no disponible por el momento'
-              ?'Club no disponible por el momento'
-              :'No se pudo cargar la disponibilidad del club. Intentá nuevamente.';
-            errorEl.style.display='block';
-          }
-        } finally {actualizandoDisponibilidad=false;}
+        const requestedDate=fechaSeleccionada;errorDisponibilidad='';
+        try{
+          const query=new URLSearchParams({clubId,desde:requestedDate,hasta:requestedDate});
+          const response=await fetchBackendPublico(BACKEND_URL+'/public/disponibilidad?'+query),data=await response.json().catch(()=>({}));
+          if(!response.ok||!data.ok||!data.club||!Array.isArray(data.reservas))throw Error(data.error||'Disponibilidad no disponible');
+          if(gestoReservaActivo)await new Promise(resolve=>terminarGestoReserva=resolve);
+          clubRaizActual=data.club;configuracionGeneralActual=data.club.datosClub||{};reservasGlobales=data.reservas;
+          disponibilidadFechaCargada=requestedDate;refrescarConfiguracionClubPublica();
+          document.getElementById('mensaje-error').style.display='none';document.getElementById('pantalla-jugador').style.display='block';
+        }catch(error){
+          errorDisponibilidad=error?.message==='Club no disponible por el momento'?'Club no disponible por el momento':'No se pudo actualizar la disponibilidad. Intentá nuevamente.';
+          disponibilidadFechaCargada=null;renderizarPantallas();
+          if(!nombreClubGlobal){const errorEl=document.getElementById('mensaje-error');errorEl.replaceChildren();const text=document.createElement('p'),retry=document.createElement('button');text.textContent=errorDisponibilidad;retry.type='button';retry.className='btn-modal btn-guardar';retry.textContent='Reintentar';retry.onclick=actualizar;errorEl.append(text,retry);errorEl.style.display='block';}
+        }finally{actualizandoDisponibilidad=false;if(requestedDate!==fechaSeleccionada)queueMicrotask(actualizar);}
       };
-      actualizar();
-      if(!intervaloDisponibilidad)intervaloDisponibilidad=setInterval(()=>{if(!document.hidden)actualizar();},30000);
+      actualizarDisponibilidadReserva=actualizar;actualizar();
+      if(!intervaloDisponibilidad)intervaloDisponibilidad=setInterval(()=>{if(!document.hidden&&!gestoReservaActivo)actualizarDisponibilidadReserva?.();},30000);
     }
 
     setInterval(() => {
@@ -1880,13 +1978,13 @@
 
 
     window.addEventListener('online', () => {
-      renderizarPantallas();
+      iniciarAppCliente();
     });
 
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) {
         limpiarReservasPendientesVencidas();
-        renderizarPantallas();
+        actualizarDisponibilidadReserva?.();
       }
     });
 

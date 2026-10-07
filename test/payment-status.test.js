@@ -3,3 +3,7 @@ test('return URL success alone never confirms reservation',()=>assert.equal(mess
 test('confirmed server reservation is shown as confirmed',()=>assert.equal(message({senaPagada:true},'pending').type,'success'));
 test('late paid reservation needs review even with stale confirmed flag',()=>assert.equal(message({estadoPago:'pago_requiere_revision',status:'confirmado'},'success').title,'Pago en revisión'));
 test('expiry does not claim that payment failed',()=>assert.equal(message({estado:'vencida'},'success').title,'Plazo de reserva vencido'));
+test('cancelled and rejected reservations never display stale confirmation',()=>{
+ assert.equal(message({estado:'cancelada',status:'confirmado'},'success').type,'failure');
+ assert.equal(message({estadoPago:'pago_no_aprobado',status:'confirmado'},'success').type,'failure');
+});
