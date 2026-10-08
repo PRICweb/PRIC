@@ -2574,6 +2574,9 @@ async function guardarDatosClub(parcial){
     const limpio=serializar(parcial||{});
     if(!limpio||typeof limpio!=='object'||Array.isArray(limpio)) throw new Error('Los datos del club deben enviarse como un objeto.');
     delete limpio.reservas;
+    // Images are saved by the media API; direct configuration writes must not change them.
+    delete limpio.fotoClub;
+    delete limpio.fotoModalidades;
     const clubId=(typeof currentClubId!=='undefined'&&currentClubId)||window.CLUB_DOC_ID_ACTUAL;
     if(!clubId) throw new Error('No hay club activo para guardar.');
     const {db}=await firebaseReady();
