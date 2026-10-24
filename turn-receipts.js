@@ -1,0 +1,55 @@
+(function(root){
+ 'use strict';
+ const cents=v=>{const n=Number(v??0),c=Math.round(n*100);if(!Number.isFinite(n)||n<0||!Number.isSafeInteger(c))throw Error('Importe de pago inválido.');return c;};
+ const day=value=>{const d=value?new Date(value):new Date();if(Number.isNaN(d.getTime()))throw Error('Fecha de pago inválida.');return new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Argentina/Buenos_Aires',year:'numeric',month:'2-digit',day:'2-digit'}).format(d);};
+ const state=(r,date)=>r.fijo&&date!==r.fecha?(r.instancias?.[date]||{}):r;
+ function patch(r,date,values){if(r.fijo&&date!==r.fecha){r.instancias={...(r.instancias||{}),[date]:{...(r.instancias?.[date]||{}),...values}};}else Object.assign(r,values);}
+ function applyAllocation(r,date,receipt){const sold={...(state(r,date).consumosCobrados||{})};for(const p of receipt.consumosAgrupados||[])sold[p.nombre]=(cents(sold[p.nombre])+cents(p.total))/100;patch(r,date,{consumosCobrados:sold});}
+ function preserve(proposal,current){const out=JSON.parse(JSON.stringify(proposal)),fields=['pagoEfectivo','pagoTransferencia','fechaPago','fechaPagoRegistro','cobrosVersion','consumosCobrados','inventarioDiarioVersion'];for(const key of fields)if(current[key]!==undefined)out[key]=current[key];if(current.origenReserva==='web_reservas'||current.pagoMercadoPago){for(const key of ['origenReserva','estadoPago','estado','status','senaPagada','senaPagadaEn','montoSenaPagado','confirmadaEn','pagoMercadoPago','requiereAtencionAdmin','motivoAtencionAdmin',...Object.keys(current).filter(k=>k.startsWith('whatsapp'))])if(current[key]!==undefined)out[key]=current[key];}for(const [date,e]of Object.entries(current.instancias||{})){out.instancias=out.instancias||{};out.instancias[date]={...(out.instancias[date]||{})};for(const key of fields)if(e[key]!==undefined)out.instancias[date][key]=e[key];}return out;}
+ function record({id,r,date,cash=0,transfer=0,stamp=new Date().toISOString(),deposit=false,legacy=false,clubId}){
+  const efectivo=cents(cash)/100,transferencia=cents(transfer)/100,e=state(r,date),groups=new Map();
+  for(const c of e.consumos||[]){const name=String(c.nombre||'Producto');groups.set(name,(groups.get(name)||0)+cents(c.precio||0));}
+  const schedule=root?.PricReservationSchedule||(typeof require==='function'?require('./reservation-schedule'):null),effective=schedule?schedule.effective(r,date):r;const hora=String(e.hora||effective.hora||r.horaInicio||''),cancha=String(e.cancha||effective.cancha||''),allocated=[];let remaining=cents(cash)+cents(transfer);for(const [nombre,total]of groups){const amount=Math.min(remaining,Math.max(0,total-cents(e.consumosCobrados?.[nombre])));if(amount)allocated.push({nombre,total:amount/100});remaining-=amount;}
+  return {id,clubId,reservaId:String(r.id),fechaTurno:date,fecha:day(stamp),fechaRegistro:stamp,horaTurno:hora,turnoReferencia:[r.jugador||'Sin nombre',date,hora,cancha?'Cancha '+cancha:''].filter(Boolean).join(' · '),detalle:(deposit?'Seña · ':'Pago parcial · ')+(r.jugador||'Sin nombre')+' · '+date+' · '+hora+(cancha?' · Cancha '+cancha:''),tipo:r.esClase||r.tipoEvento==='Clases'?'clase':'turno',efectivo,transferencia,monto:(cents(cash)+cents(transfer))/100,esSena:deposit,migrado:legacy,consumosAgrupados:allocated,version:1};
+ }
+ function legacy(r,date,clubId){
+  r=JSON.parse(JSON.stringify(r));const e=state(r,date);if(e.cobrosVersion===1)return [];
+  let cash=cents(e.pagoEfectivo),transfer=cents(e.pagoTransferencia);const result=[],prefix='legacy_'+encodeURIComponent(String(r.id))+'_'+date;
+  const deposit=r.senaPagada===true||r.estadoPago==='sena_pagada';
+  const amount=deposit&&date===r.fecha?Math.min(transfer,cents(r.montoSenaPagado??r.pagoMercadoPago?.montoPagado??r.montoSena??0)):0;
+  if(amount){const stamp=r.senaPagadaEn||r.pagoMercadoPago?.fechaAprobacion||e.fechaPagoRegistro||(e.fechaPago||date)+'T12:00:00-03:00';const rec=record({id:prefix+'_sena',r,date,transfer:amount/100,stamp,deposit:true,legacy:true,clubId});if(!r.senaPagadaEn&&!r.pagoMercadoPago?.fechaAprobacion&&!e.fechaPagoRegistro)rec.horaAsiento='—';result.push(rec);applyAllocation(r,date,rec);transfer-=amount;}
+  if(cash+transfer){const stamp=e.fechaPagoRegistro||(e.fechaPago||date)+'T12:00:00-03:00';const rec=record({id:prefix,r,date,cash:cash/100,transfer:transfer/100,stamp,legacy:true,clubId});if(!e.fechaPagoRegistro)rec.horaAsiento='—';result.push(rec);}
+  return result;
+ }
+ function inventory({id,r,date,product,quantity,stamp=new Date().toISOString(),clubId,legacy=false}){return {id,clubId,reservaId:String(r.id),fechaTurno:date,fecha:day(stamp),fechaRegistro:stamp,tipo:'consumo_costo',detalle:(quantity<0?'Devolución de consumo · ':'Consumo · ')+(product.nombre||'Producto')+' · '+(r.jugador||'Sin nombre'),productoNombre:product.nombre||'Producto',costoUnitario:product.costoUnitario??product.costo??null,cantidad:quantity,esReversion:quantity<0,monto:0,efectivo:0,transferencia:0,migrado:legacy,version:1};}
+ function legacyInventory(r,date,clubId){const e=state(r,date);if(e.inventarioDiarioVersion===1)return [];const groups=new Map();for(const c of e.consumos||[]){const key=[c.prodId||c.nombre,c.fecha||date,c.costoUnitario??'unknown'].join('|');if(!groups.has(key))groups.set(key,{...c,cantidad:0});groups.get(key).cantidad+=Number(c.cantidad||1);}return [...groups.values()].map((c,i)=>inventory({id:'legacy_cost_'+encodeURIComponent(String(r.id))+'_'+date+'_'+i,r,date,product:c,quantity:c.cantidad,stamp:c.fecha||date+'T12:00:00-03:00',clubId,legacy:true}));}
+ async function save({db,clubId,reservationId,date,cash=0,transfer=0,discount,receiptId,migrateOnly=false}){
+  const base=db.collection('clubs').doc(clubId),ref=base.collection('reservas').doc(String(reservationId)),receipts=base.collection('cobrosTurnos'),stamp=new Date().toISOString();
+  return db.runTransaction(async tx=>{
+   const snap=await tx.get(ref);if(!snap.exists)throw Error('El turno ya no existe.');const r={...snap.data(),id:snap.id},dates=migrateOnly?[r.fecha,...(r.fijo?Object.keys(r.instancias||{}).filter(f=>f!==r.fecha):[])]:[date];
+   const old=dates.flatMap(f=>[...legacy(r,f,clubId),...legacyInventory(r,f,clubId)]),existing=[];for(const item of old)existing.push(await tx.get(receipts.doc(item.id)));
+   const newRef=!migrateOnly&&cents(cash)+cents(transfer)>0?receipts.doc(receiptId):null,newSnap=newRef?await tx.get(newRef):null;
+   if(newSnap?.exists)return {reserva:r,receipt:newSnap.data()};
+   old.filter(p=>p.tipo!=='consumo_costo').forEach(rec=>applyAllocation(r,rec.fechaTurno,rec));
+   let receipt=null;
+   if(!migrateOnly){const e=state(r,date);receipt=newRef?record({id:receiptId,r,date,cash,transfer,stamp,clubId}):null;const changes={cobrosVersion:1,inventarioDiarioVersion:1,pagoEfectivo:(cents(e.pagoEfectivo)+cents(cash))/100,pagoTransferencia:(cents(e.pagoTransferencia)+cents(transfer))/100};if(discount!==undefined)changes.descuento=cents(discount)/100;if(receipt){changes.fechaPago=receipt.fecha;changes.fechaPagoRegistro=stamp;}patch(r,date,changes);}
+   else dates.forEach(f=>patch(r,f,{cobrosVersion:1,inventarioDiarioVersion:1}));
+   old.forEach((item,i)=>{if(!existing[i].exists)tx.set(receipts.doc(item.id),item);});if(receipt)tx.set(newRef,receipt);
+   if(receipt)applyAllocation(r,date,receipt);tx.set(ref,r,{merge:true});return {reserva:r,receipt};
+  });
+ }
+ async function saveMany({db,clubId,items}){
+  if(items.length>100)throw Error('Cobrá hasta 100 clases por operación.');const base=db.collection('clubs').doc(clubId),stamp=new Date().toISOString();
+  return db.runTransaction(async tx=>{const reservations=new Map(),pending=[],newRecords=[];
+   for(const item of items)if(!reservations.has(item.reservationId)){const ref=base.collection('reservas').doc(String(item.reservationId)),snap=await tx.get(ref);if(!snap.exists)throw Error('Una clase ya no existe.');reservations.set(item.reservationId,{ref,r:{...snap.data(),id:snap.id}});}
+   for(const item of items){const {r}=reservations.get(item.reservationId),e=state(r,item.date);if(cents(e.pagoEfectivo)!==cents(item.expectedCash)||cents(e.pagoTransferencia)!==cents(item.expectedTransfer))throw Error('Los pagos de una clase cambiaron. Volvé a abrir el cobro.');
+    for(const rec of [...legacy(r,item.date,clubId),...legacyInventory(r,item.date,clubId)]){pending.push({rec,ref:base.collection('cobrosTurnos').doc(rec.id)});if(rec.tipo!=='consumo_costo')applyAllocation(r,item.date,rec);}
+    if(cents(item.cash)+cents(item.transfer)>0){const rec=record({id:item.receiptId,r,date:item.date,cash:item.cash,transfer:item.transfer,stamp,clubId});newRecords.push(rec);applyAllocation(r,item.date,rec);}
+    patch(r,item.date,{cobrosVersion:1,inventarioDiarioVersion:1,pagoEfectivo:(cents(e.pagoEfectivo)+cents(item.cash))/100,pagoTransferencia:(cents(e.pagoTransferencia)+cents(item.transfer))/100,descuento:(cents(e.descuento)+cents(item.discountDelta))/100,fechaPago:day(stamp),fechaPagoRegistro:stamp});
+   }
+   const existing=[];for(const p of pending)existing.push(await tx.get(p.ref));
+   pending.forEach((p,i)=>{if(!existing[i].exists)tx.set(p.ref,p.rec);});newRecords.forEach(rec=>tx.set(base.collection('cobrosTurnos').doc(rec.id),rec));reservations.forEach(({ref,r})=>tx.set(ref,r,{merge:true}));return [...reservations.values()].map(v=>v.r);
+  });
+ }
+ const api={cents,day,state,patch,record,legacy,inventory,legacyInventory,save,saveMany,preserve};if(typeof module!=='undefined'&&module.exports)module.exports=api;if(root)root.PricTurnReceipts=api;
+})(typeof window!=='undefined'?window:null);

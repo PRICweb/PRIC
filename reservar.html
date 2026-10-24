@@ -817,7 +817,7 @@
     .pric-club-location{flex:1;min-width:0;font-size:13px;overflow-wrap:anywhere}
     .pric-club-contact a:focus-visible{outline:2px solid #07152b;outline-offset:3px}
   </style>
-<link rel="stylesheet" href="pric-design.css?v=20261006-publicacion"><script src="media-client.js"></script></head>
+<link rel="stylesheet" href="pric-design.css?v=20261006-publicacion"><script src="media-client.js"></script><script src="reservation-schedule.js?v=20261024"></script></head>
 <body>
   <div id="mensaje-error">
     <strong>Error:</strong> No se especificó el club en la URL o el club no existe.<br />
@@ -840,13 +840,9 @@
         <div id="opciones-modalidad" class="opciones-grid"></div>
       </section>
 
-      <section class="paso-reserva" id="paso-cantidad" style="display:none;">
-        <div class="paso-header"><h3>2. Elegí la cantidad de canchas</h3><span>Mismo día, horario y duración</span></div>
-        <div id="opciones-cantidad" class="opciones-grid"></div>
-      </section>
-      <section class="paso-reserva" id="paso-duracion" style="display:none;">
+<section class="paso-reserva" id="paso-duracion" style="display:none;">
         <div class="paso-header">
-          <h3>3. Elegí la duración</h3>
+          <h3>2. Elegí la duración</h3>
           <span>Turno a reservar</span>
         </div>
         <div id="opciones-duracion" class="opciones-grid"></div>
@@ -854,7 +850,7 @@
 
       <section class="paso-reserva calendario-bloque" id="paso-fecha-horario" style="display:none;">
         <div class="paso-header">
-          <h3>4. Elegí día y horario</h3>
+          <h3>3. Elegí día y horario</h3>
           <span>Horarios disponibles</span>
         </div>
         <div id="calendario-jugador" class="calendario-strip"></div>
@@ -1071,7 +1067,6 @@
     let reservaEnProcesoCreada=null,solicitudEnProceso=null,confirmandoReserva=false,cotizacionEnProceso=null;
     let reservaEnProcesoHora = null;
     let reservaEnProcesoIdempotencyKey = null;
-    let cantidadCanchasSeleccionada = 0;
     let modalidadSeleccionada = '';
     let duracionSeleccionada = null;
 
@@ -1394,9 +1389,9 @@
       const sena = Math.max(0, Math.round(desglose.total * porcentaje / 100));
 
       return {
-        total: desglose.total * Math.max(1,cantidadCanchasSeleccionada),
+        total: desglose.total,
         porcentaje,
-        sena: sena * Math.max(1,cantidadCanchasSeleccionada),
+        sena: sena,
         nombre: desglose.cfg.nombre,
         minutosSinLuz: desglose.minutosSinLuz,
         minutosConLuz: desglose.minutosConLuz,
@@ -1567,8 +1562,8 @@
       const horarios = document.getElementById('lista-horarios');
       if (!pasoDuracion || !pasoFechaHorario || !contenedor) return;
 
-      actualizarOpcionesCantidad();
-      if (!modalidadSeleccionada || !cantidadCanchasSeleccionada) {
+
+      if (!modalidadSeleccionada) {
         pasoDuracion.style.display = 'none';
         pasoFechaHorario.style.display = 'none';
         if (horarios) horarios.innerHTML = '';
@@ -1595,23 +1590,15 @@
     }
 
     window.seleccionarModalidadReserva = function(valor) {
-      if(modalidadSeleccionada!==valor)cantidadCanchasSeleccionada=0;
+
       modalidadSeleccionada = valor;
       duracionSeleccionada = duracionSugeridaParaModalidad(valor);
       actualizarSelectorModalidades();
       renderizarCalendarios();
       renderizarPantallas();
-      desplazarAPaso('paso-cantidad');
+      desplazarAPaso('paso-duracion');
     };
 
-    function actualizarOpcionesCantidad(){
-      const step=document.getElementById('paso-cantidad'),box=document.getElementById('opciones-cantidad');
-      step.style.display=modalidadSeleccionada?'flex':'none';
-      const max=getCanchas().filter(c=>c.modalidad===modalidadSeleccionada).length;
-      if(cantidadCanchasSeleccionada>max)cantidadCanchasSeleccionada=0;
-      box.innerHTML=Array.from({length:max},(_,i)=>i+1).map(n=>'<button type="button" class="opcion-card '+(n===cantidadCanchasSeleccionada?'activa':'')+'" onclick="window.seleccionarCantidadCanchas('+n+')"><strong>'+n+' cancha'+(n===1?'':'s')+'</strong></button>').join('');
-    }
-    window.seleccionarCantidadCanchas=function(n){const max=getCanchas().filter(c=>c.modalidad===modalidadSeleccionada).length;if(!Number.isInteger(n)||n<1||n>max)return;cantidadCanchasSeleccionada=n;actualizarOpcionesDuracion();desplazarAPaso('paso-duracion');};
     window.seleccionarDuracionReserva = function(minutos) {
       duracionSeleccionada = toInt(minutos, duracionSugeridaParaModalidad(modalidadSeleccionada));
       actualizarOpcionesDuracion();
@@ -1650,8 +1637,8 @@
         return !reservasGlobales.some(r => {
           if (!reservaBloqueaDisponibilidad(r)) return false;
           if (!reservaAplicaEnFecha(r, fechaSeleccionada)) return false;
-          if (String(r.cancha) !== String(c.numero)) return false;
-          const bloquesReserva = bloquesDeTurno(r.hora, r.duracion || duracionGlobal || 90);
+          const effective=window.PricReservationSchedule.effective(r,fechaSeleccionada);if (String(effective.cancha) !== String(c.numero)) return false;
+          const bloquesReserva = bloquesDeTurno(effective.hora, effective.duracion || duracionGlobal || 90);
           return bloquesNuevos.some(b => bloquesReserva.includes(b));
         });
       });
@@ -1693,7 +1680,7 @@
         return;
       }
 
-      if (!modalidadSeleccionada || !cantidadCanchasSeleccionada) {
+      if (!modalidadSeleccionada) {
         contenedorHorarios.innerHTML = '<div class="empty-state">Primero elegí una modalidad.</div>';
         return;
       }
@@ -1720,7 +1707,7 @@
       horariosFiltrados.forEach(hora => {
         if (validarEsHoraPasada(hora)) return;
         const libres = canchasLibresPara(hora, duracionSeleccionada, modalidadSeleccionada);
-        if (libres.length < Math.max(1,cantidadCanchasSeleccionada)) return;
+        if (libres.length < 1) return;
 
         const btn = document.createElement('button');
         btn.type = 'button';
@@ -1758,13 +1745,13 @@
       dialog.append(title,text,button);dialog.addEventListener('close',()=>dialog.remove(),{once:true});document.body.append(dialog);dialog.showModal();
     }
     window.abrirModalReservaJugador = function(hora) {
-      if (!modalidadSeleccionada || !cantidadCanchasSeleccionada || !duracionSeleccionada) {
+      if (!modalidadSeleccionada || !duracionSeleccionada) {
         mostrarAvisoReserva('Primero elegí modalidad y duración.');
         return;
       }
       if(validarEsHoraPasada(hora)){mostrarAvisoReserva('Ese horario ya pasó. Elegí otro.');renderizarPantallas();return;}
       const libres = canchasLibresPara(hora, duracionSeleccionada, modalidadSeleccionada);
-      if (libres.length < cantidadCanchasSeleccionada) {
+      if (libres.length < 1) {
         mostrarAvisoReserva('Ese horario ya no está disponible. Elegí otro.');
         renderizarPantallas();
         return;
@@ -1777,7 +1764,7 @@
       let pF = fechaSeleccionada.split('-');
       document.getElementById('reserva-fecha-display').innerText = `${pF[2]}/${pF[1]}/${pF[0]}`;
       document.getElementById('reserva-hora-display').innerText = `${hora} hs`;
-      document.getElementById('resumen-modalidad').innerText = labelModalidad(modalidadSeleccionada)+' · '+cantidadCanchasSeleccionada+' cancha'+(cantidadCanchasSeleccionada===1?'':'s');
+      document.getElementById('resumen-modalidad').innerText = labelModalidad(modalidadSeleccionada)+' · 1 cancha';
       document.getElementById('resumen-duracion').innerText = `${duracionSeleccionada} min`;
       document.getElementById('resumen-horario').innerText = `${hora} hs`;
       cotizacionEnProceso=actualizarResumenPagoSena();
@@ -1814,10 +1801,10 @@
       if (!inputNombre || !inputTelefono) { mostrarAvisoReserva('Por favor completá tu nombre y teléfono.'); return; }
       if(inputNombre.length<2||inputNombre.length>120){mostrarAvisoReserva('Ingresá un nombre de entre 2 y 120 caracteres.');return;}
       const phoneDigits=inputTelefono.replace(/\D/g,'');if(phoneDigits.length<8||phoneDigits.length>15){mostrarAvisoReserva('Ingresá un teléfono válido, de entre 8 y 15 dígitos.');return;}
-      if (!modalidadSeleccionada || !cantidadCanchasSeleccionada || !reservaEnProcesoHora) { mostrarAvisoReserva('Elegí modalidad, duración y horario antes de reservar.'); return; }
+      if (!modalidadSeleccionada || !reservaEnProcesoHora) { mostrarAvisoReserva('Elegí modalidad, duración y horario antes de reservar.'); return; }
       if (![60, 90, 120].includes(duracionElegida)) { mostrarAvisoReserva('La duración pública debe ser de 60, 90 o 120 minutos.'); return; }
       if (!reservaEnProcesoIdempotencyKey) reservaEnProcesoIdempotencyKey = nuevaClaveIdempotencia();
-      solicitudEnProceso ||= {clubId,precioEsperado:cotizacionEnProceso.total,senaEsperada:cotizacionEnProceso.sena,cantidadCanchas:cantidadCanchasSeleccionada,modalidad:modalidadSeleccionada,fecha:fechaSeleccionada,hora:reservaEnProcesoHora,duracion:duracionElegida,jugador:inputNombre,telefono:inputTelefono,idempotencyKey:reservaEnProcesoIdempotencyKey};
+      solicitudEnProceso ||= {clubId,precioEsperado:cotizacionEnProceso.total,senaEsperada:cotizacionEnProceso.sena,cantidadCanchas:1,modalidad:modalidadSeleccionada,fecha:fechaSeleccionada,hora:reservaEnProcesoHora,duracion:duracionElegida,jugador:inputNombre,telefono:inputTelefono,idempotencyKey:reservaEnProcesoIdempotencyKey};
       const solicitud=solicitudEnProceso;confirmandoReserva=true;
       btnConfirmar.disabled = true;
       btnConfirmar.innerText = reservaEnProcesoCreada?'Reintentando pago...':'Confirmando disponibilidad...';

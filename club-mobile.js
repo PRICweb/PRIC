@@ -20,19 +20,17 @@
  let administrationGroups=[];
  function administrationAccordions(){
   const label=document.querySelector('#sidebar-admin-club [data-sidebar-target=inventario]>span:last-child');if(label)label.textContent=mobile.matches?'Administración':'Inventario';
-  if(!mobile.matches){for(const item of administrationGroups){item.marker.replaceWith(item.node);item.wrapper.remove();}administrationGroups=[];return;}
-  if(administrationGroups.length)return;
+  if(!mobile.matches){administrationGroups=administrationGroups.filter(item=>{if(item.node.id==='card-categorias-inventario')return true;item.marker.replaceWith(item.node);item.wrapper.remove();return false;});}
   const stock=document.getElementById('tabla-inventario')?.closest('.panel-card-club');
   for(const [title,node]of [['Categorías de producto',document.getElementById('card-categorias-inventario')],['Stock actual',stock],['Historial de transacciones',document.querySelector('#panel-finanzas-club .panel-card-historial')],['Exportar balance',document.querySelector('#panel-finanzas-club .panel-exportar-balance')]]){
-   if(!node)continue;const marker=document.createComment('Original '+title),wrapper=document.createElement('details'),summary=document.createElement('summary');wrapper.className='pric-admin-accordion';summary.textContent=title;node.before(marker,wrapper);wrapper.append(summary,node);administrationGroups.push({marker,node,wrapper});
+   if(!node||administrationGroups.some(item=>item.node===node)||(!mobile.matches&&node.id!=='card-categorias-inventario'))continue;const marker=document.createComment('Original '+title),wrapper=document.createElement('details'),summary=document.createElement('summary');wrapper.className='pric-admin-accordion';summary.textContent=title;node.before(marker,wrapper);wrapper.append(summary,node);administrationGroups.push({marker,node,wrapper});
   }
  }
  function professorAccordions(){
-  if(!mobile.matches){for(const item of professorGroups){item.marker.replaceWith(item.node);item.wrapper.remove();}professorGroups=[];document.querySelector('#modal-profesores .pric-prof-legacy')?.classList.remove('pric-prof-legacy');return;}
   if(professorGroups.length)return;
   const panel=document.querySelector('#modal-profesores .panel-view-content');if(!panel)return;
-  for(const [title,node]of [['Crear',panel.querySelector('.profesores-form-row')],['Lista',panel.querySelector('.profesores-lista-box')],['Cobro',document.getElementById('ac-clases')]]){
-   if(!node)continue;const marker=document.createComment('Original '+title);node.before(marker);if(title==='Cobro')node.parentElement.classList.add('pric-prof-legacy');
+  for(const [title,node]of [['Crear',panel.querySelector('.profesores-form-row')],['Lista',panel.querySelector('.profesores-lista-box')],['Cobros',document.getElementById('ac-clases')]]){
+   if(!node)continue;const marker=document.createComment('Original '+title);node.before(marker);if(title==='Cobros')node.parentElement.classList.add('pric-prof-legacy');
    const wrapper=document.createElement('details');wrapper.className='pric-prof-accordion';const summary=document.createElement('summary');summary.textContent=title;wrapper.append(summary,node);panel.append(wrapper);professorGroups.push({marker,node,wrapper});
   }
  }
@@ -44,7 +42,7 @@
  function highlight(){if(!mobile.matches)return;const current=group(window.__vistaPanelClubActual||'turnero');document.querySelectorAll('#sidebar-admin-club [data-sidebar-target]').forEach(b=>{b.classList.toggle('active',b.dataset.sidebarTarget===current);if(b.dataset.sidebarTarget===current)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});}
  function prepare(){
   const turnero=document.getElementById('pantalla-club'),config=document.getElementById('panel-config-club'),sidebar=document.getElementById('sidebar-admin-club');if(!turnero||!config||!sidebar)return;
-  if(!document.getElementById('pric-mobile-turnero-links')){const links=document.createElement('nav');links.id='pric-mobile-turnero-links';links.className='pric-mobile-only';links.setAttribute('aria-label','Más opciones del turnero');for(const [v,title]of [['profes','Profesores'],['torneos','Torneos']]){const button=document.createElement('button');button.type='button';button.textContent=title;{const icon=sidebar.querySelector(v==='profes'?'[data-sidebar-target=profes] .pric-desktop-icon':'[data-sidebar-target=torneos] svg')?.cloneNode(true);if(icon){icon.classList.remove('pric-desktop-icon');icon.classList.add('pric-mobile-professor-icon');button.prepend(icon);}}button.onclick=()=>{if(v==='torneos'){window.webAlert?.('No disponible todavía.','Torneos');return;}open(v);};links.append(button);}turnero.append(links);}
+  if(!document.getElementById('pric-mobile-turnero-links')){const links=document.createElement('nav');links.id='pric-mobile-turnero-links';links.className='pric-mobile-only';links.setAttribute('aria-label','Más opciones del turnero');for(const [v,title]of [['profes','Profesores'],['torneos','Torneos']]){const button=document.createElement('button');button.type='button';button.textContent=title;{const icon=sidebar.querySelector(v==='profes'?'[data-sidebar-target=profes] .pric-desktop-icon':'[data-sidebar-target=torneos] svg')?.cloneNode(true);if(icon){icon.classList.remove('pric-desktop-icon');icon.classList.add('pric-mobile-professor-icon');button.prepend(icon);}}button.onclick=()=>{if(v==='torneos'){window.webAlert?.('Próximamente','Torneos');return;}open(v);};links.append(button);}turnero.append(links);}
   let exitBox=document.getElementById('pric-mobile-exit');if(!exitBox){exitBox=document.createElement('div');exitBox.id='pric-mobile-exit';exitBox.className='pric-mobile-only';config.append(exitBox);}
   const exit=document.querySelector('.sidebar-logout-club');if(exit){if(mobile.matches){exitBox.append(exit);exit.classList.remove('pric-fixed-mobile-exit');}else sidebar.append(exit);}
   if(!document.getElementById('pric-mobile-professor-title')){const title=document.createElement('h2');title.id='pric-mobile-professor-title';title.className='pric-mobile-only';title.textContent='Profesores';document.querySelector('#modal-profesores .panel-view-content')?.prepend(title);}

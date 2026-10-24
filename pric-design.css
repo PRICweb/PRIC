@@ -312,3 +312,129 @@ body:not(.panel-activo){background:#fff!important}
 .pric-form-dialog input[hidden],.pric-form-dialog button[hidden]{display:none!important}
 #panel-config-club .config-info-campo:has(#input-google-maps-club),#panel-config-club .config-info-campo:has(#input-instagram-club){grid-column:1/-1}
 
+
+/* Shared accordion layout for desktop and mobile administration. */
+#modal-profesores .pric-prof-legacy{display:none!important}
+#modal-profesores .pric-prof-accordion{background:#fff}
+#modal-profesores .pric-prof-accordion,.pric-admin-accordion{margin:0 0 16px;border:1px solid #dbe1ea;border-radius:9px;background:#fff;box-sizing:border-box}
+.pric-prof-accordion>summary,.pric-admin-accordion>summary{list-style:none;cursor:pointer;padding:16px;font:500 15px/20px var(--pric-font);color:var(--pric-primary)}
+.pric-prof-accordion>summary::-webkit-details-marker,.pric-admin-accordion>summary::-webkit-details-marker{display:none}
+.pric-prof-accordion>summary:focus-visible,.pric-admin-accordion>summary:focus-visible{outline:2px solid var(--pric-primary);outline-offset:-3px}
+#modal-profesores .pric-prof-accordion>.profesores-form-row,#modal-profesores .pric-prof-accordion>.profesores-lista-box,#modal-profesores .pric-prof-accordion>#ac-clases{margin:0!important;padding:0 16px 16px!important;border:0!important;max-height:none!important;overflow:visible!important}
+#modal-profesores .pric-prof-accordion>#ac-clases{display:block!important}
+#modal-profesores .pric-prof-accordion .profesores-clases-box{max-height:none!important;overflow:visible!important;border:0!important;padding:0!important}
+.pric-admin-accordion>#card-categorias-inventario{margin:0!important;border:0!important;box-shadow:none!important;padding:0 16px 16px!important}
+.pric-admin-accordion>#card-categorias-inventario .panel-card-title-row{display:none}
+#panel-metricas-club .metricas-controles-grid{grid-template-columns:minmax(280px,1fr) minmax(240px,1fr) 130px}
+.metricas-fechas{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+#metricas-producto-campo{margin-top:12px}
+#metricas-producto-campo[hidden]{display:none!important}
+@media(max-width:850px){#panel-metricas-club .metricas-controles-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:620px){#panel-metricas-club .metricas-controles-grid{grid-template-columns:1fr}.metricas-fechas{grid-template-columns:1fr}.metricas-fechas>div{display:grid;grid-template-columns:48px minmax(0,1fr);align-items:center;gap:8px}}
+
+.pric-prof-accordion>summary,.pric-admin-accordion>summary{border-radius:inherit}
+.pric-prof-accordion[open]>summary,.pric-admin-accordion[open]>summary{border-radius:9px 9px 0 0}
+body.panel-activo #panel-metricas-club .metricas-generar-btn{background:var(--pric-primary)!important;color:#fff!important}
+#panel-metricas-club .metricas-controles-grid{align-items:start}
+#panel-metricas-club .metricas-generar-wrap{align-self:end}
+
+/* Checkout and movement entry. */
+.pric-cash-cart{list-style:none;margin:16px 0;padding:0}
+.pric-cash-cart>li{display:flex;align-items:center;gap:16px;padding:10px 0}
+.pric-cash-cart>li>span{flex:1;min-width:0}
+.pric-cash-cart small,.pric-product-picker-row small{display:block;margin-top:5px;color:var(--pric-muted);font-size:13px}
+.pric-cash-total{display:flex;justify-content:space-between;align-items:center;gap:16px;margin:18px 0;font-size:16px}
+.pric-cash-total strong{font-size:24px;color:var(--pric-primary)}
+.pric-cash-payments{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:16px;align-items:end}
+.pric-cash-payments label,.pric-internal-movement label{display:block;margin-bottom:7px;font-size:14px;color:var(--pric-ink)}
+.pric-cash-payments input,.pric-internal-movement input,.pric-internal-movement select{margin:0!important;width:100%;box-sizing:border-box}
+.pric-cash-payments button{width:auto!important;margin:0!important;min-height:44px}
+.pric-internal-movement{display:grid;grid-template-columns:180px minmax(0,1fr) minmax(130px,.6fr) minmax(130px,.6fr);gap:16px;align-items:end}
+.pric-internal-movement>button{grid-column:1/-1;justify-self:end;width:auto!important;margin:0!important}
+.pric-product-picker{box-sizing:border-box;width:min(94vw,720px);max-height:88dvh;overflow:auto;border:1px solid var(--pric-line);border-radius:14px;padding:24px;background:white;color:var(--pric-ink);font-family:var(--pric-font,'Segoe UI',sans-serif)}
+.pric-product-picker::backdrop{background:rgba(7,21,43,.45)}
+.pric-product-picker h2{margin:0 0 10px;font-size:20px;outline:none}
+.pric-product-picker>input{margin-top:12px}
+.pric-product-picker-list{margin:16px 0}
+.pric-product-picker-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 0}
+.pric-product-picker-row[hidden],.pric-product-picker [hidden]{display:none!important}
+.pric-product-picker-row>span{flex:1;min-width:0}
+.pric-product-picker-row>.input-form{width:84px!important;flex:0 0 84px;margin:0!important;text-align:center}
+.pric-product-picker-actions{display:flex;justify-content:flex-end;gap:12px;margin-top:18px}
+.pric-product-picker-actions>button{width:auto!important;margin:0!important}
+.pric-product-picker-status{font-weight:600;color:var(--pric-ink)}
+.pric-product-picker-error{color:#b91c1c;font-size:14px}
+.pric-consumo-picker-button{width:100%!important;grid-column:1/-1}
+@media(max-width:1000px){.pric-internal-movement{grid-template-columns:1fr 1fr}.pric-internal-concept{grid-column:auto}}
+@media(max-width:767px){.pric-cash-payments{grid-template-columns:1fr 1fr}.pric-cash-payments>button{grid-column:1/-1;justify-self:end}.pric-internal-movement{grid-template-columns:1fr 1fr}.pric-internal-concept{grid-column:1/-1}.pric-product-picker{padding:18px}}
+
+/* Cantidades y cobro manual en caja y turnos. */
+.pric-cash-sale .panel-title-row{align-items:center;gap:20px;margin-bottom:20px}
+.pric-cash-cart{margin:0;padding:0;list-style:none}
+.pric-cash-cart li.pric-product-line,.gestion-consumos-list li.pric-product-line{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:20px;padding:14px 0}
+.pric-product-name{min-width:0;display:flex;flex-direction:column;gap:5px;text-align:left}
+.pric-product-name span,.pric-product-name strong{white-space:normal;overflow-wrap:anywhere}
+.pric-product-name small{font-size:13px;color:#536580}
+.pric-quantity-actions{display:flex;align-items:center;gap:6px}
+.pric-quantity-actions button{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;min-width:32px;padding:0;border:1px solid #d5deeb;border-radius:8px;background:#fff;color:#07162e;font:600 20px Arial;cursor:pointer}
+.pric-quantity-actions button:hover{border-color:#07162e}
+.pric-quantity-actions svg{width:17px;height:17px}
+.pric-cash-sale .pric-cash-total{padding:20px 0;margin:8px 0 16px;border-top:1px solid #e5eaf1}
+.pric-cash-sale .pric-cash-payments{grid-template-columns:minmax(140px,1fr) minmax(140px,1fr) minmax(170px,.75fr);gap:16px}
+.pric-cash-sale #mov-pago-resumen{margin:12px 0 0;font-size:13px}
+.pric-cart-empty{padding:24px 0!important}
+@media(max-width:600px){.pric-cash-cart li.pric-product-line,.gestion-consumos-list li.pric-product-line{gap:8px}.pric-quantity-actions{gap:3px}.pric-quantity-actions button{width:28px;height:30px;min-width:28px}.pric-cash-sale .pric-cash-payments{grid-template-columns:1fr 1fr}.pric-cash-sale #btn-registrar-venta{grid-column:1/-1}}
+
+.pric-quantity-actions button[aria-busy="true"]{background:#07162e!important;color:#fff!important;border-color:#07162e!important;opacity:1!important}
+.pric-movement-accordion{margin:0!important}.pric-movement-accordion>.panel-card-club{padding:0 18px 18px!important}.pric-movement-accordion>.panel-card-club h3{display:none!important}.pric-movement-accordion .panel-card-title-row{justify-content:flex-end}.pric-movement-accordion[open]>summary{margin-bottom:4px}
+
+.pric-quantity-actions button:active,#btn-agregar-consumo-turno[aria-busy="true"]{background:#07162e!important;color:#fff!important;border-color:#07162e!important;opacity:1!important}
+
+body.panel-activo #panel-movimientos-club .panel-movimientos-vertical{display:flex;flex-direction:column;gap:16px}
+body.panel-activo #panel-movimientos-club .pric-movement-accordion>.panel-card-club{border:0!important;box-shadow:none!important;margin:0!important;border-radius:0!important;padding:0 18px 18px!important}
+
+.pric-journal-content{padding:0 18px 18px}.pric-journal-toolbar{display:flex;gap:16px;align-items:end;margin:6px 0 16px}.pric-journal-toolbar label{display:flex;flex-direction:column;gap:7px;max-width:230px}.pric-journal-toolbar button{width:auto!important;margin:0!important}.pric-journal-content p{line-height:1.5;margin:14px 0}.pric-journal-status{font-size:13px;color:#536580}.pric-journal-table-wrap{width:100%;overflow-x:auto}.pric-journal-table{width:100%;border-collapse:collapse;border:0!important;font-size:14px;background:#fff}.pric-journal-table th,.pric-journal-table td{padding:10px 12px!important;border:0!important;border-bottom:1px solid #d7dfeb!important;background:#fff!important;text-align:left;vertical-align:top}.pric-journal-table th+th,.pric-journal-table td+td{border-left:1px solid #d7dfeb!important}.pric-journal-table th{background:#f7f9fb!important;font-weight:600}.pric-journal-table td:nth-last-child(-n+2),.pric-journal-table th:nth-last-child(-n+2){text-align:right;white-space:nowrap}.pric-journal-table td:first-child{width:33%}.pric-journal-table small{display:block;margin-top:6px;color:#536580}.pric-journal-table .pric-journal-entry-start td{border-top:1px solid #bbc7d8!important}.pric-journal-table tfoot th,.pric-journal-table tfoot td{font-weight:600}.pric-journal-table-wrap tr:last-child td{border-bottom:0!important}
+
+/* Debe al margen izquierdo, Haber al derecho, dentro de la misma columna. */
+body.panel-activo .pric-journal-table th:first-child,body.panel-activo .pric-journal-table td.pric-journal-number{width:76px;min-width:58px}
+body.panel-activo .pric-journal-table td.pric-journal-account{width:auto;white-space:normal;overflow-wrap:anywhere}
+body.panel-activo .pric-journal-table td.pric-journal-account-debe{text-align:left!important}
+body.panel-activo .pric-journal-table td.pric-journal-account-haber{text-align:right!important}
+body.panel-activo .pric-journal-table th:nth-last-child(-n+2),body.panel-activo .pric-journal-table td:nth-last-child(-n+2){width:120px}
+
+body.panel-activo .pric-journal-table th:nth-last-child(-n+2),body.panel-activo .pric-journal-table td:nth-last-child(-n+2){text-align:center!important}
+.pric-journal-number .pric-journal-time{display:block;font-size:12px;font-weight:400;margin-top:5px;white-space:nowrap;color:#536580}
+.pric-journal-summary{margin:18px 0;padding-left:20px;line-height:1.8}.pric-journal-summary li{padding:2px 0}.pric-journal-summary strong{font-weight:600;color:#07162e}
+
+/* Un asiento conserva su separación exterior; solo los importes tienen líneas internas. */
+body.panel-activo .pric-journal-table tbody td{height:64px;box-sizing:border-box;line-height:18px;vertical-align:middle}
+body.panel-activo .pric-journal-table tbody td.pric-journal-number,body.panel-activo .pric-journal-table tbody td.pric-journal-account{border-bottom:0!important}
+body.panel-activo .pric-journal-table tbody tr.pric-journal-entry-start td{border-top:1px solid #d7dfeb!important}
+body.panel-activo .pric-journal-table tbody td:nth-last-child(-n+2){border-bottom:1px solid #d7dfeb!important}
+body.panel-activo .pric-journal-table tfoot th,body.panel-activo .pric-journal-table tfoot td{background:#07162e!important;color:#fff!important;font-weight:700;font-size:15px;padding:15px 12px!important;border-top:2px solid #07162e!important;border-bottom:0!important}
+body.panel-activo .pric-journal-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 32px;list-style:none;padding:0;margin:20px 0;line-height:1.5}
+body.panel-activo .pric-journal-summary li{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:4px 0}
+body.panel-activo .pric-journal-summary strong{white-space:nowrap}
+body.panel-activo .pric-journal-summary li:last-child{font-weight:700;color:#07162e}
+@media(max-width:600px){body.panel-activo .pric-journal-summary{grid-template-columns:1fr;gap:6px}}
+
+.gestion-pagos-historial{display:flex;flex-direction:column;gap:10px;margin-top:12px;text-align:left}.gestion-pago-registrado{display:grid;grid-template-columns:1fr auto;gap:4px 12px;padding:8px 0;color:#07162e;font-size:13px}.gestion-pago-registrado>span:last-child{grid-column:1/-1}.gestion-pago-registrado>span:nth-child(2){color:#536580;font-size:12px}
+
+.gestion-pagos-historial{max-height:168px;overflow-y:auto;gap:6px}.gestion-pago-registrado{padding:4px 0;line-height:16px;gap:3px 12px}
+
+.finanzas-pago-titulo{display:flex;align-items:center;justify-content:space-between;gap:12px}.finanzas-pagos-toggle{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;width:30px;height:30px;padding:4px;border:0;background:#fff;color:#07162e;border-radius:7px;cursor:pointer}.finanzas-pagos-toggle svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8}.finanzas-pagos-toggle:hover{background:#edf0f3}.finanzas-pagos-toggle:focus-visible{outline:2px solid #07162e;outline-offset:2px}.finanzas-pago-parcial td:nth-child(2){padding-left:28px!important}.finanzas-pago-parcial small{display:block;color:#536580;font-size:12px;margin-top:4px}body.panel-activo #panel-finanzas-club .historial-transacciones-scroll{max-height:none!important;min-height:0!important;height:auto!important;overflow:visible!important}
+
+/* Daily movement history shares the schedule and journal table finish. */
+#historial-transacciones-acordeon .pric-history-table{width:100%;border-collapse:collapse;border:0!important;background:#fff;font-size:14px}
+#historial-transacciones-acordeon .pric-history-table th,#historial-transacciones-acordeon .pric-history-table td{padding:12px!important;border:0!important;border-bottom:1px solid #d7dfeb!important;background:#fff;vertical-align:middle;line-height:1.5}
+#historial-transacciones-acordeon .pric-history-table th{background:#f7f9fb;font-weight:600;text-align:left}
+#historial-transacciones-acordeon .pric-history-table th+th,#historial-transacciones-acordeon .pric-history-table td+td{border-left:1px solid #d7dfeb!important}
+#historial-transacciones-acordeon .pric-history-table th:nth-child(n+3),#historial-transacciones-acordeon .pric-history-table td:nth-child(n+3){text-align:center!important;white-space:nowrap}
+#historial-transacciones-acordeon .pric-history-table small{display:block;margin-top:5px;color:#536580}
+#historial-transacciones-acordeon .pric-history-table .finanzas-pago-parcial td{background:#f7f9fb}
+
+#historial-transacciones-acordeon .pric-history-table tfoot th,#historial-transacciones-acordeon .pric-history-table tfoot td{background:#07162e!important;color:#fff!important;font-weight:700;font-size:15px;padding:15px 12px!important;border-top:2px solid #07162e!important;border-bottom:0!important}
+.pric-export-open{align-self:flex-start;width:auto!important}.pric-export-dialog{width:min(440px,calc(100% - 32px));box-sizing:border-box;border:1px solid #d7dfeb;border-radius:16px;padding:24px;background:#fff;color:#07162e;max-height:calc(100dvh - 32px);overflow:auto}.pric-export-dialog::backdrop{background:#07162e66}.pric-export-dialog h3{margin:0 0 20px}.pric-export-dialog label{display:flex;flex-direction:column;gap:8px}.pric-export-dialog .panel-grid-form{display:grid;gap:16px}.pric-export-actions{display:flex;gap:12px;margin-top:24px}.pric-export-actions button{flex:1;margin:0!important}
+@media(min-width:768px){body.panel-activo [data-sidebar-target="finanzas"],body.panel-activo #panel-finanzas-club{display:none!important}}
+
+body.panel-activo .pric-export-accordion{display:block;width:100%;box-sizing:border-box;text-align:left;border:1px solid #d7dfeb;border-radius:10px;padding:16px;background:#fff;color:var(--pric-primary);font-family:var(--pric-font);font-size:15px;font-weight:500;line-height:20px;cursor:pointer;margin:0}.pric-export-accordion:focus-visible{outline:2px solid #365f98;outline-offset:2px}
