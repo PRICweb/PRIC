@@ -393,30 +393,7 @@ body.panel-activo #panel-metricas-club .metricas-generar-btn{background:var(--pr
 body.panel-activo #panel-movimientos-club .panel-movimientos-vertical{display:flex;flex-direction:column;gap:16px}
 body.panel-activo #panel-movimientos-club .pric-movement-accordion>.panel-card-club{border:0!important;box-shadow:none!important;margin:0!important;border-radius:0!important;padding:0 18px 18px!important}
 
-.pric-journal-content{padding:0 18px 18px}.pric-journal-toolbar{display:flex;gap:16px;align-items:end;margin:6px 0 16px}.pric-journal-toolbar label{display:flex;flex-direction:column;gap:7px;max-width:230px}.pric-journal-toolbar button{width:auto!important;margin:0!important}.pric-journal-content p{line-height:1.5;margin:14px 0}.pric-journal-status{font-size:13px;color:#536580}.pric-journal-table-wrap{width:100%;overflow-x:auto}.pric-journal-table{width:100%;border-collapse:collapse;border:0!important;font-size:14px;background:#fff}.pric-journal-table th,.pric-journal-table td{padding:10px 12px!important;border:0!important;border-bottom:1px solid #d7dfeb!important;background:#fff!important;text-align:left;vertical-align:top}.pric-journal-table th+th,.pric-journal-table td+td{border-left:1px solid #d7dfeb!important}.pric-journal-table th{background:#f7f9fb!important;font-weight:600}.pric-journal-table td:nth-last-child(-n+2),.pric-journal-table th:nth-last-child(-n+2){text-align:right;white-space:nowrap}.pric-journal-table td:first-child{width:33%}.pric-journal-table small{display:block;margin-top:6px;color:#536580}.pric-journal-table .pric-journal-entry-start td{border-top:1px solid #bbc7d8!important}.pric-journal-table tfoot th,.pric-journal-table tfoot td{font-weight:600}.pric-journal-table-wrap tr:last-child td{border-bottom:0!important}
-
-/* Debe al margen izquierdo, Haber al derecho, dentro de la misma columna. */
-body.panel-activo .pric-journal-table th:first-child,body.panel-activo .pric-journal-table td.pric-journal-number{width:76px;min-width:58px}
-body.panel-activo .pric-journal-table td.pric-journal-account{width:auto;white-space:normal;overflow-wrap:anywhere}
-body.panel-activo .pric-journal-table td.pric-journal-account-debe{text-align:left!important}
-body.panel-activo .pric-journal-table td.pric-journal-account-haber{text-align:right!important}
-body.panel-activo .pric-journal-table th:nth-last-child(-n+2),body.panel-activo .pric-journal-table td:nth-last-child(-n+2){width:120px}
-
-body.panel-activo .pric-journal-table th:nth-last-child(-n+2),body.panel-activo .pric-journal-table td:nth-last-child(-n+2){text-align:center!important}
-.pric-journal-number .pric-journal-time{display:block;font-size:12px;font-weight:400;margin-top:5px;white-space:nowrap;color:#536580}
-.pric-journal-summary{margin:18px 0;padding-left:20px;line-height:1.8}.pric-journal-summary li{padding:2px 0}.pric-journal-summary strong{font-weight:600;color:#07162e}
-
-/* Un asiento conserva su separación exterior; solo los importes tienen líneas internas. */
-body.panel-activo .pric-journal-table tbody td{height:64px;box-sizing:border-box;line-height:18px;vertical-align:middle}
-body.panel-activo .pric-journal-table tbody td.pric-journal-number,body.panel-activo .pric-journal-table tbody td.pric-journal-account{border-bottom:0!important}
-body.panel-activo .pric-journal-table tbody tr.pric-journal-entry-start td{border-top:1px solid #d7dfeb!important}
-body.panel-activo .pric-journal-table tbody td:nth-last-child(-n+2){border-bottom:1px solid #d7dfeb!important}
-body.panel-activo .pric-journal-table tfoot th,body.panel-activo .pric-journal-table tfoot td{background:#07162e!important;color:#fff!important;font-weight:700;font-size:15px;padding:15px 12px!important;border-top:2px solid #07162e!important;border-bottom:0!important}
-body.panel-activo .pric-journal-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 32px;list-style:none;padding:0;margin:20px 0;line-height:1.5}
-body.panel-activo .pric-journal-summary li{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:4px 0}
-body.panel-activo .pric-journal-summary strong{white-space:nowrap}
-body.panel-activo .pric-journal-summary li:last-child{font-weight:700;color:#07162e}
-@media(max-width:600px){body.panel-activo .pric-journal-summary{grid-template-columns:1fr;gap:6px}}
+.pric-history-content{padding:0 18px 18px}.pric-history-toolbar{display:flex;gap:16px;align-items:end;margin:6px 0 16px}.pric-history-toolbar label{display:flex;flex-direction:column;gap:7px;max-width:230px}.pric-history-toolbar button{width:auto!important;margin:0!important}.pric-history-content p{line-height:1.5;margin:14px 0}.pric-history-status{font-size:13px;color:#536580}.pric-history-table-wrap{width:100%;overflow-x:auto}
 
 .gestion-pagos-historial{display:flex;flex-direction:column;gap:10px;margin-top:12px;text-align:left}.gestion-pago-registrado{display:grid;grid-template-columns:1fr auto;gap:4px 12px;padding:8px 0;color:#07162e;font-size:13px}.gestion-pago-registrado>span:last-child{grid-column:1/-1}.gestion-pago-registrado>span:nth-child(2){color:#536580;font-size:12px}
 
@@ -424,7 +401,7 @@ body.panel-activo .pric-journal-summary li:last-child{font-weight:700;color:#071
 
 .finanzas-pago-titulo{display:flex;align-items:center;justify-content:space-between;gap:12px}.finanzas-pagos-toggle{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;width:30px;height:30px;padding:4px;border:0;background:#fff;color:#07162e;border-radius:7px;cursor:pointer}.finanzas-pagos-toggle svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8}.finanzas-pagos-toggle:hover{background:#edf0f3}.finanzas-pagos-toggle:focus-visible{outline:2px solid #07162e;outline-offset:2px}.finanzas-pago-parcial td:nth-child(2){padding-left:28px!important}.finanzas-pago-parcial small{display:block;color:#536580;font-size:12px;margin-top:4px}body.panel-activo #panel-finanzas-club .historial-transacciones-scroll{max-height:none!important;min-height:0!important;height:auto!important;overflow:visible!important}
 
-/* Daily movement history shares the schedule and journal table finish. */
+/* Daily movement history table. */
 #historial-transacciones-acordeon .pric-history-table{width:100%;border-collapse:collapse;border:0!important;background:#fff;font-size:14px}
 #historial-transacciones-acordeon .pric-history-table th,#historial-transacciones-acordeon .pric-history-table td{padding:12px!important;border:0!important;border-bottom:1px solid #d7dfeb!important;background:#fff;vertical-align:middle;line-height:1.5}
 #historial-transacciones-acordeon .pric-history-table th{background:#f7f9fb;font-weight:600;text-align:left}
