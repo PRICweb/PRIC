@@ -354,7 +354,7 @@ body.panel-activo #panel-metricas-club .metricas-generar-btn{background:var(--pr
 .pric-product-picker{box-sizing:border-box;width:min(94vw,720px);max-height:88dvh;overflow:auto;border:1px solid var(--pric-line);border-radius:14px;padding:24px;background:white;color:var(--pric-ink);font-family:var(--pric-font,'Segoe UI',sans-serif)}
 .pric-product-picker::backdrop{background:rgba(7,21,43,.45)}
 .pric-product-picker h2{margin:0 0 10px;font-size:20px;outline:none}
-.pric-product-picker>input{margin-top:12px}
+.pric-product-picker-content>input{margin-top:12px}
 .pric-product-picker-list{margin:16px 0}
 .pric-product-picker-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 0}
 .pric-product-picker-row[hidden],.pric-product-picker [hidden]{display:none!important}
@@ -438,3 +438,5 @@ body.panel-activo .pric-journal-summary li:last-child{font-weight:700;color:#071
 @media(min-width:768px){body.panel-activo [data-sidebar-target="finanzas"],body.panel-activo #panel-finanzas-club{display:none!important}}
 
 body.panel-activo .pric-export-accordion{display:block;width:100%;box-sizing:border-box;text-align:left;border:1px solid #d7dfeb;border-radius:10px;padding:16px;background:#fff;color:var(--pric-primary);font-family:var(--pric-font);font-size:15px;font-weight:500;line-height:20px;cursor:pointer;margin:0}.pric-export-accordion:focus-visible{outline:2px solid #365f98;outline-offset:2px}
+
+@media(min-width:768px){.pric-product-picker[open]{display:flex;flex-direction:column;overflow:hidden;padding:0}.pric-product-picker-content{min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:24px;flex:1 1 auto}.pric-product-picker-actions{flex:0 0 auto;margin:0;padding:16px 24px;background:#fff;border-top:1px solid var(--pric-line);justify-content:flex-end}}

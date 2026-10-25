@@ -44,15 +44,16 @@
       const status=document.createElement('p');status.className='pric-product-picker-status';status.setAttribute('aria-live','polite');
       const error=document.createElement('p');error.className='pric-product-picker-error';error.setAttribute('role','alert');
       const footer=document.createElement('div');footer.className='pric-product-picker-actions';
-      const cancel=document.createElement('button');cancel.type='button';cancel.className='pric-media-button';cancel.textContent='Cancelar';
+      const cancel=document.createElement('button');cancel.type='button';cancel.className='pric-media-button';cancel.textContent='Cerrar';
       const apply=document.createElement('button');apply.type='button';apply.className='btn-modal btn-guardar';apply.textContent='Agregar productos';footer.append(cancel,apply);
       const getSelection=()=>[...quantities].filter(([,input])=>input.value!==''&&Number(input.value)!==0).map(([id,input])=>({id,cantidad:Number(input.value)}));
       const refresh=()=>{try{const selected=lines(getSelection(),products);status.textContent='Total de productos: '+money(selected.reduce((sum,item)=>sum+item.total,0));error.textContent='';apply.disabled=!selected.length;}catch(e){error.textContent=e.message;apply.disabled=true;}};
       list.addEventListener('input',refresh);searchButton.onclick=()=>{search.hidden=false;search.focus();};search.oninput=()=>{const query=search.value.trim().toLocaleLowerCase('es');for(const row of list.querySelectorAll('[data-search]'))row.hidden=!row.dataset.search.includes(query);};
       let result=null;cancel.onclick=()=>dialog.close();apply.onclick=()=>{try{result=lines(getSelection(),products).map(item=>({id:item.id,cantidad:item.cantidad}));if(result.length)dialog.close();}catch(e){error.textContent=e.message;}};
+      dialog.addEventListener('keydown',event=>{if(event.key!=='Enter'||event.isComposing||event.repeat||event.ctrlKey||event.altKey||event.metaKey||event.shiftKey)return;if(event.target.closest?.('button')&&event.target!==apply)return;event.preventDefault();event.stopPropagation();refresh();if(!apply.disabled)apply.click();});
       dialog.addEventListener('click',event=>{if(event.target!==dialog)return;const r=dialog.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom){event.preventDefault();event.stopImmediatePropagation();dialog.close();}});
       dialog.addEventListener('close',()=>{active=false;dialog.remove();resolve(result);},{once:true});
-      dialog.append(heading,help,searchButton,search,list,status,error,footer);document.body.append(dialog);refresh();dialog.showModal();heading.focus({preventScroll:true});
+      const content=document.createElement('div');content.className='pric-product-picker-content';content.append(heading,help,searchButton,search,list,status,error);dialog.append(content,footer);document.body.append(dialog);refresh();dialog.showModal();heading.focus({preventScroll:true});
     });
   }};
 })(typeof window!=='undefined'?window:null);
