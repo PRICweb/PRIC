@@ -817,7 +817,7 @@
     .pric-club-location{flex:1;min-width:0;font-size:13px;overflow-wrap:anywhere}
     .pric-club-contact a:focus-visible{outline:2px solid #07152b;outline-offset:3px}
   </style>
-<link rel="stylesheet" href="pric-design.css?v=20261006-publicacion"><script src="media-client.js"></script><script src="reservation-schedule.js?v=20261024"></script></head>
+<link rel="stylesheet" href="pric-design.css?v=20261006-publicacion"><script src="media-client.js"></script><script src="reservation-schedule.js?v=20261024"></script><script src="number-entry.js?v=20261027"></script></head>
 <body>
   <div id="mensaje-error">
     <strong>Error:</strong> No se especificó el club en la URL o el club no existe.<br />
@@ -1942,7 +1942,7 @@
       consultar();
     }
 
-    let actualizandoDisponibilidad=false,disponibilidadFechaCargada=null,errorDisponibilidad='',actualizarDisponibilidadReserva=null;
+    let actualizandoDisponibilidad=false,disponibilidadFechaCargada=null,errorDisponibilidad='',actualizarDisponibilidadReserva=null,ultimaDisponibilidadFirma='';
     let intervaloDisponibilidad=null,gestoReservaActivo=false,terminarGestoReserva=null;
     window.addEventListener('pointerdown',e=>{if(e.target.closest?.('#pantalla-jugador'))gestoReservaActivo=true;},{capture:true,passive:true});
     const terminarGesto=()=>{gestoReservaActivo=false;const resolve=terminarGestoReserva;terminarGestoReserva=null;if(resolve)setTimeout(()=>{if(gestoReservaActivo)terminarGestoReserva=resolve;else resolve();},350);};
@@ -1955,7 +1955,12 @@
           const query=new URLSearchParams({clubId,desde:requestedDate,hasta:requestedDate});
           const response=await fetchBackendPublico(BACKEND_URL+'/public/disponibilidad?'+query),data=await response.json().catch(()=>({}));
           if(!response.ok||!data.ok||!data.club||!Array.isArray(data.reservas))throw Error(data.error||'Disponibilidad no disponible');
+          if(requestedDate!==fechaSeleccionada)return;
+          const firma=JSON.stringify([requestedDate,data.club,data.reservas]);
+          if(firma===ultimaDisponibilidadFirma&&disponibilidadFechaCargada===requestedDate)return;
           if(gestoReservaActivo)await new Promise(resolve=>terminarGestoReserva=resolve);
+          if(requestedDate!==fechaSeleccionada)return;
+          ultimaDisponibilidadFirma=firma;
           clubRaizActual=data.club;configuracionGeneralActual=data.club.datosClub||{};reservasGlobales=data.reservas;
           disponibilidadFechaCargada=requestedDate;refrescarConfiguracionClubPublica();
           document.getElementById('mensaje-error').style.display='none';document.getElementById('pantalla-jugador').style.display='block';
