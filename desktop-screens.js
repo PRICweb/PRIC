@@ -12,7 +12,7 @@ node.querySelectorAll(':scope>.contenido-acordeon').forEach(n=>{n.hidden=false;n
 const head=document.createElement('div');head.className='pric-desktop-heading';const h=document.createElement('h2');h.textContent=title;const back=document.createElement('button');back.type='button';back.textContent='←';back.setAttribute('aria-label','Volver a la vista principal');back.onclick=()=>window.abrirVistaPanelClub(view);head.append(h,back);node.prepend(head);
 if(view==='config'){const save=document.createElement('button');save.type='button';save.className='btn-modal btn-guardar';save.textContent='Guardar';save.onclick=()=>window.guardarSeccionConfiguracion(node,save);head.insertBefore(save,back);}
 if(view==='empleados'&&title==='Lista')window.renderizarListaEmpleados?.();if(title==='Ajustes')window.cargarAjustesHistorial?.();if(title==='Horas trabajadas')window.cargarHorasEmpleados?.();if(title==='Liquidar sueldo')window.cargarLiquidacionEmpleados?.();
-if(node.id==='historial-transacciones-acordeon')window.renderizarHistorial?.();
+// Native details toggle loads transaction history once.
 node.scrollIntoView({block:'start'});
 }
 function closeMenus(){document.querySelectorAll('.pric-desktop-submenu').forEach(n=>{n.classList.remove('expanded');document.querySelector('[aria-controls="'+n.id+'"]')?.setAttribute('aria-expanded','false');});}
