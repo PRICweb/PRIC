@@ -20,17 +20,17 @@
  let administrationGroups=[];
  function administrationAccordions(){
   const label=document.querySelector('#sidebar-admin-club [data-sidebar-target=inventario]>span:last-child');if(label)label.textContent='Inventario';
-  if(!mobile.matches){administrationGroups=administrationGroups.filter(item=>{if(item.node.id==='card-categorias-inventario')return true;item.marker.replaceWith(item.node);item.wrapper.remove();return false;});}
+  if(!mobile.matches){administrationGroups=administrationGroups.filter(item=>{if(item.node.id==='card-categorias-inventario'||item.node.contains(document.getElementById('tabla-inventario')))return true;item.marker.replaceWith(item.node);item.wrapper.remove();return false;});}
   const stock=document.getElementById('tabla-inventario')?.closest('.panel-card-club');
-  for(const [title,node]of [['Categorías de producto',document.getElementById('card-categorias-inventario')],['Stock actual',stock],['Historial de transacciones',document.querySelector('#panel-finanzas-club .panel-card-historial')],['Exportar balance',document.querySelector('#panel-finanzas-club .panel-exportar-balance')]]){
-   if(!node||administrationGroups.some(item=>item.node===node)||(!mobile.matches&&node.id!=='card-categorias-inventario'))continue;const marker=document.createComment('Original '+title),wrapper=document.createElement('details'),summary=document.createElement('summary');wrapper.className='pric-admin-accordion';summary.textContent=title;node.before(marker,wrapper);wrapper.append(summary,node);administrationGroups.push({marker,node,wrapper});
+  for(const [title,node]of [['Categorías',document.getElementById('card-categorias-inventario')],['Stock',stock],['Historial de transacciones',document.querySelector('#panel-finanzas-club .panel-card-historial')],['Exportar balance',document.querySelector('#panel-finanzas-club .panel-exportar-balance')]]){
+   if(!node||administrationGroups.some(item=>item.node===node)||(!mobile.matches&&node.id!=='card-categorias-inventario'&&node!==stock))continue;const marker=document.createComment('Original '+title),wrapper=document.createElement('details'),summary=document.createElement('summary');wrapper.className='pric-admin-accordion';summary.textContent=title;node.before(marker,wrapper);wrapper.append(summary,node);administrationGroups.push({marker,node,wrapper});
   }
  }
  let metricsPosition=null,metricsAccordion=null;
  function movementMetrics(){
   const panel=document.getElementById('panel-metricas-club'),movements=document.querySelector('#panel-movimientos-club .panel-movimientos-vertical');if(!panel||!movements)return;
   if(mobile.matches){
-   if(!metricsAccordion){metricsPosition=document.createComment('Ubicación original de métricas');panel.before(metricsPosition);metricsAccordion=document.createElement('details');metricsAccordion.id='pric-mobile-metrics';metricsAccordion.className='pric-admin-accordion pric-movement-accordion';const summary=document.createElement('summary');summary.textContent='Métricas';metricsAccordion.append(summary,panel);const exportButton=movements.querySelector('.pric-export-accordion');if(exportButton)exportButton.before(metricsAccordion);else movements.append(metricsAccordion);}
+   if(!metricsAccordion){metricsPosition=document.createComment('Ubicación original de métricas');panel.before(metricsPosition);metricsAccordion=document.createElement('details');metricsAccordion.id='pric-mobile-metrics';metricsAccordion.className='pric-admin-accordion pric-movement-accordion';const summary=document.createElement('summary');summary.textContent='Informes';metricsAccordion.append(summary,panel);const exportButton=movements.querySelector('.pric-export-accordion');if(exportButton)exportButton.before(metricsAccordion);else movements.append(metricsAccordion);}
   }else if(metricsAccordion){metricsPosition.replaceWith(panel);metricsAccordion.remove();metricsAccordion=null;metricsPosition=null;}
  }
  function professorAccordions(){

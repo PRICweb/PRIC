@@ -6,7 +6,7 @@
  function modalityImage(id,slot,into){const label=document.createElement('label');label.textContent='Imagen de la modalidad';const input=document.createElement('input');input.id=id;input.type='hidden';label.append(input);into.append(label);root.PricMedia.attach(input,{kind:'modality',slot,resolve:()=>root.PricClubMedia.target()});}
  function reorg(){
   if(prepared)return;const advanced=$('config-etapa4-card'),scroller=document.querySelector('#panel-config-club .scroll-interno'),info=$('ac-config-info')||$('ac-config-informacion');if(!advanced||!scroller||!info)return;prepared=true;
-  const information=accordion('Información','pric-config-info'),padel=accordion('Pádel','pric-config-padel'),tennis=accordion('Tenis','pric-config-tenis'),routine=accordion('Horarios','pric-config-rutina'),policies=accordion('Políticas','pric-config-politicas');
+  const information=accordion('Información','pric-config-info'),padel=accordion('Pádel','pric-config-padel'),tennis=accordion('Tenis','pric-config-tenis'),routine=accordion('Horarios','pric-config-rutina'),policies=accordion('Términos y cuentas vinculadas','pric-config-politicas');
   const foto=$('input-foto-club'),contact=document.querySelector('.config-info-campos');if(contact)information.content.append(contact);
   const name=document.createElement('label');name.textContent='Nombre del club';const nameInput=document.createElement('input');nameInput.id='input-nombre-club';nameInput.className='input-form';nameInput.readOnly=true;name.append(nameInput);information.content.prepend(name);
   if(foto){const label=foto.parentElement.querySelector('label');if(label)label.textContent='Imagen principal del club';root.PricMedia.attach(foto,{kind:'club',resolve:()=>root.PricClubMedia.target()});}

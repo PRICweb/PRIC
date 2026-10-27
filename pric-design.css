@@ -485,3 +485,100 @@ body.panel-activo .pric-export-accordion{display:block;width:100%;box-sizing:bor
 }
 
 @media(max-width:767px){body.panel-activo #pric-onboarding #panel-config-club .pric-config-save{display:block!important}}
+/* Desktop subviews share the existing forms and their validation. */
+#pric-turnero-loading{background:transparent!important;pointer-events:none;color:#06162f!important;cursor:default}
+.pric-desktop-submenu{display:none}
+@media(min-width:768px){
+.pric-desktop-submenu.expanded{display:flex;flex-direction:column;gap:4px;margin:-8px 0 4px 16px}
+.pric-desktop-submenu button{font:inherit;font-size:14px;text-align:left;background:#fff;color:#06162f;border:0;border-radius:8px;padding:10px 12px;cursor:pointer}
+.pric-desktop-submenu button:hover,.pric-desktop-submenu button.active{background:#eef0f3}
+.pric-desktop-hidden{display:none!important}
+.pric-desktop-selected>summary,.pric-desktop-selected>.header-acordeon{display:none!important}
+.pric-desktop-selected>.contenido-acordeon{display:block!important;max-height:none!important;overflow:visible!important}
+.pric-desktop-heading{display:flex;align-items:center;gap:16px;margin-bottom:18px;padding:12px 16px;border-bottom:1px solid #d7dfeb}
+.pric-desktop-heading h2{flex:1;margin:0;font-size:22px}
+.pric-desktop-heading button{width:auto!important;margin:0!important}
+.pric-desktop-heading button:last-child{background:#fff;border:0;color:#06162f;font-size:26px;cursor:pointer}
+}
+@media(min-width:768px){
+ #sidebar-admin-club .pric-desktop-submenu,#sidebar-admin-club .pric-desktop-submenu.expanded{display:grid;grid-template-rows:0fr;opacity:0;visibility:hidden;margin:-14px 0 0 12px;padding:0;transition:grid-template-rows .16s ease,opacity .12s ease,visibility .16s;pointer-events:none}
+ #sidebar-admin-club .pric-desktop-submenu.expanded{grid-template-rows:1fr;opacity:1;visibility:visible;pointer-events:auto}
+ .pric-desktop-submenu-inner{overflow:hidden;min-height:0;display:flex;flex-direction:column;gap:4px}
+ .pric-desktop-submenu-inner::before{content:'';height:0;flex-shrink:0}
+ #sidebar-admin-club .pric-desktop-submenu button{font-size:13px;line-height:1.35;padding:7px 10px;min-height:0;margin:0;border-radius:7px}
+}
+@media(prefers-reduced-motion:reduce){#sidebar-admin-club .pric-desktop-submenu{transition:none!important}}
+/* Subviews have no outer frame or heading divider; form fields and tables retain their borders. */
+body.panel-activo .pric-desktop-selected,body.panel-activo .pric-subview-active{border:0!important;box-shadow:none!important}
+.pric-desktop-selected>.pric-desktop-heading,.pric-subview-active>.pric-subview-header{border-bottom:0!important}
+body.panel-activo .pric-desktop-selected>.panel-card-club,body.panel-activo .pric-desktop-selected>.contenido-acordeon{border:0!important;box-shadow:none!important}
+.pric-purchase-total{display:flex;justify-content:space-between;align-items:center;gap:16px;margin:24px 0}
+.pric-purchase-total strong{font-size:24px;color:#06162f}
+.pric-sale-discount{display:block;max-width:260px;margin:18px 0}
+.pric-sale-discount input{margin-top:8px}
+.pric-adjustments-history{margin-top:28px}
+.pric-admin-data-table{width:100%;border-collapse:collapse;table-layout:fixed;background:#fff;color:#07152b}
+body.panel-activo .pric-admin-data-table th{background:#f7f8fa!important;font-weight:600;text-align:left;padding:12px 10px;border:0;border-bottom:1px solid #d7dfeb!important}
+body.panel-activo .pric-admin-data-table td{padding:12px 10px!important;vertical-align:middle;border:0;border-bottom:1px solid #e5eaf2!important;overflow-wrap:anywhere}
+.pric-table-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px}
+.pric-adjustments-history table th:nth-child(3){width:16%}
+.pric-adjustments-history table th:last-child{width:20%}
+#ajustes-mas{display:block;margin:16px auto 0}#ajustes-mas[hidden],#ajustes-cancelar[hidden],#mov-ajuste-direccion-wrap[hidden]{display:none!important}
+body.panel-activo .profesores-lista-box{border:0!important;box-shadow:none!important;max-height:none!important;overflow:visible!important;padding:0!important}
+@media(max-width:767px){.pric-adjustments-history table{font-size:12px}.pric-adjustments-history td,.pric-adjustments-history th{padding:8px 4px!important}.pric-table-actions{gap:3px}.pric-table-actions button{padding:6px!important;font-size:12px!important}.pric-admin-data-table th:last-child{width:24%}}
+body.panel-activo #panel-config-club .pric-config-save{display:none!important}
+body.panel-activo #pric-onboarding .pric-config-save{display:block!important}
+.pric-internal-movement>[hidden]{display:none!important}
+body.panel-activo #panel-config-club details.pric-config-inner{border:1px solid #d7dfeb!important;border-radius:10px!important;margin:16px 0!important;padding:0!important}
+body.panel-activo #panel-config-club details.pric-config-inner>summary{padding:16px!important;font:inherit!important;font-size:14px!important;color:#07152b!important;background:#fff!important;cursor:pointer;list-style:none}
+body.panel-activo #panel-config-club details.pric-config-inner.pric-desktop-selected{border:0!important}
+.pric-metric-content{padding:16px 0}
+.pric-internal-movement>div,.pric-internal-movement>label{display:flex;flex-direction:column;gap:7px;align-self:end;margin:0!important}
+.pric-internal-movement label{margin:0!important;line-height:20px}
+.pric-internal-movement input,.pric-internal-movement select{height:44px!important;min-height:44px!important}
+#mov-ajuste-direccion-wrap{font-size:14px;color:#07152b;line-height:20px}
+#pric-config-politicas{display:none;gap:24px;padding:16px 0}
+#pric-config-politicas:not([hidden]){display:grid!important}
+#pric-config-politicas>div{margin:0!important}
+#pric-config-politicas label{display:block!important;margin:0 0 9px!important;line-height:1.45}
+#pric-config-politicas textarea{min-height:120px;margin:0!important;line-height:1.5}
+#pric-config-politicas #config-mercadopago-card{margin:0 0 8px!important;padding:18px!important}
+#pric-config-padel>details,#pric-config-tenis>details{margin:0 0 16px!important}
+#pric-config-padel>details>.contenido-acordeon,#pric-config-tenis>details>.contenido-acordeon{padding:16px!important}
+#pric-sales-margin #margen-calcular{width:auto!important;margin:16px 0!important}
+.pric-report-period{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;align-items:end;gap:14px;margin-bottom:20px}
+.pric-report-period>label{display:flex;flex-direction:column;gap:7px;margin:0!important}
+.pric-report-period input{height:44px!important;margin:0!important;box-sizing:border-box}
+#pric-sales-margin .pric-report-period #margen-calcular,.pric-report-period button{width:auto!important;height:44px!important;margin:0!important;white-space:nowrap}
+.pric-report-kind{display:flex;flex-direction:column;gap:8px;max-width:380px;margin:18px 0}
+#informe-totales td{font-weight:700;background:#eef0f3!important}
+@media(max-width:600px){.pric-report-period{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}.pric-report-period>button{grid-column:1/-1;justify-self:end}}
+#employee-form label{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;color:#07152b}
+#employee-form input,#employee-form select{margin:0!important}
+#employee-account{margin-top:20px}#employee-account[hidden],#employee-extra-field[hidden]{display:none!important}
+#employee-permissions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:16px 0}
+.pric-employee-permission{border:1px solid #d7dfeb;border-radius:10px;padding:14px;min-width:0}
+#employee-form .pric-employee-permission label{display:flex;flex-direction:row;align-items:center;gap:10px;margin:0 0 10px}
+#employee-form .pric-employee-permission input{width:17px!important;height:17px;accent-color:#06162f;flex-shrink:0}
+.pric-employee-permission-children{padding-left:25px}
+[data-employee-hidden]{display:none!important}
+@media(max-width:600px){#employee-permissions{grid-template-columns:1fr}}
+body.panel-activo #sidebar-admin-club [data-employee-hidden],body.panel-activo #app-content [data-employee-hidden]{display:none!important}
+.pric-employee-editor{width:min(920px,94vw);max-height:90dvh;overflow:auto;border:1px solid #d7dfeb;border-radius:14px;background:#fff;color:#07152b;padding:24px;box-sizing:border-box}
+.pric-employee-editor::backdrop{background:rgba(7,21,43,.35)}
+.pric-employee-form label{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+.pric-employee-form .pric-employee-permission label{flex-direction:row;align-items:center;gap:10px;margin:0 0 10px}
+.pric-employee-form input[data-scope]{width:17px!important;height:17px;accent-color:#06162f;flex-shrink:0}
+.pric-employee-form [hidden]{display:none!important}
+.pric-employee-form [id^=employee-permissions]{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:16px 0}
+.pric-employee-edit-footer{display:flex;justify-content:flex-end;gap:12px;position:sticky;bottom:-24px;background:#fff;padding:16px 0;margin-top:16px}
+.pric-employee-edit-footer button{width:auto!important;min-width:100px}
+@media(max-width:600px){.pric-employee-form [id^=employee-permissions]{grid-template-columns:1fr}}
+.pric-hours-form{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(90px,.5fr) minmax(150px,1fr) auto;gap:14px;align-items:end;margin-bottom:18px}
+.pric-hours-form>label,#panel-empleados-club .panel-grid-form>label{display:flex;flex-direction:column;gap:8px;margin:0}
+.pric-hours-form input,.pric-hours-form select{height:44px!important;margin:0!important}
+.pric-hours-form>button{width:auto!important;height:44px;margin:0!important}
+.pric-payroll-total{font-size:20px;font-weight:700;color:#06162f;margin:20px 0}
+#payroll-form{margin-bottom:28px}#payroll-more{display:block;margin:16px auto}#payroll-more[hidden]{display:none!important}
+@media(max-width:900px){.pric-hours-form{grid-template-columns:1fr 1fr}.pric-hours-form>button{justify-self:end}}
+@media(min-width:768px){.pric-desktop-nav-group{display:flex;flex-direction:column;min-width:0}#sidebar-admin-club .pric-desktop-nav-group>.pric-desktop-submenu{margin:0 0 0 12px!important}}
