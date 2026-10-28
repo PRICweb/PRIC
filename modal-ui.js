@@ -10,6 +10,8 @@
  function closeModal(el){if(el.classList.contains('web-dialog-overlay')){el.pricCancel?.();return;}if(el.tagName==='DIALOG'){const cancel=new Event('cancel',{cancelable:true});if(el.dispatchEvent(cancel))el.close();return;}const functions={'modal-acciones':'cerrarModalAcciones','modal-reserva-admin':'cerrarModalReservaAdmin','modal-cobrar-clase':'cerrarModalCobrarClase','modal-agregar-producto':'cerrarModalAgregarProducto','modal-editar-precio':'cerrarModalEditarPrecio','modal-reponer-stock':'cerrarModalReposicion'};const fn=functions[el.id];if(fn&&typeof window[fn]==='function')window[fn]();else el.querySelector('[data-action*="cerrar"],[data-cancel]')?.click();}
  document.addEventListener('keydown',e=>{if(e.key!=='Escape'||e.defaultPrevented)return;const visible=n=>n.getClientRects().length&&getComputedStyle(n).visibility!=='hidden';const modals=[...document.querySelectorAll('dialog[open],.modal-overlay:not(.panel-seccion-club),.web-dialog-overlay.open')].filter(visible);if(modals.length){e.preventDefault();e.stopImmediatePropagation();closeModal(modals.at(-1));return;}const openAccordion=[...document.querySelectorAll('#panel-config-club details.pric-config-inner[open]')].filter(visible).at(-1);if(openAccordion){e.preventDefault();openAccordion.open=false;return;}if(window.PricMobileScreens?.active()){e.preventDefault();window.PricMobileScreens.back();return;}const arrow=document.querySelector('.pric-desktop-selected .pric-desktop-heading button[aria-label="Volver a la vista principal"]');if(arrow&&visible(arrow)){e.preventDefault();arrow.click();return;}const menu=document.querySelector('.pric-desktop-submenu.expanded');if(menu){e.preventDefault();menu.classList.remove('expanded');document.querySelector('[aria-controls="'+menu.id+'"]')?.setAttribute('aria-expanded','false');return;}if(document.body.classList.contains('panel-activo')&&window.__vistaPanelClubActual!=='turnero'){e.preventDefault();window.abrirVistaPanelClub?.('turnero');}},false);
  const modalHistory=[];let restoringModal=false,removingHistory=false,modalSequence=0;
+ const afterModalClose=[];
+ window.pricCloseModalThen=(el,action)=>{if(matchMedia('(max-width:767px)').matches&&modalHistory.some(entry=>entry.el===el)){afterModalClose.push(action);el.close();}else{el.close();action();}};
  function syncModalHistory(current){
   if(!matchMedia('(max-width:767px)').matches)return;
   if(restoringModal){for(let i=modalHistory.length-1;i>=0;i--)if(!current.has(modalHistory[i].el))modalHistory.splice(i,1);return;}
@@ -25,7 +27,7 @@
  const handledBack=new WeakSet();
  window.pricHandleModalBack=e=>{
   if(handledBack.has(e))return true;
-  if(removingHistory){handledBack.add(e);removingHistory=false;e.stopImmediatePropagation();syncModalHistory(activeModals);return true;}
+  if(removingHistory){handledBack.add(e);removingHistory=false;e.stopImmediatePropagation();syncModalHistory(activeModals);const callbacks=afterModalClose.splice(0);queueMicrotask(()=>callbacks.forEach(action=>action()));return true;}
   if(!modalHistory.length)return false;
   handledBack.add(e);e.stopImmediatePropagation();restoringModal=true;
   while(modalHistory.length&&modalHistory[modalHistory.length-1].id!==e.state?.pricModal)closeModal(modalHistory.pop().el);

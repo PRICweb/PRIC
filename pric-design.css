@@ -582,3 +582,32 @@ body.panel-activo #sidebar-admin-club [data-employee-hidden],body.panel-activo #
 #payroll-form{margin-bottom:28px}#payroll-more{display:block;margin:16px auto}#payroll-more[hidden]{display:none!important}
 @media(max-width:900px){.pric-hours-form{grid-template-columns:1fr 1fr}.pric-hours-form>button{justify-self:end}}
 @media(min-width:768px){.pric-desktop-nav-group{display:flex;flex-direction:column;min-width:0}#sidebar-admin-club .pric-desktop-nav-group>.pric-desktop-submenu{margin:0 0 0 12px!important}}
+/* Mobile navigation uses the same account permissions as desktop. */
+@media(max-width:767px){
+ body.panel-activo #sidebar-admin-club .sidebar-menu-club{grid-template-columns:repeat(var(--pric-mobile-nav-count,5),minmax(0,1fr))!important;min-height:70px}
+ body.panel-activo #sidebar-admin-club .sidebar-menu-club>[data-sidebar-target]{display:none!important}
+ body.panel-activo #sidebar-admin-club .sidebar-menu-club>[data-mobile-nav=true]:not([data-employee-hidden]){display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:5px!important;min-width:0!important;width:100%!important;height:70px!important;min-height:70px!important;aspect-ratio:auto;padding:7px 2px!important;margin:0!important;border-radius:0!important;font-size:10px!important;line-height:1.25;box-sizing:border-box;white-space:normal;overflow-wrap:anywhere}
+ body.panel-activo #sidebar-admin-club [data-sidebar-target=metricas]{order:0}body.panel-activo #sidebar-admin-club [data-sidebar-target=movimientos]{order:1}body.panel-activo #sidebar-admin-club [data-sidebar-target=turnero]{order:2}body.panel-activo #sidebar-admin-club [data-sidebar-target=inventario]{order:3}body.panel-activo #sidebar-admin-club [data-sidebar-target=empleados]{order:4}
+ body.panel-activo[data-mobile-nav-empty] #sidebar-admin-club{display:none!important}
+ body.panel-activo[data-mobile-nav-empty] #app-content{padding-bottom:20px!important}
+ body.panel-activo #app-content{padding-bottom:calc(88px + env(safe-area-inset-bottom))!important}
+ #pric-mobile-turnero-links button[hidden]{display:none!important}
+ #pric-mobile-turnero-links:has(>button[hidden]){grid-template-columns:1fr}
+ #pric-mobile-turnero-links:has(>button[hidden]):not(:has(>button:not([hidden]))){display:none!important}
+ #panel-metricas-club{min-width:0!important;padding:16px!important}
+ .pric-hours-form{grid-template-columns:minmax(0,1fr)!important}.pric-hours-form>button{width:100%!important;justify-self:stretch}
+ #panel-empleados-club .panel-grid-form,.pric-employee-form .panel-grid-form{grid-template-columns:minmax(0,1fr)!important}
+ .pric-employee-editor{padding:16px;width:calc(100% - 24px)}.pric-employee-edit-footer{bottom:-16px}
+ #panel-metricas-club .pric-mobile-table tfoot{display:block;margin-top:12px;padding:12px;background:#eef0f3;border-radius:8px}
+ #panel-metricas-club .pric-mobile-table tfoot tr{display:grid;gap:8px}
+ #panel-metricas-club .pric-mobile-table tfoot td{display:flex;justify-content:space-between;gap:12px;padding:4px 0!important;border:0!important;font-weight:700}
+ #panel-metricas-club .pric-mobile-table tfoot td[data-mobile-label]:not(:first-child):before{content:attr(data-mobile-label);font-weight:400}
+ #panel-metricas-club .pric-mobile-table tfoot td:empty{display:none!important}
+}
+#pric-mobile-navigation{box-sizing:border-box;width:calc(100% - 24px);max-width:440px;max-height:calc(100dvh - 48px);padding:16px;border:1px solid #d7dfeb;border-radius:16px;background:#fff;color:#07162e;overflow:auto}
+#pric-mobile-navigation::backdrop{background:rgba(7,21,43,.35)}
+.pric-mobile-navigation-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.pric-mobile-navigation-header h2{font-size:20px;margin:0}
+#pric-mobile-navigation nav{display:grid;gap:8px}
+.pric-mobile-navigation-item{display:flex;align-items:center;gap:14px;min-height:54px;padding:14px;border:1px solid #d7dfeb;border-radius:10px;background:#fff;color:#07162e;text-align:left;font:14px 'Segoe UI',sans-serif;cursor:pointer}
+.pric-mobile-navigation-item svg{width:22px;height:22px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.pric-mobile-navigation-item[aria-current=page]{background:#eef0f3}
+@media(max-width:767px){body.panel-activo #pric-mobile-brand{display:flex!important;align-items:center;justify-content:space-between;gap:12px}.pric-mobile-account{border:0;background:#fff;color:#07162e;width:36px;height:36px;padding:6px;flex:none;cursor:pointer}.pric-mobile-account svg{width:24px;height:24px}}
