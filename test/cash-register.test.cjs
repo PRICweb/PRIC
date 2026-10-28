@@ -63,7 +63,7 @@ test('financial history and exports retain signed cash and transfer amounts for 
   const html=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8');
   const source=html.slice(html.indexOf('  function transaccionesDesdeDatos('),html.indexOf('  async function cargarTransaccionesFinanzasRango('));
   const context={normalizarRegistroFinanciero:x=>x,numeroValido:value=>Number(value)||0};vm.createContext(context);vm.runInContext(source,context);
-  const rows=context.transaccionesDesdeDatos([{id:'sale',fecha:'2026-10-24',monto:150,efectivo:100,transferencia:50}],[{id:'expense',fecha:'2026-10-24',monto:70,efectivo:20,transferencia:50}],[]);
+  const rows=context.transaccionesDesdeDatos([{id:'sale',fecha:'2026-10-24',monto:150,efectivo:100,transferencia:50},{id:'cancelled-sale',monto:9999,efectivo:9999,anulado:true}],[{id:'expense',fecha:'2026-10-24',monto:70,efectivo:20,transferencia:50},{id:'cancelled-expense',monto:9999,transferencia:9999,anulado:true}],[]);
   const expense=rows.find(row=>row.id==='expense');assert.equal(expense.efectivo,-20);assert.equal(expense.transferencia,-50);assert.equal(expense.monto,-70);
   assert.equal(rows.reduce((sum,row)=>sum+row.efectivo,0),80);assert.equal(rows.reduce((sum,row)=>sum+row.transferencia,0),0);assert.equal(rows.reduce((sum,row)=>sum+row.monto,0),80);
 });
