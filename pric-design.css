@@ -417,6 +417,12 @@ body.panel-activo #panel-movimientos-club .pric-movement-accordion>.panel-card-c
 body.panel-activo .pric-export-accordion{display:block;width:100%;box-sizing:border-box;text-align:left;border:1px solid #d7dfeb;border-radius:10px;padding:16px;background:#fff;color:var(--pric-primary);font-family:var(--pric-font);font-size:15px;font-weight:500;line-height:20px;cursor:pointer;margin:0}.pric-export-accordion:focus-visible{outline:2px solid #365f98;outline-offset:2px}
 
 @media(min-width:768px){.pric-product-picker[open]{display:flex;flex-direction:column;overflow:hidden;padding:0}.pric-product-picker-content{min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:24px;flex:1 1 auto}.pric-product-picker-actions{flex:0 0 auto;margin:0;padding:16px 24px;background:#fff;border-top:1px solid var(--pric-line);justify-content:flex-end}}
+@media(max-width:767px){
+ .pric-product-picker[open]{display:flex;flex-direction:column;overflow:hidden;padding:0}
+ .pric-product-picker-content{min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:18px;flex:1 1 auto}
+ .pric-product-picker-actions{flex:0 0 auto;margin:0;padding:14px 18px max(14px,env(safe-area-inset-bottom));background:#fff;border-top:1px solid var(--pric-line);gap:10px}
+ .pric-product-picker-actions>button{min-height:44px;flex:1;min-width:0;padding:10px 8px!important}
+}
 
 #pric-turnero-loading{position:fixed;inset:0 0 0 220px;z-index:1400;background:rgba(100,110,125,.35);display:flex;align-items:center;justify-content:center;color:#06162f;font-size:20px;font-weight:600;cursor:wait}#pric-turnero-loading[hidden]{display:none}@media(max-width:767px){#pric-turnero-loading{inset:0 0 82px}}
 
@@ -610,4 +616,24 @@ body.panel-activo #sidebar-admin-club [data-employee-hidden],body.panel-activo #
 #pric-mobile-navigation nav{display:grid;gap:8px}
 .pric-mobile-navigation-item{display:flex;align-items:center;gap:14px;min-height:54px;padding:14px;border:1px solid #d7dfeb;border-radius:10px;background:#fff;color:#07162e;text-align:left;font:14px 'Segoe UI',sans-serif;cursor:pointer}
 .pric-mobile-navigation-item svg{width:22px;height:22px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.pric-mobile-navigation-item[aria-current=page]{background:#eef0f3}
+.ctacte-dialog{width:min(600px,94vw);max-height:88dvh;overflow:auto;box-sizing:border-box;padding:24px;border:1px solid #d7dfeb;border-radius:14px;background:#fff;color:#07152b;font:14px 'Segoe UI',sans-serif}
+.ctacte-dialog::backdrop{background:rgba(7,21,43,.35)}.ctacte-dialog h2{margin:0 0 24px;font-size:22px}
+.ctacte-dialog label,#ctacte-clientes-form label{display:flex;flex-direction:column;gap:8px}
+.ctacte-dialog-actions{display:flex;justify-content:flex-end;gap:12px;position:sticky;bottom:-24px;background:#fff;padding:16px 0;margin-top:20px}
+.ctacte-dialog-actions button{width:auto!important;min-width:110px;margin:0!important}
+#ctacte-clientes-form{margin-bottom:28px}#ctacte-clientes-form button{width:auto!important;margin-top:16px}
+.ctacte-form-status{color:#52627a;line-height:1.5}.ctacte-form-status:empty{display:none}
+#panel-ctacte-club .pric-admin-data-table th:last-child{width:180px}#panel-ctacte-club .btn-modal{width:auto!important;margin:0!important}
+.ctacte-debt-amount{display:flex;align-items:center;gap:10px}.ctacte-detail-toggle{border:0;background:transparent;color:#07152b;width:32px;height:32px;font:22px 'Segoe UI',sans-serif;cursor:pointer}.ctacte-detail-toggle[aria-expanded=true]{transform:rotate(180deg)}
+body.panel-activo #panel-ctacte-club .ctacte-detail-row>td{padding:12px 20px!important;background:#f7f8fa}.ctacte-detail-row table{background:#fff}
+#ctacte-deudas-totales{background:#eef0f3;font-weight:700}#ctacte-deudas-totales th,#ctacte-deudas-totales td{padding:14px 10px!important}
+@media(max-width:767px){body.panel-activo #sidebar-admin-club [data-sidebar-target=ctacte],body.panel-activo #panel-ctacte-club{display:none!important}#ctacte-desktop-notice{padding:20px;color:#52627a;line-height:1.5}#ctacte-desktop-notice[hidden]{display:none!important}}
 @media(max-width:767px){body.panel-activo #pric-mobile-brand{display:flex!important;align-items:center;justify-content:space-between;gap:12px}.pric-mobile-account{border:0;background:#fff;color:#07162e;width:36px;height:36px;padding:6px;flex:none;cursor:pointer}.pric-mobile-account svg{width:24px;height:24px}}
+
+.ctacte-client-name{position:relative;padding-right:44px!important}.ctacte-client-name .ctacte-detail-toggle{position:absolute;right:6px;top:50%;margin-top:-16px}.ctacte-whatsapp{display:inline-flex;align-items:center;justify-content:center;color:#07152b;width:36px;height:36px;flex:none}.ctacte-whatsapp svg{width:26px;height:26px}
+.ctacte-payment-choice{margin:16px 0}.ctacte-payment-choice label{display:flex;flex-direction:column;gap:8px;max-width:360px}.ctacte-credit-fields{display:flex;gap:16px;align-items:end;flex-wrap:wrap;margin:16px 0}.ctacte-credit-fields[hidden]{display:none!important}.ctacte-credit-fields button{margin:0!important;width:auto!important}.ctacte-credit-fields p{flex-basis:100%;margin:0}.ctacte-payment-choice~.gestion-payment-grid>div[hidden],.pric-cash-payments>div[hidden]{display:none!important}
+.ctacte-picker[open]{display:flex;flex-direction:column;max-height:85dvh;padding:0;overflow:hidden;width:min(600px,calc(100vw - 32px));background:#fff}.ctacte-picker .pric-product-picker-content{overflow-y:auto;min-height:0;padding:20px;flex:1}.ctacte-picker .pric-product-picker-actions{flex:none;margin:0;padding:16px;background:#fff;display:flex;justify-content:flex-end;gap:12px}.ctacte-picker-list{display:grid;gap:8px;margin-top:16px}.ctacte-picker-option{padding:12px;text-align:left;border:1px solid #d5deed;border-radius:9px;background:#fff;color:#07152b;cursor:pointer}.ctacte-picker-option.selected{background:#07152b;color:#fff}
+
+.ctacte-client-name .ctacte-detail-toggle{display:flex;align-items:center;justify-content:center;padding:0!important;margin:0!important;top:calc(50% - 16px);line-height:1}.ctacte-credit-fields label[hidden]{display:none!important}
+
+@media(max-width:767px){.ctacte-payment-choice,.ctacte-picker,.ctacte-dialog,.pric-employee-permission[data-permission-view=ctacte]{display:none!important}}

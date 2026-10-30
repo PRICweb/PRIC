@@ -28,3 +28,5 @@ test('annulled receipts contribute neither service nor product income',()=>{
  const result=reports.splitReceipt({anulado:true,efectivo:400,transferencia:600,consumosAgrupados:[{total:200}]});
  for(const row of Object.values(result))for(const field of ['efectivo','transferencia','monto'])assert.equal(row[field],0);
 });
+
+test('credit sale has margin value but is only cash income when collected',()=>{const movements=[{tipo:'venta_producto',esVentaCredito:true,monto:0,importeVenta:180,cantidad:2},{tipo:'ingreso_libre',subtipoAjuste:'cobro_cuenta_corriente',monto:200,efectivo:80,transferencia:120,importeProductos:150,importeTurnos:50}];const rows=reports.productIncome(movements,[]);assert.equal(rows.length,1);assert.equal(rows[0].monto,150);assert.equal(rows[0].efectivo,60);assert.equal(rows[0].transferencia,90);assert.equal(reports.collectionPart(movements[1],'importeTurnos').monto,50);});
