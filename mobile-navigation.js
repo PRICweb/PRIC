@@ -50,6 +50,7 @@
      const label=document.createElement('span');label.textContent=window.PricPermissionCatalog?.[view]?.[0]||view;item.append(label);
      if(window.__vistaPanelClubActual===view)item.setAttribute('aria-current','page');item.onclick=()=>window.pricCloseModalThen(dialog,()=>select(view));list.append(item);
     }
+    for(const entry of window.PricPwa?.menuItems()||[]){const item=document.createElement('button');item.type='button';item.className='pric-mobile-navigation-item';item.innerHTML=entry.icon;const text=document.createElement('span');text.textContent=entry.label;item.append(text);item.onclick=()=>window.pricCloseModalThen(dialog,entry.run);list.append(item);}
     const logout=document.createElement('button');logout.type='button';logout.className='pric-mobile-navigation-item';
     const exitIcon=document.querySelector('.sidebar-logout-club svg')?.cloneNode(true);if(exitIcon)logout.append(exitIcon);const text=document.createElement('span');text.textContent='Cerrar sesión';logout.append(text);
     logout.onclick=()=>window.pricCloseModalThen(dialog,()=>document.querySelector('.sidebar-logout-club')?.click());list.append(logout);

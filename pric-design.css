@@ -636,4 +636,4 @@ body.panel-activo #panel-ctacte-club .ctacte-detail-row>td{padding:12px 20px!imp
 
 .ctacte-client-name .ctacte-detail-toggle{display:flex;align-items:center;justify-content:center;padding:0!important;margin:0!important;top:calc(50% - 16px);line-height:1}.ctacte-credit-fields label[hidden]{display:none!important}
 
-@media(max-width:767px){.ctacte-payment-choice,.ctacte-picker,.ctacte-dialog,.pric-employee-permission[data-permission-view=ctacte]{display:none!important}}
+@media(max-width:767px){.ctacte-dialog,.pric-employee-permission[data-permission-view=ctacte]{display:none!important}}
