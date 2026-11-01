@@ -504,7 +504,7 @@ body.panel-activo .pric-export-accordion{display:block;width:100%;box-sizing:bor
 .pric-desktop-heading{display:flex;align-items:center;gap:16px;margin-bottom:18px;padding:12px 16px;border-bottom:1px solid #d7dfeb}
 .pric-desktop-heading h2{flex:1;margin:0;font-size:22px}
 .pric-desktop-heading button{width:auto!important;margin:0!important}
-.pric-desktop-heading button:last-child{background:#fff;border:0;color:#06162f;font-size:26px;cursor:pointer}
+.pric-desktop-heading button[aria-label="Volver a la vista principal"]{background:transparent;border:0;color:#06162f;font-size:26px;cursor:pointer}
 }
 @media(min-width:768px){
  #sidebar-admin-club .pric-desktop-submenu,#sidebar-admin-club .pric-desktop-submenu.expanded{display:grid;grid-template-rows:0fr;opacity:0;visibility:hidden;margin:-14px 0 0 12px;padding:0;transition:grid-template-rows .16s ease,opacity .12s ease,visibility .16s;pointer-events:none}

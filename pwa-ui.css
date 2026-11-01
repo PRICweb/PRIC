@@ -3,3 +3,22 @@
 #pwa-offline{width:100vw;height:100dvh;max-width:none;max-height:none;box-sizing:border-box;margin:0;border:0}#pwa-offline::backdrop{background:white}
 
 .pwa-inbox-head>button{width:36px;height:36px;display:grid;place-items:center;border:0;background:transparent;color:#07152b;font:24px/1 "Segoe UI",sans-serif;cursor:pointer;border-radius:8px}.pwa-inbox-head>button:hover{background:#f0f2f5}.pwa-inbox-head>button:focus-visible{outline:2px solid #07152b;outline-offset:2px}
+
+body.panel-activo .pwa-principal-title{display:none!important}
+#pric-turnero-loading{font-size:14px!important;font-weight:500!important;color:#fff!important}
+.pwa-inbox[open]{display:flex;flex-direction:column;min-height:min(390px,calc(100dvh - 32px));box-sizing:border-box}
+.pwa-inbox-head{justify-content:flex-start;flex:0 0 auto;z-index:1}.pwa-inbox-head-actions{display:flex;align-items:center;margin-right:auto}
+.pwa-inbox .pwa-refresh{background:#fff;color:#07152b;border:1px solid #07152b;padding:10px 14px}
+.pwa-inbox-content{overflow:auto;min-height:0;flex:1}.pwa-inbox-actions:has(>button[hidden]){margin-top:0}
+.pwa-inbox-footer{flex:0 0 auto;padding:18px 20px;background:#fff;position:sticky;bottom:0}
+.pwa-inbox-footer .pwa-settings{margin:0;padding:0;display:flex;align-items:center;justify-content:flex-start;flex-wrap:nowrap;gap:16px}
+.pwa-inbox-footer .pwa-settings>button{flex:0 0 auto}.pwa-inbox-footer .pwa-settings>p{flex:1;min-width:0;font-size:14px;line-height:1.45}
+
+@media(max-width:767px){.pwa-inbox-head{padding:16px;gap:10px}.pwa-inbox-head h2{font-size:18px}.pwa-inbox .pwa-refresh{padding:8px 10px;font-size:12px}.pwa-inbox-footer{padding:16px}.pwa-inbox-footer .pwa-settings{gap:12px}.pwa-inbox-footer .pwa-settings>button{max-width:45%;white-space:normal;padding:10px;font-size:13px}}
+
+body.panel-activo .pwa-empty-header{display:none!important}
+@media(min-width:768px){body.panel-activo :is(#pantalla-club,#modal-profesores,#panel-inventario-club,#panel-movimientos-club,#panel-metricas-club,#panel-config-club,#panel-actividad-club,#panel-ctacte-club,#panel-empleados-club).pwa-main-view:not(:has(.pric-desktop-selected)){padding-top:0!important}body.panel-activo .pwa-main-view>.panel-header-club p{margin-top:0!important}}
+@media(min-width:768px){#sidebar-admin-club .sidebar-brand-club{position:relative}#sidebar-admin-club .sidebar-brand-club>#pwa-bell{position:absolute;top:0;right:3px;left:auto;width:28px;height:28px;padding:4px;z-index:1;background:transparent}#sidebar-admin-club .sidebar-brand-club>#pwa-bell:hover{background:#f0f2f5}}
+.pric-desktop-heading>button[aria-label="Volver a la vista principal"]{display:grid;place-items:center;align-self:center;flex:0 0 36px;width:36px!important;height:44px;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;color:#07152b!important;font-size:26px!important;cursor:pointer}
+
+@media(min-width:768px){#sidebar-admin-club .sidebar-brand-club>#pwa-bell svg{width:20px;height:20px}}
