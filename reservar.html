@@ -817,8 +817,8 @@
     .pric-club-location{flex:1;min-width:0;font-size:13px;overflow-wrap:anywhere}
     .pric-club-contact a:focus-visible{outline:2px solid #07152b;outline-offset:3px}
   </style>
-<link rel="stylesheet" href="pric-design.css?v=20261006-publicacion"><script src="media-client.js"></script><script src="reservation-schedule.js?v=20261024"></script><script src="number-entry.js?v=20261027"></script></head>
-<body>
+<link rel="stylesheet" href="pric-design.css?v=20261006-publicacion"><script src="media-client.js"></script><script src="reservation-schedule.js?v=20261102-canchas"></script><script src="number-entry.js?v=20261027"></script><style>#reservation-loading{position:fixed;inset:0;z-index:2147480000;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;color:#07152b;font:16px 'Segoe UI',sans-serif}#reservation-loading[hidden]{display:none!important}#reservation-loading img{width:min(280px,70vw);height:auto;clip-path:inset(calc(100% - var(--reserve-progress,5%)) 0 0);transition:clip-path .5s ease}#reservation-loading p{margin:0;color:#52627a}@media(prefers-reduced-motion:reduce){#reservation-loading img{clip-path:none;transition:none}}</style></head>
+<body><div id="reservation-loading" role="status" aria-label="Cargando reservas"><img src="pwa/icon-512.png" alt="PRIC"><p>Cargando</p></div><script src="reservation-loading.js?v=20261102" ></script>
   <div id="mensaje-error">
     <strong>Error:</strong> No se especificó el club en la URL o el club no existe.<br />
     Asegurate de ingresar desde el link oficial del club. Ejemplo: <strong>?club=orbit</strong>
@@ -1527,10 +1527,6 @@
     function modalidadesDisponibles() {
       const opciones = [];
       if (canchasIndoorGlobal > 0) opciones.push({ value: 'padel_indoor', label: 'Pádel Indoor', detalle: `${canchasIndoorGlobal} cancha${canchasIndoorGlobal === 1 ? '' : 's'}` });
-      if (canchasOutdoorGlobal > 0) opciones.push({ value: 'padel_outdoor', label: 'Pádel Outdoor', detalle: `${canchasOutdoorGlobal} cancha${canchasOutdoorGlobal === 1 ? '' : 's'}` });
-      if (canchasTenisIndoorGlobal > 0) opciones.push({ value: 'tenis_indoor', label: 'Tenis Indoor', detalle: `${canchasTenisIndoorGlobal} cancha${canchasTenisIndoorGlobal === 1 ? '' : 's'}` });
-      if (canchasTenisOutdoorGlobal > 0) opciones.push({ value: 'tenis_outdoor', label: 'Tenis Outdoor', detalle: `${canchasTenisOutdoorGlobal} cancha${canchasTenisOutdoorGlobal === 1 ? '' : 's'}` });
-      if (!canchasTenisIndoorGlobal && !canchasTenisOutdoorGlobal && canchasTenisGlobal > 0) opciones.push({value:'tenis_outdoor',label:'Tenis Outdoor',detalle:`${canchasTenisGlobal} cancha${canchasTenisGlobal===1?'':'s'}`});
       return opciones;
     }
 
@@ -1540,7 +1536,7 @@
       const disponibles = modalidadesDisponibles();
 
       if (!disponibles.length) {
-        contenedor.innerHTML = '<div class="empty-state">Este club todavía no tiene modalidades configuradas.</div>';
+        contenedor.innerHTML = '<div class="empty-state">Por el momento solo se puede reservar pádel indoor. Este club no tiene canchas indoor habilitadas.</div>';
         modalidadSeleccionada = '';
         duracionSeleccionada = null;
         actualizarOpcionesDuracion();
@@ -1625,7 +1621,7 @@
     function reservaAplicaEnFecha(reserva, fecha) {
       if (!reserva) return false;
       const canceladas = Array.isArray(reserva.fechasCanceladas) ? reserva.fechasCanceladas : [];
-      if (canceladas.includes(fecha)) return false;
+      if (canceladas.includes(fecha) || (reserva.bajaCanchaDesde && fecha >= reserva.bajaCanchaDesde)) return false;
       if ((reserva.fecha || fecha) === fecha) return true;
       return reserva.fijo === true && window.getDayOfWeekFromDate(reserva.fecha) === window.getDayOfWeekFromDate(fecha) && fecha > reserva.fecha;
     }
@@ -1964,7 +1960,7 @@
           errorDisponibilidad=error?.message==='Club no disponible por el momento'?'Club no disponible por el momento':'No se pudo actualizar la disponibilidad. Intentá nuevamente.';
           disponibilidadFechaCargada=null;renderizarPantallas();
           if(!nombreClubGlobal){const errorEl=document.getElementById('mensaje-error');errorEl.replaceChildren();const text=document.createElement('p'),retry=document.createElement('button');text.textContent=errorDisponibilidad;retry.type='button';retry.className='btn-modal btn-guardar';retry.textContent='Reintentar';retry.onclick=actualizar;errorEl.append(text,retry);errorEl.style.display='block';}
-        }finally{actualizandoDisponibilidad=false;if(requestedDate!==fechaSeleccionada)queueMicrotask(actualizar);}
+        }finally{window.PricReservationLoading?.finish();actualizandoDisponibilidad=false;if(requestedDate!==fechaSeleccionada)queueMicrotask(actualizar);}
       };
       actualizarDisponibilidadReserva=actualizar;actualizar();
       if(!intervaloDisponibilidad)intervaloDisponibilidad=setInterval(()=>{if(!document.hidden&&!gestoReservaActivo)actualizarDisponibilidadReserva?.();},30000);
@@ -1987,6 +1983,7 @@
     });
 
     if (!clubId) {
+      window.PricReservationLoading?.finish();
       document.getElementById('mensaje-error').style.display = 'block';
     } else {
       iniciarAppCliente();
