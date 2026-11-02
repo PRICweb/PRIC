@@ -905,10 +905,7 @@
   <div id="modal-exito-reserva" class="modal-overlay">
     <div class="modal-content" style="border-color:#10b981;">
       <h2 id="reservation-success-title" style="color:#10b981;margin:0 0 12px 0;">¡Reserva confirmada! ✅</h2>
-      <p style="color:#52627a;font-size:1.05em;line-height:1.5;margin:0 0 16px 0;">
-        Tu turno quedó reservado en <strong id="exito-cancha" style="color:#07152b;"></strong><br />
-        a las <strong id="exito-hora" style="color:#07152b;"></strong> hs.
-      </p>
+      <p id="reservation-success-message" style="color:#52627a;font-size:1.05em;line-height:1.5;margin:0 0 16px 0;"></p>
       <button class="btn-modal btn-confirmado" data-cancel onclick="document.getElementById('modal-exito-reserva').style.display='none'">Excelente</button>
     </div>
   </div>
@@ -924,7 +921,7 @@
     </div>
   </div>
 
-  <script src="./payment-status.js?v=20261029-entrega"></script>
+  <script src="./payment-status.js?v=20261101-confirmacion-cancha"></script>
   <script src="./modal-ui.js?v=20261006-reservationback"></script>
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
@@ -1848,8 +1845,7 @@
           navegarAMercadoPago(payData.initPoint);
           return;
         }
-        document.getElementById('exito-cancha').innerText = createData.canchaNombre || `Cancha ${createData.cancha || ''}`;
-        document.getElementById('exito-hora').innerText = createData.mercadoPagoDesconectado ? `${solicitud.hora} · Reserva confirmada sin seña online` : solicitud.hora;
+        document.getElementById('reservation-success-message').innerText = window.PRICPaymentStatus.confirmationText({canchaNombre:createData.canchaNombre,cancha:createData.cancha,hora:solicitud.hora});
         window.cerrarModalReservaJugador();
         document.getElementById('modal-exito-reserva').style.display = 'flex';
       } catch (error) {
