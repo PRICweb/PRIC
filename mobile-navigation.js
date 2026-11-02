@@ -5,7 +5,7 @@
  function plan(allowed){
   const views=order.filter(view=>allowed.includes(view));
   const direct=bottom.filter(view=>views.includes(view));
-  const linked=views.includes('profes')&&views.includes('turnero')?['profes']:[];
+  const linked=[];
   const more=['profes','config','actividad'].filter(view=>views.includes(view)&&!linked.includes(view));
   return {views,direct,more,linked};
  }
@@ -60,7 +60,7 @@
 
   highlight();
  }
- window.PricMobileNavigation={render,views:()=>currentPlan.views.slice(),highlight};
+ window.PricMobileNavigation={render,views:()=>currentPlan.views.slice(),swipeViews:()=>currentPlan.direct.slice(),highlight};
  document.addEventListener('DOMContentLoaded',()=>{render();new MutationObserver(render).observe(document.querySelector('#sidebar-admin-club .sidebar-menu-club'),{childList:true});});
  window.addEventListener('pric-view-change',render);window.addEventListener('pric-permissions-change',render);mobile.addEventListener('change',()=>{document.getElementById('pric-mobile-navigation')?.close();render();});
 })(typeof window==='object'?window:globalThis);
