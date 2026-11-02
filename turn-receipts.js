@@ -10,7 +10,7 @@
   const efectivo=cents(cash)/100,transferencia=cents(transfer)/100,e=state(r,date),groups=new Map();
   for(const c of e.consumos||[]){const name=String(c.nombre||'Producto');groups.set(name,(groups.get(name)||0)+cents(c.precio||0));}
   const schedule=root?.PricReservationSchedule||(typeof require==='function'?require('./reservation-schedule'):null),effective=schedule?schedule.effective(r,date):r;const hora=String(e.hora||effective.hora||r.horaInicio||''),cancha=String(e.cancha||effective.cancha||''),allocated=[];const paid=cents(cash)+cents(transfer),business=netTotal===undefined?paid:Math.min(paid,Math.max(0,cents(netTotal)-cents(e.pagoEfectivo)-cents(e.pagoTransferencia)-cents(e.pagoCuentaCorriente)));let remaining=business;for(const [nombre,total]of groups){const amount=Math.min(remaining,Math.max(0,total-cents(e.consumosCobrados?.[nombre])));if(amount)allocated.push({nombre,total:amount/100});remaining-=amount;}
-  return {id,clubId,reservaId:String(r.id),fechaTurno:date,fecha:day(stamp),fechaRegistro:stamp,horaTurno:hora,turnoReferencia:[r.jugador||'Sin nombre',date,hora,cancha?'Cancha '+cancha:''].filter(Boolean).join(' · '),detalle:(deposit?'Seña · ':'Pago parcial · ')+(r.jugador||'Sin nombre')+' · '+date+' · '+hora+(cancha?' · Cancha '+cancha:''),tipo:r.esClase||r.tipoEvento==='Clases'?'clase':'turno',efectivo,transferencia,monto:(cents(cash)+cents(transfer))/100,importeAjuste:(paid-business)/100,esSena:deposit,migrado:legacy,consumosAgrupados:allocated,version:1};
+  return {id,clubId,reservaId:String(r.id),fechaTurno:date,fecha:day(stamp),fechaRegistro:stamp,horaTurno:hora,modalidad:String(effective.modalidad||r.modalidad||''),cancha,turnoReferencia:[r.jugador||'Sin nombre',date,hora,cancha?'Cancha '+cancha:''].filter(Boolean).join(' · '),detalle:(deposit?'Seña · ':'Pago parcial · ')+(r.jugador||'Sin nombre')+' · '+date+' · '+hora+(cancha?' · Cancha '+cancha:''),tipo:r.esClase||r.tipoEvento==='Clases'?'clase':'turno',efectivo,transferencia,monto:(cents(cash)+cents(transfer))/100,importeAjuste:(paid-business)/100,esSena:deposit,migrado:legacy,consumosAgrupados:allocated,version:1};
  }
  function legacy(r,date,clubId){
   r=JSON.parse(JSON.stringify(r));const e=state(r,date);if(e.cobrosVersion===1)return [];
@@ -38,11 +38,13 @@
    if(receipt)applyAllocation(r,date,receipt);tx.set(ref,r,{merge:true});return {reserva:r,receipt};
   });
  }
- async function saveMany({db,clubId,items}){
+ async function saveMany({db,clubId,items,quoteTotal}){
+  if(new Set(items.map(x=>x.reservationId+'@'+x.date)).size!==items.length)throw Error('Una clase está repetida en el cobro.');
   if(items.length>100)throw Error('Cobrá hasta 100 clases por operación.');const base=db.collection('clubs').doc(clubId),stamp=new Date().toISOString();
   return db.runTransaction(async tx=>{const reservations=new Map(),pending=[],newRecords=[];
    for(const item of items)if(!reservations.has(item.reservationId)){const ref=base.collection('reservas').doc(String(item.reservationId)),snap=await tx.get(ref);if(!snap.exists)throw Error('Una clase ya no existe.');reservations.set(item.reservationId,{ref,r:{...snap.data(),id:snap.id}});}
    for(const item of items){const {r}=reservations.get(item.reservationId),e=state(r,item.date);if(cents(e.pagoEfectivo)!==cents(item.expectedCash)||cents(e.pagoTransferencia)!==cents(item.expectedTransfer))throw Error('Los pagos de una clase cambiaron. Volvé a abrir el cobro.');
+    if(item.expectedDiscount!==undefined&&cents(e.descuento)!==cents(item.expectedDiscount)||item.expectedCredit!==undefined&&cents(e.pagoCuentaCorriente)!==cents(item.expectedCredit)||quoteTotal&&item.expectedTotal!==undefined&&cents(quoteTotal(r,item.date))!==cents(item.expectedTotal))throw Error('El saldo de una clase cambió. Volvé a abrir el cobro.');
     for(const rec of [...legacy(r,item.date,clubId),...legacyInventory(r,item.date,clubId)]){pending.push({rec,ref:base.collection('cobrosTurnos').doc(rec.id)});if(rec.tipo!=='consumo_costo')applyAllocation(r,item.date,rec);}
     if(cents(item.cash)+cents(item.transfer)>0){const rec=record({id:item.receiptId,r,date:item.date,cash:item.cash,transfer:item.transfer,stamp,clubId});newRecords.push(rec);applyAllocation(r,item.date,rec);}
     patch(r,item.date,{cobrosVersion:1,inventarioDiarioVersion:1,pagoEfectivo:(cents(e.pagoEfectivo)+cents(item.cash))/100,pagoTransferencia:(cents(e.pagoTransferencia)+cents(item.transfer))/100,descuento:(cents(e.descuento)+cents(item.discountDelta))/100,fechaPago:day(stamp),fechaPagoRegistro:stamp});

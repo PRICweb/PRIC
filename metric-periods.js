@@ -14,6 +14,7 @@
  }
  function instant(item,occurrence=false){
   if(occurrence){const d=new Date(String(item.fecha).slice(0,10)+'T'+String(item.hora||''));return Number.isNaN(d.getTime())?null:d;}
+  if(item.fechaImputacion&&item.horaTurno){const d=new Date(item.fechaImputacion+'T'+item.horaTurno);return Number.isNaN(d.getTime())?null:d;}
   const stamp=item.fechaRegistro||item.fechaPagoRegistro;if(stamp){const d=new Date(stamp);if(!Number.isNaN(d.getTime()))return d;}
   if(/^\d{2}:\d{2}/.test(item.horaAsiento||'')){const day=item.fecha instanceof Date?iso(item.fecha):String(item.fecha).slice(0,10);const d=new Date(day+'T'+item.horaAsiento);if(!Number.isNaN(d.getTime()))return d;}
   return null;

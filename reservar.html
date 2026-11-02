@@ -1055,7 +1055,7 @@
     let duracionTenisGlobal = 60;
     let nombresIndoorGlobal = [];
     let nombresOutdoorGlobal = [];
-    let nombresTenisGlobal = [];
+    let nombresTenisGlobal = [], nombresTenisIndoorGlobal=[], nombresTenisOutdoorGlobal=[];
     let nombresCanchasGlobal = [];
     let diasAbiertosGlobal = [0, 1, 2, 3, 4, 5, 6];
     let telefonoClubGlobal = '';
@@ -1160,6 +1160,7 @@
       canchasTenisGlobal = tiene(d, 'canchasTenis') ? Math.max(0, toInt(d.canchasTenis, 0)) : canchasTenisGlobal;
       canchasTenisIndoorGlobal = tiene(d,'canchasTenisIndoor') ? Math.max(0,toInt(d.canchasTenisIndoor,0)) : canchasTenisIndoorGlobal;
       canchasTenisOutdoorGlobal = tiene(d,'canchasTenisOutdoor') ? Math.max(0,toInt(d.canchasTenisOutdoor,0)) : (canchasTenisIndoorGlobal===0?canchasTenisGlobal:canchasTenisOutdoorGlobal);
+      if(tiene(d,'canchasTenisIndoor')||tiene(d,'canchasTenisOutdoor'))canchasTenisGlobal=canchasTenisIndoorGlobal+canchasTenisOutdoorGlobal;
       preciosTenisModalidadesGlobal=d.preciosTenisModalidades||{};
       horariosPorDiaGlobal = d.horariosPorDia && typeof d.horariosPorDia==='object' ? d.horariosPorDia : horariosPorDiaGlobal;
       cierresClubGlobal = Array.isArray(d.cierresClub) ? d.cierresClub : cierresClubGlobal;
@@ -1234,6 +1235,8 @@
       nombresIndoorGlobal = Array.isArray(d.nombresIndoor) ? d.nombresIndoor : nombresIndoorGlobal;
       nombresOutdoorGlobal = Array.isArray(d.nombresOutdoor) ? d.nombresOutdoor : nombresOutdoorGlobal;
       nombresTenisGlobal = Array.isArray(d.nombresTenis) ? d.nombresTenis : nombresTenisGlobal;
+      nombresTenisIndoorGlobal=Array.isArray(d.nombresTenisIndoor)?d.nombresTenisIndoor:nombresTenisGlobal.slice(0,canchasTenisIndoorGlobal);
+      nombresTenisOutdoorGlobal=Array.isArray(d.nombresTenisOutdoor)?d.nombresTenisOutdoor:nombresTenisGlobal.slice(canchasTenisIndoorGlobal);
       nombresCanchasGlobal = Array.isArray(d.nombresCanchas) ? d.nombresCanchas : [].concat(nombresIndoorGlobal, nombresOutdoorGlobal, nombresTenisGlobal);
 
       let gallery=document.getElementById('pric-reservation-gallery');if(!gallery){gallery=document.createElement('div');gallery.id='pric-reservation-gallery';gallery.className='pric-public-gallery';document.getElementById('subtitulo-club').after(gallery);}gallery.replaceChildren();for(const [label,url]of [['Club',d.fotoClub],...Object.entries(d.fotoModalidades||{})]){if(typeof url!=='string'||!url.startsWith('https://firebasestorage.googleapis.com/'))continue;const item=document.createElement('figure'),photo=document.createElement('img'),caption=document.createElement('figcaption');photo.src=url;photo.loading='lazy';photo.alt=label==='Club'?'Imagen principal del club':labelModalidad(label);caption.textContent=photo.alt;item.append(photo,caption);gallery.append(item);}
@@ -1613,8 +1616,8 @@
       for(let i=0;i<canchasIndoorGlobal;i++,numero++)canchas.push({numero,modalidad:'padel_indoor',label:nombresIndoorGlobal[i]||`Pádel Indoor ${i+1}`,precio:precioIndoorGlobal,duracionBase:duracionIndoorGlobal||90});
       for(let i=0;i<canchasOutdoorGlobal;i++,numero++)canchas.push({numero,modalidad:'padel_outdoor',label:nombresOutdoorGlobal[i]||`Pádel Outdoor ${i+1}`,precio:precioOutdoorGlobal,duracionBase:duracionOutdoorGlobal||90});
       const ti=canchasTenisIndoorGlobal, to=canchasTenisOutdoorGlobal||(!ti?canchasTenisGlobal:0);
-      for(let i=0;i<ti;i++,numero++)canchas.push({numero,modalidad:'tenis_indoor',label:`Tenis Indoor ${i+1}`,precio:precioTenisGlobal,duracionBase:duracionTenisGlobal||60});
-      for(let i=0;i<to;i++,numero++)canchas.push({numero,modalidad:'tenis_outdoor',label:nombresTenisGlobal[i]||`Tenis Outdoor ${i+1}`,precio:precioTenisGlobal,duracionBase:duracionTenisGlobal||60});
+      for(let i=0;i<ti;i++,numero++)canchas.push({numero,modalidad:'tenis_indoor',label:nombresTenisIndoorGlobal[i]||`Tenis Indoor ${i+1}`,precio:precioTenisGlobal,duracionBase:duracionTenisGlobal||60});
+      for(let i=0;i<to;i++,numero++)canchas.push({numero,modalidad:'tenis_outdoor',label:nombresTenisOutdoorGlobal[i]||`Tenis Outdoor ${i+1}`,precio:precioTenisGlobal,duracionBase:duracionTenisGlobal||60});
       return canchas;
     }
 
