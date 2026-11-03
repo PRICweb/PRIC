@@ -12,7 +12,7 @@
   else if(key!=='hoy')throw Error('Período desconocido');
   return{desde:iso(from),hasta:iso(to)};
  }
- function instant(item,occurrence=false){
+ function instant(item,occurrence=false){if(item.fechaRegistroDeuda){const d=new Date(item.fechaRegistroDeuda);return Number.isNaN(d.getTime())?null:d;}
   if(occurrence){const d=new Date(String(item.fecha).slice(0,10)+'T'+String(item.hora||''));return Number.isNaN(d.getTime())?null:d;}
   if(item.fechaImputacion&&item.horaTurno){const d=new Date(item.fechaImputacion+'T'+item.horaTurno);return Number.isNaN(d.getTime())?null:d;}
   const stamp=item.fechaRegistro||item.fechaPagoRegistro;if(stamp){const d=new Date(stamp);if(!Number.isNaN(d.getTime()))return d;}
