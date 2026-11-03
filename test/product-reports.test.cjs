@@ -30,3 +30,39 @@ test('annulled receipts contribute neither service nor product income',()=>{
 });
 
 test('credit sale has margin value but is only cash income when collected',()=>{const movements=[{tipo:'venta_producto',esVentaCredito:true,monto:0,importeVenta:180,cantidad:2},{tipo:'ingreso_libre',subtipoAjuste:'cobro_cuenta_corriente',monto:200,efectivo:80,transferencia:120,importeProductos:150,importeTurnos:50}];const rows=reports.productIncome(movements,[]);assert.equal(rows.length,1);assert.equal(rows[0].monto,150);assert.equal(rows[0].efectivo,60);assert.equal(rows[0].transferencia,90);assert.equal(reports.collectionPart(movements[1],'importeTurnos').monto,50);});
+
+
+test('court discounts leave product revenue and FIFO margin intact until the court price is exhausted',()=>{
+ const base={id:'r@2026-11-19',reservaId:'r',fecha:'2026-11-19',pagoCuentaCorriente:0,consumos:[{prodId:'p',nombre:'Bebida',precio:500,cantidad:2,costoUnitario:100}]};
+ for(const discount of [0,200,1000,1200,1500]){
+  const o={...base,total:1500-discount},goods=Math.min(500,o.total),lines=reports.turnLines([o]);
+  assert.equal(lines.reduce((s,x)=>s+x.monto,0),goods);assert.equal(lines.reduce((s,x)=>s+x.descuento,0),500-goods);
+  assert.equal(lines[0].costoUnitario,100);
+  const raw={id:'cash',tipo:'turno',reservaId:'r',fechaTurno:o.fecha,efectivo:600,transferencia:900,monto:1500,consumosAgrupados:[{nombre:'Bebida',total:500}]};
+  const [row]=reports.reconcileTurnReceipts([raw],[o]),parts=reports.splitReceipt(row);
+  assert.equal(parts.products.monto,goods);assert.equal(parts.service.monto,Math.max(0,1000-discount));assert.equal(parts.adjustment.monto,discount);
+  for(const key of ['efectivo','transferencia','monto'])assert.equal(Math.round((parts.products[key]+parts.service[key]+parts.adjustment[key])*100),Math.round(raw[key]*100));
+  assert.equal(raw.consumosAgrupados[0].total,500);assert.equal(raw.importeAjuste,undefined);
+ }
+});
+test('partial cash, transfer and credit receipts share a single product budget and preserve actual money after discount edits',()=>{
+ const occurrence={id:'r@2026-11-19',total:300,pagoCuentaCorriente:0,consumos:[{nombre:'Agua',precio:500}],consumosCobrados:{Agua:500}};
+ const raw=[{id:'a',tipo:'turno',reservaId:'r',fechaTurno:'2026-11-19',fechaRegistro:'2026-11-19T12:00:00Z',efectivo:200,transferencia:0,monto:200,consumosAgrupados:[{nombre:'Agua',total:200}]},{id:'b',tipo:'turno',reservaId:'r',fechaTurno:'2026-11-19',fechaRegistro:'2026-11-19T13:00:00Z',efectivo:0,transferencia:800,monto:800,consumosAgrupados:[{nombre:'Agua',total:300}]}];
+ const projected=reports.reconcileTurnReceipts(raw,[occurrence]),parts=projected.map(reports.splitReceipt);
+ assert.deepEqual(parts.map(x=>x.products.monto),[200,100]);assert.equal(parts.reduce((s,x)=>s+x.adjustment.monto,0),700);
+ const credited=reports.reconcileTurnReceipts(raw,[{...occurrence,total:800,pagoCuentaCorriente:500,consumosCobrados:{Agua:700}}]);
+ assert.equal(credited.map(reports.splitReceipt).reduce((s,x)=>s+x.products.monto,0),300);
+ assert.deepEqual(credited.map(x=>[x.efectivo,x.transferencia]),[[200,0],[0,800]]);
+});
+
+test('removing settled credit does not apply its product discount twice to retained receipts',()=>{
+ const row={id:'kept',reservaId:'r',fechaTurno:'2026-11-19',tipo:'turno',efectivo:150,transferencia:150,monto:300,consumosAgrupados:[{nombre:'Agua',total:300}]};
+ const o={id:'r@2026-11-19',total:300,pagoCuentaCorriente:0,descuentoConsumosCtaCte:200,consumosCobrados:{Agua:500},consumos:[{nombre:'Agua',precio:500}]};
+ const parts=reports.splitReceipt(reports.reconcileTurnReceipts([row],[o])[0]);assert.equal(parts.products.monto,300);assert.equal(parts.service.monto,0);assert.equal(parts.adjustment.monto,0);
+ assert.equal(reports.reconcileTurnReceipts([row],[{...o,total:0,reconciliarCobros:false}])[0],row);
+});
+
+test('archiving a paid discounted turn retains its net classification after the reservation is removed',()=>{
+ const receipt={id:'paid',reservaId:'r',fechaTurno:'2026-11-19',tipo:'turno',efectivo:1000,transferencia:500,monto:1500,consumosAgrupados:[{nombre:'Agua',total:500}]},archive={esSnapshotVenta:true,tipo:'consumo_costo',ocurrenciaContable:{id:'r@2026-11-19',total:300,consumos:[{nombre:'Agua',precio:500}]}};
+ const rows=reports.reconcileTurnReceipts([receipt,archive],[]),parts=reports.splitReceipt(rows[0]);assert.equal(parts.products.monto,300);assert.equal(parts.adjustment.monto,1200);assert.equal(rows[1],archive);
+});
