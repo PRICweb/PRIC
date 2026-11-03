@@ -1530,6 +1530,7 @@
     function modalidadesDisponibles() {
       const opciones = [];
       if (canchasIndoorGlobal > 0) opciones.push({ value: 'padel_indoor', label: 'Pádel Indoor', detalle: `${canchasIndoorGlobal} cancha${canchasIndoorGlobal === 1 ? '' : 's'}` });
+      for(const [value,label,count] of [['padel_outdoor','Pádel Outdoor',canchasOutdoorGlobal],['tenis_indoor','Tenis Indoor',canchasTenisIndoorGlobal],['tenis_outdoor','Tenis Outdoor',canchasTenisOutdoorGlobal]])if(count>0)opciones.push({value,label,detalle:`${count} cancha${count===1?'':'s'}`});
       return opciones;
     }
 
@@ -1539,7 +1540,7 @@
       const disponibles = modalidadesDisponibles();
 
       if (!disponibles.length) {
-        contenedor.innerHTML = '<div class="empty-state">Por el momento solo se puede reservar pádel indoor. Este club no tiene canchas indoor habilitadas.</div>';
+        contenedor.innerHTML = '<div class="empty-state">Este club no tiene canchas habilitadas para reservar.</div>';
         modalidadSeleccionada = '';
         duracionSeleccionada = null;
         actualizarOpcionesDuracion();
