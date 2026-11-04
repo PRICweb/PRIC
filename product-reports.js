@@ -6,7 +6,7 @@
  const amount=row=>Number(row.monto??row.importe??(Number(row.efectivo||0)+Number(row.transferencia||0)));
  function splitReceipt(receipt){
   const cash=receipt.anulado?0:Math.max(0,cents(receipt.efectivo)),transfer=receipt.anulado?0:Math.max(0,cents(receipt.transferencia)),total=cash+transfer;
-  const goods=receipt.anulado?0:Math.min(total,Math.max(0,(receipt.consumosAgrupados||[]).reduce((sum,item)=>sum+Math.max(0,cents(item.total)),0)));
+  const goods=receipt.anulado||receipt.esSena?0:Math.min(total,Math.max(0,(receipt.consumosAgrupados||[]).reduce((sum,item)=>sum+Math.max(0,cents(item.total)),0)));
   const productCash=total?Math.min(cash,proportion(goods,cash,total)):0,productTransfer=goods-productCash;
   const adjustment=receipt.anulado?0:Math.min(total-goods,Math.max(0,cents(receipt.importeAjuste))),service=total-goods-adjustment,serviceCash=total?proportion(goods+service,cash,total)-productCash:0;
   return {products:{...receipt,tipo:'venta_producto',efectivo:productCash/100,transferencia:productTransfer/100,monto:goods/100},service:{...receipt,efectivo:serviceCash/100,transferencia:(service-serviceCash)/100,monto:service/100},adjustment:{...receipt,tipo:'ingreso_libre',ajusteVenta:true,efectivo:(cash-productCash-serviceCash)/100,transferencia:(transfer-productTransfer-service+serviceCash)/100,monto:adjustment/100}};
@@ -36,14 +36,14 @@
   const currentKeys=new Set((occurrences||[]).map(o=>o.id||String(o.reservaId)+'@'+o.fecha)),allOccurrences=[...(occurrences||[]),...(receipts||[]).filter(r=>r.esSnapshotVenta&&!r.anulado&&r.ocurrenciaContable&&!currentKeys.has(r.ocurrenciaContable.id)).map(r=>r.ocurrenciaContable)];
   for(const o of allOccurrences){if(o.reconciliarCobros===false)continue;const key=o.id||String(o.reservaId)+'@'+o.fecha,rows=byKey.get(key)||[];
    const gross=(o.consumos||[]).reduce((s,x)=>s+Math.max(0,cents(x.precio)),0),netGoods=Math.min(Math.max(0,gross-cents(o.descuentoConsumosCtaCte)),Math.max(0,cents(o.total)));
-   const receiptGoods=rows.reduce((s,r)=>s+(r.consumosAgrupados||[]).reduce((a,g)=>a+cents(g.total),0),0),reservedGoods=Math.max(0,Object.values(o.consumosCobrados||{}).reduce((s,x)=>s+cents(x),0)-receiptGoods-cents(o.descuentoConsumosCtaCte));
+   const receiptGoods=rows.filter(r=>!r.esSena).reduce((s,r)=>s+(r.consumosAgrupados||[]).reduce((a,g)=>a+cents(g.total),0),0),reservedGoods=Math.max(0,Object.values(o.consumosCobrados||{}).reduce((s,x)=>s+cents(x),0)-receiptGoods-cents(o.descuentoConsumosCtaCte));
    budgets.set(key,{business:Math.max(0,cents(o.total)-cents(o.pagoCuentaCorriente)),goods:Math.max(0,netGoods-reservedGoods)});
   }
   const projected=new Map();
   for(const [key,rows]of byKey){const budget=budgets.get(key);if(!budget)continue;
    for(const r of [...rows].sort((a,b)=>String(a.fechaRegistro||'').localeCompare(String(b.fechaRegistro||''))||String(a.id||'').localeCompare(String(b.id||'')))){
     const paid=cents(r.efectivo)+cents(r.transferencia),business=Math.min(paid,budget.business);budget.business-=business;
-    const groups=r.consumosAgrupados||[],original=groups.reduce((s,g)=>s+cents(g.total),0),goods=Math.min(original,budget.goods,business);budget.goods-=goods;
+    const groups=r.esSena?[]:(r.consumosAgrupados||[]),original=groups.reduce((s,g)=>s+cents(g.total),0),goods=Math.min(original,budget.goods,business);budget.goods-=goods;
     let cumulative=0,allocated=0;const detail=groups.map(g=>{cumulative+=cents(g.total);const next=proportion(goods,cumulative,original),amount=next-allocated;allocated=next;return {...g,total:amount/100};}).filter(g=>g.total>0);
     projected.set(r,{...r,consumosAgrupados:detail,importeAjuste:(paid-business)/100});
    }

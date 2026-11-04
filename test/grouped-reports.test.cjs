@@ -13,3 +13,12 @@ test('retained credit receipts stay in credit sales rather than shifting to dire
 test('extraordinary income collected from credit appears only as the other-income portion',()=>{const r={tipo:'ingreso_libre',subtipoAjuste:'cobro_cuenta_corriente',cobroCtaCteId:'p',ventaId:'cc',fecha:'2026-11-03',detalle:'Cobro de evento',monto:100,efectivo:40,transferencia:60,importeOtros:70,importeProductos:30,desgloseCtaCte:{otros:{montoCentavos:7000,efectivoCentavos:2800,transferenciaCentavos:4200},productos:{montoCentavos:3000,efectivoCentavos:1200,transferenciaCentavos:1800}}},d={movimientos:[r],pagos:[],ocurrencias:[]},income=R.build(d,'ajustes:ingreso_libre',P),goods=R.build(d,'ventas:ctacte',P);assert.equal(income.totals.monto,70);assert.equal(income.totals.efectivo,28);assert.equal(income.totals.transferencia,42);assert.equal(goods.totals.monto,30);assert.equal(income.rows[0].concepto,'Cobro de evento');});
 
 test('turn product sales filter by effective modality and use configured court names',()=>{const data={ocurrencias:[{id:'r@2026-11-04',fecha:'2026-11-04',modalidad:'outdoor',cancha:'1',canchaNombre:'Orbit exterior',duracion:60}],pagos:[{reservaId:'r',fecha:'2026-11-04',fechaTurno:'2026-11-04',tipo:'turno',modalidad:'indoor',monto:300,efectivo:300,consumosAgrupados:[{nombre:'Agua',total:100}]}]};const reports=require('../grouped-reports'),products=require('../product-reports');assert.equal(reports.build(data,'ventas:turnos_indoor',products).totals.monto,0);for(const key of ['ventas:turnos_outdoor','ventas:turnos_padel','ventas:turnos']){const result=reports.build(data,key,products);assert.equal(result.totals.monto,100);assert.match(result.rows[0].concepto,/Orbit exterior/);}});
+
+test('indoor sales separate product receipts from court payments and legacy deposits',()=>{
+ const date='2026-11-04',base={reservaId:'r',fecha:date,fechaTurno:date,tipo:'turno',modalidad:'indoor'};
+ const rows=[{...base,transferencia:400,esSena:true,consumosAgrupados:[{nombre:'Agua',total:400}]},{...base,efectivo:700,consumosAgrupados:[{nombre:'Agua',total:100}]}];
+ const report={pagos:rows};
+ assert.equal(R.build(report,'ventas:turnos_indoor',P).totals.monto,100);
+ assert.equal(R.build(report,'turnos:indoor',P).totals.monto,1000);
+ assert.equal(R.build(report,'combinado:indoor',P).totals.monto,1100);
+});
