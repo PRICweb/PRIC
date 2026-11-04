@@ -637,3 +637,12 @@ body.panel-activo #panel-ctacte-club .ctacte-detail-row>td{padding:12px 20px!imp
 .ctacte-client-name .ctacte-detail-toggle{display:flex;align-items:center;justify-content:center;padding:0!important;margin:0!important;top:calc(50% - 16px);line-height:1}.ctacte-credit-fields label[hidden]{display:none!important}
 
 @media(max-width:767px){.ctacte-dialog,.pric-employee-permission[data-permission-view=ctacte]{display:none!important}}
+
+@media(max-width:767px){
+body.panel-activo .pric-admin-data-table{font-size:.8rem;line-height:1.3}
+body.panel-activo .pric-admin-data-table th,body.panel-activo .pric-admin-data-table td{padding:7px 4px!important;overflow-wrap:anywhere}
+body.panel-activo .pric-admin-data-table .pric-media-button,body.panel-activo .pric-admin-data-table .btn-modal{max-width:100%;font-size:.75rem!important;white-space:normal;padding:6px!important}
+body.panel-activo .pric-admin-data-table .pric-table-actions{flex-wrap:wrap}
+#historial-transacciones-acordeon .pric-history-table tbody tr{gap:4px 8px;padding:7px 0}
+#historial-transacciones-acordeon .pric-history-table tbody td{font-size:.8rem!important;line-height:1.3}
+}

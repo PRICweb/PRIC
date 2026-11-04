@@ -11,5 +11,6 @@ function restoreItem(p,item){return restore(p,[item.loteStock?{...item.loteStock
 function adjust(p,quantity,unit,id,stamp=new Date().toISOString()){quantity=qty(quantity);unit=cost(unit);const changed=p.costo==null||Number(p.costo)!==unit;let rows=lots(p);if(changed)rows=rows.map(x=>({...x,costoUnitario:unit,costoTotalCentavos:Math.round(x.cantidad*unit*100)}));save(p,rows);p.costo=unit;if(quantity<p.stock)take(p,p.stock-quantity);else if(quantity>p.stock)add(p,quantity-p.stock,unit,id,stamp);return p;}
 function units(allocation){const result=[];for(const lot of allocation.lotes){let before=0;for(let i=1;i<=lot.cantidad;i++){const next=lot.costoTotalCentavos==null?null:Math.round(lot.costoTotalCentavos*i/lot.cantidad),unit=next==null?null:(next-before)/100;before=next;result.push({...lot,cantidad:1,costoUnitario:unit,costoTotalCentavos:next==null?null:Math.round(unit*100)});}}return result;}
 function value(p){return lots(p).reduce((s,x)=>s+Number(x.costoTotalCentavos||0)/100,0);}
-return{lots,add,take,restore,restoreItem,adjust,value,units};
+function editSignature(p){return JSON.stringify([Number(p.stock||0),p.costo==null?null:Number(p.costo),Number(p.precio||0),p.categoria||'',lots(p).map(l=>[l.id,l.fechaRegistro,l.cantidad,l.costoUnitario,l.costoTotalCentavos])]);}
+return{lots,add,take,restore,restoreItem,adjust,value,units,editSignature};
 });

@@ -1,5 +1,5 @@
 'use strict';
-const BUILD='20261103-auditoria1',CACHE='pric-public-'+BUILD,ROOT=new URL('./',self.location.href),DB='pric-pwa-session';
+const BUILD='20261104-panel2',CACHE='pric-public-'+BUILD,ROOT=new URL('./',self.location.href),DB='pric-pwa-session';
 function storage(mode,fn){return new Promise((resolve,reject)=>{const request=indexedDB.open(DB,1);request.onupgradeneeded=()=>request.result.createObjectStore('state');request.onerror=()=>reject(request.error);request.onsuccess=()=>{const db=request.result,tx=db.transaction('state',mode),store=tx.objectStore('state');let result;try{result=fn(store);}catch(e){db.close();reject(e);return;}tx.oncomplete=()=>{const value=result?.result;db.close();resolve(value);};tx.onerror=()=>{db.close();reject(tx.error);};};});}
 const getIdentity=()=>storage('readonly',s=>s.get('identity'));
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(['offline.html','pwa/icon-192.png'].map(p=>new URL(p,ROOT).href)))));
