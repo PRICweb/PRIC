@@ -2,7 +2,7 @@
  'use strict';
  const proportion=(amount,weight,total)=>total?Number((BigInt(amount)*BigInt(weight)+BigInt(Math.floor(total/2)))/BigInt(total)):0;
 
- const cents=value=>Math.round((Number(value)||0)*100);
+ const cents=value=>{const n=Number(value??0),c=Math.round(n*100);if(!Number.isFinite(n)||!Number.isSafeInteger(c))throw Error('Hay un importe inválido en los registros. Revisalo antes de generar el informe.');return c;};
  const amount=row=>Number(row.monto??row.importe??(Number(row.efectivo||0)+Number(row.transferencia||0)));
  function splitReceipt(receipt){
   const cash=receipt.anulado?0:Math.max(0,cents(receipt.efectivo)),transfer=receipt.anulado?0:Math.max(0,cents(receipt.transferencia)),total=cash+transfer;
@@ -21,7 +21,7 @@
    const adjustedGross=Math.max(0,gross-cents(occurrence.descuentoConsumosCtaCte));const net=Number.isFinite(Number(occurrence.total))?Math.min(adjustedGross,Math.max(0,cents(occurrence.total))):adjustedGross;
    let allocated=0,accumulated=0;
    products.forEach((item,index)=>{
-    const quantity=Number(item.cantidad||1);if(quantity<=0)return;
+    const quantity=Number(item.cantidad??1);if(!Number.isFinite(quantity)||quantity<0)throw Error('La cantidad de un consumo no es válida.');if(quantity===0)return;
     accumulated+=Math.max(0,cents(item.precio));const target=gross?proportion(net,accumulated,gross):0,amount=target-allocated;allocated=target;
     result.push({id:'turn-product:'+key+':'+index,tipo:'venta_producto',origen:'consumo_turno',reservaId:occurrence.reservaId,fecha:occurrence.fecha,productoId:item.prodId||undefined,productoNombre:item.nombre||'Producto',cantidad:quantity,subtotal:Math.max(0,cents(item.precio))/100,descuento:(Math.max(0,cents(item.precio))-amount)/100,monto:amount/100,costoUnitario:item.costoUnitario??null});
    });

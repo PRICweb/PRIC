@@ -1,0 +1,6 @@
+(function(root){
+'use strict';
+const core='https://cdn.jsdelivr.net/npm/jspdf@4.2.1/dist/jspdf.umd.min.js',table='https://cdn.jsdelivr.net/npm/jspdf-autotable@5.0.9/dist/jspdf.plugin.autotable.min.js';
+function create(target,loader){let pending=null;const load=loader||(url=>new Promise((resolve,reject)=>{const script=target.document.createElement('script');script.src=url;script.async=true;const timer=target.setTimeout(()=>finish(Error('La descarga del generador PDF demoró demasiado. Reintentá o exportá CSV.')),20000);function finish(error){target.clearTimeout(timer);script.onload=null;script.onerror=null;if(error){script.remove();reject(error);}else resolve();}script.onload=()=>finish();script.onerror=()=>finish(Error('No se pudo descargar el generador PDF. Revisá la conexión y reintentá.'));target.document.head.append(script);}));return{ready(){if(pending)return pending;pending=(async()=>{if(!target.jspdf?.jsPDF)await load(core);if(!target.jspdf?.jsPDF)throw Error('El generador PDF no está disponible.');await load(table);return target.jspdf;})().catch(error=>{pending=null;throw error;});return pending;}};}
+if(typeof module==='object'&&module.exports)module.exports={create};if(root)root.PricPdf=create(root);
+})(typeof window==='object'?window:null);
