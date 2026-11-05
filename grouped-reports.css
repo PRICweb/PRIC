@@ -9,3 +9,7 @@
 .pric-grouped-report .report-table tfoot tr{padding:8px}
 .pric-grouped-report .report-table td:nth-child(2){font-weight:600}
 }
+
+.pric-grouped-report .report-chart{overflow-x:auto;margin:16px 0}
+.pric-grouped-report [hidden]{display:none!important}
+.pric-grouped-report .report-details>summary{cursor:pointer;padding:12px 0;font-weight:600}
