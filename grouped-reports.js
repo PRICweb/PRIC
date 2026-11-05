@@ -36,5 +36,33 @@ function build(data,key,tools,productFilter){tools=tools||root?.PricProductRepor
  return {rows,totals,kind,metric:groups.flatMap(g=>g.options).find(o=>o.key===key)?.metric||'importe'};
 }
 function daily(result){const days=new Map();for(const r of result.rows){const d=String(r.fecha).slice(0,10);if(!days.has(d))days.set(d,{fecha:d,monto:0,unidades:0,turnos:0,horas:0});const g=days.get(d);g.monto+=cents(r.monto);g.unidades+=Number(r.unidades||0);g.turnos+=Number(r.turnos||0);g.horas+=Number(r.horas||0);}return [...days.values()].map(g=>({...g,monto:g.monto/100,costo:g.unidades?g.monto/100/g.unidades:0}));}
-const api={groups,build,daily,modes,mode};if(typeof module==='object'&&module.exports)module.exports=api;if(root)root.PricGroupedReports=api;
+function chartPeriods(result,from,to){
+ const rows=daily(result);
+ if(!rows.length)return {periods:[],unit:'días'};
+ const day=86400000,start=new Date(from+'T00:00:00Z'),end=new Date(to+'T00:00:00Z');
+ const month=d=>d.getUTCFullYear()*12+d.getUTCMonth();
+ const week=d=>Math.floor((d.getTime()/day+3)/7);
+ const year=d=>d.getUTCFullYear();
+ const options=[
+  ['días',d=>d.getTime()/day],
+  ['semanas',week],
+  ['meses',month],
+  ['trimestres',d=>Math.floor(month(d)/3)],
+  ['años',year]
+ ];
+ const selected=options.find(([,key])=>key(end)-key(start)<7);
+ const years=Math.ceil((year(end)-year(start)+1)/7);
+ const [unit,key]=selected||['bloques de '+years+' años',d=>Math.floor((year(d)-year(start))/years)];
+ const groups=new Map();
+ for(const row of rows){
+  const id=key(new Date(row.fecha+'T00:00:00Z'));
+  let period=groups.get(id);
+  if(!period){period={fecha:row.fecha,fin:row.fecha,monto:0,unidades:0,turnos:0,horas:0};groups.set(id,period);}
+  period.fin=row.fecha;
+  period.monto+=cents(row.monto);
+  for(const field of ['unidades','turnos','horas'])period[field]+=row[field];
+ }
+ return {unit,periods:[...groups.values()].map(p=>({...p,monto:p.monto/100,costo:p.unidades?p.monto/100/p.unidades:0}))};
+}
+const api={groups,build,daily,chartPeriods,modes,mode};if(typeof module==='object'&&module.exports)module.exports=api;if(root)root.PricGroupedReports=api;
 })(typeof window==='object'?window:null);
