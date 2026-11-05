@@ -66,3 +66,14 @@ test('archiving a paid discounted turn retains its net classification after the 
  const receipt={id:'paid',reservaId:'r',fechaTurno:'2026-11-19',tipo:'turno',efectivo:1000,transferencia:500,monto:1500,consumosAgrupados:[{nombre:'Agua',total:500}]},archive={esSnapshotVenta:true,tipo:'consumo_costo',ocurrenciaContable:{id:'r@2026-11-19',total:300,consumos:[{nombre:'Agua',precio:500}]}};
  const rows=reports.reconcileTurnReceipts([receipt,archive],[]),parts=reports.splitReceipt(rows[0]);assert.equal(parts.products.monto,300);assert.equal(parts.adjustment.monto,1200);assert.equal(rows[1],archive);
 });
+
+test('mixed court payments round the allocation and reconcile both original payment channels',()=>{
+ const receipt={efectivo:15000,transferencia:57800,consumosAgrupados:[{total:2800}]};
+ const {products,service,adjustment}=reports.splitReceipt(receipt);
+ assert.deepEqual([products.efectivo,products.transferencia,service.efectivo,service.transferencia],[500,2300,14500,55500]);
+ for(const field of ['efectivo','transferencia'])assert.equal(products[field]+service[field]+adjustment[field],receipt[field]);
+ assert.equal(service.monto,70000);
+ const small=reports.splitReceipt({efectivo:250,transferencia:250,consumosAgrupados:[{total:200}]});
+ assert.equal(small.products.monto,200);
+ assert.equal(small.products.efectivo+small.service.efectivo,250);
+});

@@ -4,11 +4,25 @@
 
  const cents=value=>{const n=Number(value??0),c=Math.round(n*100);if(!Number.isFinite(n)||!Number.isSafeInteger(c))throw Error('Hay un importe inválido en los registros. Revisalo antes de generar el informe.');return c;};
  const amount=row=>Number(row.monto??row.importe??(Number(row.efectivo||0)+Number(row.transferencia||0)));
+ // Allocate a mixed payment without changing any recorded payment or category total.
+ function roundMixedCash(part,cash,transfer){
+  const min=Math.max(0,part-transfer),max=Math.min(part,cash);
+  if(min===max)return min;
+  const target=proportion(part,cash,cash+transfer);
+  for(const step of [50000,100]){
+   const low=Math.ceil(min/step),high=Math.floor(max/step);
+   if(low<=high)return Math.min(high,Math.max(low,Math.round(target/step)))*step;
+  }
+  return Math.min(max,Math.max(min,target));
+ }
  function splitReceipt(receipt){
   const cash=receipt.anulado?0:Math.max(0,cents(receipt.efectivo)),transfer=receipt.anulado?0:Math.max(0,cents(receipt.transferencia)),total=cash+transfer;
   const goods=receipt.anulado||receipt.esSena?0:Math.min(total,Math.max(0,(receipt.consumosAgrupados||[]).reduce((sum,item)=>sum+Math.max(0,cents(item.total)),0)));
-  const productCash=total?Math.min(cash,proportion(goods,cash,total)):0,productTransfer=goods-productCash;
-  const adjustment=receipt.anulado?0:Math.min(total-goods,Math.max(0,cents(receipt.importeAjuste))),service=total-goods-adjustment,serviceCash=total?proportion(goods+service,cash,total)-productCash:0;
+  const adjustment=receipt.anulado?0:Math.min(total-goods,Math.max(0,cents(receipt.importeAjuste)));
+  const adjustmentCash=roundMixedCash(adjustment,cash,transfer);
+  const businessCash=cash-adjustmentCash,businessTransfer=transfer-(adjustment-adjustmentCash);
+  const productCash=roundMixedCash(goods,businessCash,businessTransfer),productTransfer=goods-productCash;
+  const service=total-goods-adjustment,serviceCash=businessCash-productCash;
   return {products:{...receipt,tipo:'venta_producto',efectivo:productCash/100,transferencia:productTransfer/100,monto:goods/100},service:{...receipt,efectivo:serviceCash/100,transferencia:(service-serviceCash)/100,monto:service/100},adjustment:{...receipt,tipo:'ingreso_libre',ajusteVenta:true,efectivo:(cash-productCash-serviceCash)/100,transferencia:(transfer-productTransfer-service+serviceCash)/100,monto:adjustment/100}};
  }
  function turnLines(occurrences){
