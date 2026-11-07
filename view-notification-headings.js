@@ -9,7 +9,9 @@ function hasContent(node){
 }
 function sync(){
  const bell=document.getElementById('pwa-bell'),brand=document.querySelector('#sidebar-admin-club .sidebar-brand-club');
- if(bell&&brand&&bell.parentElement!==brand)brand.append(bell);
+ const actions=matchMedia('(max-width:767px)').matches?document.getElementById('pric-mobile-actions'):null;
+ const target=actions||brand;
+ if(bell&&target&&bell.parentElement!==target){if(actions)actions.prepend(bell);else target.append(bell);}
  if(document.body.classList.contains('pwa-root-notifications'))document.body.classList.remove('pwa-root-notifications');
  for(const id of ids){const panel=document.getElementById(id);if(!panel)continue;
   if(!panel.classList.contains('pwa-main-view'))panel.classList.add('pwa-main-view');

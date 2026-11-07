@@ -39,7 +39,7 @@
   }
   document.querySelectorAll('#pric-mobile-turnero-links button[data-mobile-target]').forEach(node=>node.hidden=!!window.PricCanScope&&!window.PricCanScope(node.dataset.mobileTarget));
   const brand=document.getElementById('pric-mobile-brand');
-  if(brand&&!brand.querySelector('button')){
+  if(brand&&!brand.querySelector('#pric-mobile-menu')){
    const account=document.createElement('button');account.id='pric-mobile-menu';account.type='button';account.className='pric-mobile-account';account.setAttribute('aria-label','Abrir menú');account.setAttribute('aria-controls','pric-mobile-navigation');account.setAttribute('aria-expanded','false');
    account.innerHTML='<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>';
    account.onclick=()=>{
@@ -58,6 +58,12 @@
    };brand.append(account);
   }
 
+  if(brand){
+   let actions=document.getElementById('pric-mobile-actions');
+   if(!actions){actions=document.createElement('div');actions.id='pric-mobile-actions';brand.append(actions);}
+   const menuButton=document.getElementById('pric-mobile-menu');
+   if(menuButton&&menuButton.parentElement!==actions)actions.append(menuButton);
+  }
   highlight();
  }
  window.PricMobileNavigation={render,views:()=>currentPlan.views.slice(),swipeViews:()=>currentPlan.direct.slice(),highlight};

@@ -35,3 +35,18 @@
 body.panel-activo #panel-metricas-club > details.pric-admin-accordion:not(.pric-subview-active):not(.pric-desktop-selected){
  margin:0 0 16px!important;
 }
+@media(max-width:767px){
+ #pric-mobile-actions{display:flex;align-items:center;gap:4px;flex:none;margin-left:auto}
+ .pric-mobile-brand-name{min-width:0;flex:1;overflow-wrap:anywhere}
+ #pric-mobile-actions>#pwa-bell:not([hidden]){position:relative;inset:auto;display:grid!important;place-items:center;width:36px;height:36px;padding:6px;flex:none;margin:0;background:#fff;color:#07152b}
+ #pric-mobile-actions>#pwa-bell svg{width:24px;height:24px}
+ #pric-report-records .record-summary td:nth-child(2){grid-column:auto}
+ #pric-report-records .record-summary td:first-child{grid-column:1/-1;font-weight:600}
+}
+@media(max-width:767px){
+ #pric-report-records .report-table td{display:block!important;min-width:0!important;max-width:100%;box-sizing:border-box;overflow-wrap:anywhere!important}
+ #pric-report-records .report-table td::before{display:block!important;position:static!important;max-width:100%;white-space:normal;overflow-wrap:anywhere}
+ #pric-report-records .report-table tr{box-sizing:border-box;max-width:100%}
+}@media(max-width:767px){
+ #pric-report-records .report-table tbody,#pric-report-records .report-table tfoot{box-sizing:border-box;max-width:100%}
+}

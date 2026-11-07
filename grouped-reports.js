@@ -71,9 +71,24 @@ function records(data,label,tools){
   if(kind==='especiales')options=options.filter(o=>o.key==='especiales:todas');
   if(kind==='ventas')options=options.filter(o=>['ventas:turnos','ventas:caja','ventas:ctacte'].includes(o.key));
   if(kind==='compras')options=options.filter(o=>o.key==='compras:total');
-  const rows=options.flatMap(o=>build(data,o.key,tools).rows.map(r=>({...r,origen:r.modalidad&&r.modalidad!=='sin_modalidad'?modes[r.modalidad]:o.label})));
+  const rows=options.flatMap(o=>build(data,o.key,tools).rows.map(r=>({...r,categoriaRegistro:o.label,origen:r.modalidad&&r.modalidad!=='sin_modalidad'?modes[r.modalidad]:o.label})));
   rows.sort((a,b)=>String(a.fecha).localeCompare(String(b.fecha))||String(a.concepto).localeCompare(String(b.concepto)));
   return rows;
 }
-const api={groups,build,daily,chartPeriods,records,modes,mode};if(typeof module==='object'&&module.exports)module.exports=api;if(root)root.PricGroupedReports=api;
+function recordSummary(rows,label){
+ const groups=new Map(),totals={nombre:'Totales',efectivo:0,transferencia:0,monto:0,turnos:0,horas:0,unidades:0,costo:0};
+ for(const row of rows){
+  let name=row.origen||'Sin modalidad identificada';
+  if(label==='Compras'||label==='Empleados')name=row.concepto||'Sin identificar';
+  else if(label==='Ventas'||label==='Ajustes')name=[row.categoriaRegistro,row.modalidad&&modes[mode(row.modalidad)]].filter(Boolean).join(' · ')||name;
+  if(!groups.has(name))groups.set(name,{nombre:name,efectivo:0,transferencia:0,monto:0,turnos:0,horas:0,unidades:0,costo:0});
+  for(const target of [groups.get(name),totals]){
+   for(const key of ['efectivo','transferencia','monto'])target[key]+=cents(row[key]);
+   for(const key of ['turnos','horas','unidades'])target[key]+=Number(row[key]||0);
+  }
+ }
+ const finish=x=>({...x,efectivo:x.efectivo/100,transferencia:x.transferencia/100,monto:x.monto/100,costo:x.unidades?x.monto/100/x.unidades:0});
+ return {rows:[...groups.values()].map(finish).sort((a,b)=>a.nombre.localeCompare(b.nombre,'es')),totals:finish(totals)};
+}
+const api={groups,build,daily,chartPeriods,records,recordSummary,modes,mode};if(typeof module==='object'&&module.exports)module.exports=api;if(root)root.PricGroupedReports=api;
 })(typeof window==='object'?window:null);

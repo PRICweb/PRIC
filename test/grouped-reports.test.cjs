@@ -46,3 +46,14 @@ test('Registros reads each main group once without duplicate modality subtotals'
   for(const row of rows)assert.equal(Math.round((Number(row.efectivo||0)+Number(row.transferencia||0))*100),Math.round(row.monto*100));
  }
 });
+
+test('record summary groups modalities and product costs while retaining full totals beyond the first fifty details',()=>{
+ const rows=Array.from({length:57},(_,i)=>({origen:i%2?'Pádel in':'Pádel out',categoriaRegistro:'En turnos',modalidad:i%2?'indoor':'outdoor',concepto:'Cancha '+i,turnos:1,horas:1.5,efectivo:500,transferencia:1000,monto:1500}));
+ const summary=R.recordSummary(rows,'Turnos');
+ assert.equal(summary.rows.length,2);assert.equal(summary.totals.turnos,57);assert.equal(summary.totals.horas,85.5);assert.equal(summary.totals.monto,85500);
+ for(const field of ['efectivo','transferencia','monto','turnos','horas'])assert.equal(summary.rows.reduce((s,r)=>s+r[field],0),summary.totals[field]);
+ const purchases=R.recordSummary([{concepto:'Agua',unidades:2,monto:200,efectivo:200},{concepto:'Agua',unidades:1,monto:400,transferencia:400}],'Compras');
+ assert.equal(purchases.rows.length,1);assert.equal(purchases.rows[0].costo,200);assert.equal(purchases.rows[0].unidades,3);
+ const channels=R.recordSummary([{...rows[0],categoriaRegistro:'En caja'},{...rows[0],categoriaRegistro:'En Cta Cte'}],'Ventas');
+ assert.equal(channels.rows.length,2);
+});
