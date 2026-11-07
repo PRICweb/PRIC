@@ -33,3 +33,16 @@ test('special occasions and classes do not contribute to regular booking reports
   assert.equal(result.totals.monto,100);
  }
 });
+
+test('Registros reads each main group once without duplicate modality subtotals',()=>{
+ const totals=Object.fromEntries(R.groups.map(g=>[g.label,R.records(data,g.label,P).reduce((s,r)=>s+Math.round(r.monto*100),0)/100]));
+ assert.equal(totals.Turnos,1000);assert.equal(totals['Turnos + Ventas'],1600);
+ assert.equal(totals.Profesores,800);assert.equal(totals.Ventas,900);
+ assert.equal(totals.Compras,500);assert.equal(totals.Ajustes,-10);
+ const purchases=R.records(data,'Compras',P);
+ assert.equal(purchases[0].unidades,3);assert.equal(purchases[0].costo,100);
+ for(const group of R.groups){
+  const rows=R.records(data,group.label,P);
+  for(const row of rows)assert.equal(Math.round((Number(row.efectivo||0)+Number(row.transferencia||0))*100),Math.round(row.monto*100));
+ }
+});

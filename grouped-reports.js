@@ -25,7 +25,7 @@ function build(data,key,tools,productFilter){tools=tools||root?.PricProductRepor
   else if(choice==='caja')rows=tools.counterIncome(movements).map(r=>({...r,monto:tools.amount(r),concepto:r.titulo||r.productoNombre||'Venta en caja',turnos:0,horas:0}));
   else rows=receipts.flatMap(r=>{const o=operations.get(r.reservaId+'@'+r.fechaTurno),actual=o?.modalidad||mode(r.modalidad);if(!['turno','clase'].includes(r.tipo)||r.reclasificadoCtaCte||(choice!=='turnos'&&!matches(actual,choice.slice(7))))return[];const part=tools.splitReceipt(r).products;return cents(part.monto)?[{...part,concepto:label(r,o),turnos:0,horas:0}]:[];});
  }else if(kind==='ajustes'){
-  rows=movements.filter(r=>{if(r.nominaId||r.cobroCtaCteId&&r.subtipoAjuste==='cobro_cuenta_corriente'||r.esVentaCredito)return false;const type=r.subtipoAjuste||r.tipo;return type===choice&&(!['ingreso_libre','egreso'].includes(choice)||!r.ajusteVenta&&!r.ventaId&&!r.productoId);}).map(r=>({...r,monto:tools.amount(r),concepto:r.concepto||r.detalle||r.titulo||'Ajuste',turnos:0,horas:0,...(['egreso','stock'].includes(r.tipo)?{monto:-tools.amount(r),efectivo:-Number(r.efectivo||0),transferencia:-Number(r.transferencia||0)}:{})}));
+  rows=movements.filter(r=>{if(r.nominaId||r.cobroCtaCteId&&r.subtipoAjuste==='cobro_cuenta_corriente'||r.esVentaCredito)return false;const type=r.subtipoAjuste||r.tipo;return type===choice&&(!['ingreso_libre','egreso'].includes(choice)||!r.ajusteVenta&&!r.ventaId&&!r.productoId);}).map(r=>({...r,monto:tools.amount(r),concepto:(r.concepto||r.detalle||r.titulo||'Ajuste')+(r.modalidad?' · '+(modes[r.modalidad]||r.modalidad):''),turnos:0,horas:0,...(['egreso','stock'].includes(r.tipo)?{monto:-tools.amount(r),efectivo:-Number(r.efectivo||0),transferencia:-Number(r.transferencia||0)}:{})}));
   if(choice==='ingreso_libre')for(const r of movements)if(!r.anulado&&Number(r.importeOtros)>0)rows.push({...tools.collectionPart(r,'importeOtros'),concepto:r.concepto||r.detalle||r.titulo||'Ingreso cobrado de Cta Cte',turnos:0,horas:0});
   if(['ajuste_caja','ajuste_bancario'].includes(choice)){const f=choice==='ajuste_caja'?'efectivo':'transferencia';for(const r of receipts){const p=tools.splitReceipt(r).adjustment;if(p[f])rows.push({...p,concepto:'Ajuste de cobro · '+(r.turnoReferencia||r.detalle||'Turno'),monto:p[f],efectivo:f==='efectivo'?p[f]:0,transferencia:f==='transferencia'?p[f]:0,turnos:0,horas:0});}}
  }else if(kind==='compras'){
@@ -64,5 +64,16 @@ function chartPeriods(result,from,to){
  }
  return {unit,periods:[...groups.values()].map(p=>({...p,monto:p.monto/100,costo:p.unidades?p.monto/100/p.unidades:0}))};
 }
-const api={groups,build,daily,chartPeriods,modes,mode};if(typeof module==='object'&&module.exports)module.exports=api;if(root)root.PricGroupedReports=api;
+function records(data,label,tools){
+  const group=groups.find(g=>g.label===label),kind=group.options[0].key.split(':')[0];
+  let options=group.options;
+  if(['turnos','combinado','profesores'].includes(kind))options=options.filter(o=>['indoor','outdoor','tenis_indoor','tenis_outdoor','sin_modalidad'].includes(o.key.split(':')[1]));
+  if(kind==='especiales')options=options.filter(o=>o.key==='especiales:todas');
+  if(kind==='ventas')options=options.filter(o=>['ventas:turnos','ventas:caja','ventas:ctacte'].includes(o.key));
+  if(kind==='compras')options=options.filter(o=>o.key==='compras:total');
+  const rows=options.flatMap(o=>build(data,o.key,tools).rows.map(r=>({...r,origen:r.modalidad&&r.modalidad!=='sin_modalidad'?modes[r.modalidad]:o.label})));
+  rows.sort((a,b)=>String(a.fecha).localeCompare(String(b.fecha))||String(a.concepto).localeCompare(String(b.concepto)));
+  return rows;
+}
+const api={groups,build,daily,chartPeriods,records,modes,mode};if(typeof module==='object'&&module.exports)module.exports=api;if(root)root.PricGroupedReports=api;
 })(typeof window==='object'?window:null);

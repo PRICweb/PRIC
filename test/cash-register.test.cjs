@@ -56,7 +56,7 @@ test('turn quantity selection and removal preserve concurrent payments and corre
   require('../stock-lots').take(h.data.get('clubs/test/inventario/a'),2);await h.context.window.eliminarConsumoTurno(0,'a');assert.equal(h.selected.consumos.length,2);assert.equal(h.data.get('clubs/test/inventario/a').stock,2);assert.equal(h.selected.pagoEfectivo,1234);
 });
 test('one internal form saves both directions and both payment methods, rejecting invalid input',async()=>{
-  const h=harness();for(const tipo of ['egreso','ingreso_libre']){h.element('mov-interno-tipo').value=tipo;h.element('mov-interno-concepto').value='Concepto';h.element('mov-interno-efectivo').value='100';h.element('mov-interno-transferencia').value='50';await h.context.window.agregarMovimientoInterno();}
+  const h=harness();for(const tipo of ['egreso','ingreso_libre']){h.element('mov-interno-tipo').value=tipo;h.element('mov-ajuste-modalidad').value='indoor';h.element('mov-interno-concepto').value='Concepto';h.element('mov-interno-efectivo').value='100';h.element('mov-interno-transferencia').value='50';await h.context.window.agregarMovimientoInterno();}
   assert.equal(h.context.gastosGlobal.length,1);assert.equal(h.context.ingresosGlobal.length,1);assert.equal(h.context.gastosGlobal[0].efectivo,100);assert.equal(h.context.gastosGlobal[0].transferencia,50);assert.equal(h.context.gastosGlobal[0].monto,150);
   h.element('mov-interno-concepto').value='Invalid';h.element('mov-interno-efectivo').value='-1';await h.context.window.agregarMovimientoInterno();assert.equal(h.context.ingresosGlobal.length,1);
 });
@@ -84,3 +84,10 @@ test('checkout and turn consumption persist FIFO costs across two purchase lots 
 
 test('paid turn requires confirmation and an added consumption reopens its outstanding balance',async()=>{const h=harness();h.selected.pagoEfectivo=2000;h.data.get('clubs/test/reservas/r').pagoEfectivo=2000;let prompts=0;h.context.window.turneroConfirm=async()=>{prompts++;return false;};await h.context.window.agregarConsumoTurno();assert.equal(prompts,1);assert.equal(h.data.get('clubs/test/inventario/a').stock,5);h.context.window.turneroConfirm=async()=>{prompts++;return true;};await h.context.window.agregarConsumoTurno();assert.equal(h.selected.pagoEfectivo,2000);assert.equal(h.context.totalTurnoInstancia(h.selected)-h.selected.pagoEfectivo,450);await h.context.window.ajustarGrupoConsumoTurno(0,1);assert.equal(prompts,2);});
 test('payment concurrent with an unconfirmed consumption edit leaves stock untouched',async()=>{const h=harness();h.data.get('clubs/test/reservas/r').pagoEfectivo=2000;await h.context.window.agregarConsumoTurno();assert.equal(h.data.get('clubs/test/inventario/a').stock,5);assert.match(h.context.lastAlert,/se pagó mientras/);});
+
+test('manual income and expense adjustments require a modality',async()=>{
+ const h=harness();h.element('mov-interno-tipo').value='ingreso_libre';h.element('mov-interno-concepto').value='Prueba';h.element('mov-interno-efectivo').value='500';
+ await h.context.window.agregarMovimientoInterno();assert.equal(h.context.ingresosGlobal.length,0);
+ h.element('mov-ajuste-modalidad').value='tenis_outdoor';await h.context.window.agregarMovimientoInterno();
+ assert.equal(h.context.ingresosGlobal[0].modalidad,'tenis_outdoor');
+});

@@ -1,12 +1,12 @@
 (function(root){
  'use strict';
  const bottom=['metricas','movimientos','turnero','inventario','empleados'];
- const order=[...bottom,'profes','config','actividad'];
+ const order=[...bottom,'profes','config','actividad','ctacte'];
  function plan(allowed){
   const views=order.filter(view=>allowed.includes(view));
   const direct=bottom.filter(view=>views.includes(view));
-  const linked=[];
-  const more=['profes','config','actividad'].filter(view=>views.includes(view)&&!linked.includes(view));
+  const linked=views.includes('profes')?['profes']:[];
+  const more=['config','actividad','ctacte'].filter(view=>views.includes(view)&&!linked.includes(view));
   return {views,direct,more,linked};
  }
  if(typeof module==='object'&&module.exports){module.exports={plan,order};return;}

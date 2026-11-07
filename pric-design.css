@@ -627,7 +627,7 @@ body.panel-activo #sidebar-admin-club [data-employee-hidden],body.panel-activo #
 .ctacte-debt-amount{display:flex;align-items:center;gap:10px}.ctacte-detail-toggle{border:0;background:transparent;color:#07152b;width:32px;height:32px;font:22px 'Segoe UI',sans-serif;cursor:pointer}.ctacte-detail-toggle[aria-expanded=true]{transform:rotate(180deg)}
 body.panel-activo #panel-ctacte-club .ctacte-detail-row>td{padding:12px 20px!important;background:#f7f8fa}.ctacte-detail-row table{background:#fff}
 #ctacte-deudas-totales{background:#eef0f3;font-weight:700}#ctacte-deudas-totales th,#ctacte-deudas-totales td{padding:14px 10px!important}
-@media(max-width:767px){body.panel-activo #sidebar-admin-club [data-sidebar-target=ctacte],body.panel-activo #panel-ctacte-club{display:none!important}#ctacte-desktop-notice{padding:20px;color:#52627a;line-height:1.5}#ctacte-desktop-notice[hidden]{display:none!important}}
+@media(max-width:767px){#ctacte-desktop-notice{padding:20px;color:#52627a;line-height:1.5}#ctacte-desktop-notice[hidden]{display:none!important}}
 @media(max-width:767px){body.panel-activo #pric-mobile-brand{display:flex!important;align-items:center;justify-content:space-between;gap:12px}.pric-mobile-account{border:0;background:#fff;color:#07162e;width:36px;height:36px;padding:6px;flex:none;cursor:pointer}.pric-mobile-account svg{width:24px;height:24px}}
 
 .ctacte-client-name{position:relative;padding-right:44px!important}.ctacte-client-name .ctacte-detail-toggle{position:absolute;right:6px;top:50%;margin-top:-16px}.ctacte-whatsapp{display:inline-flex;align-items:center;justify-content:center;color:#07152b;width:36px;height:36px;flex:none}.ctacte-whatsapp svg{width:26px;height:26px}
@@ -636,7 +636,7 @@ body.panel-activo #panel-ctacte-club .ctacte-detail-row>td{padding:12px 20px!imp
 
 .ctacte-client-name .ctacte-detail-toggle{display:flex;align-items:center;justify-content:center;padding:0!important;margin:0!important;top:calc(50% - 16px);line-height:1}.ctacte-credit-fields label[hidden]{display:none!important}
 
-@media(max-width:767px){.ctacte-dialog,.pric-employee-permission[data-permission-view=ctacte]{display:none!important}}
+@media(max-width:767px){}
 
 @media(max-width:767px){
 body.panel-activo .pric-admin-data-table{font-size:.8rem;line-height:1.3}

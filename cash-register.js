@@ -41,7 +41,15 @@
       for(const product of ordered){
         const row=document.createElement('label');row.className='pric-product-picker-row';
         const text=document.createElement('span'),name=document.createElement('strong'),detail=document.createElement('small');name.textContent=product.nombre||'Producto';detail.textContent=(product.categoria||'Sin categoría')+' · '+money(cents(product.precio||0))+' · Stock '+Number(product.stock||0);text.append(name,detail);
-        const input=document.createElement('input');input.className='input-form';input.type='number';input.min='0';input.max=String(Math.min(1000,Math.max(0,Number(product.stock||0))));input.step='1';input.value=String(Number(product.stock||0)>0?(selection.find(item=>String(item.id)===String(product.id))?.cantidad||0):0);input.disabled=Number(product.stock||0)<=0;input.setAttribute('aria-label','Cantidad de '+product.nombre);quantities.set(String(product.id),input);row.append(text,input);row.dataset.search=(String(product.nombre||'')+' '+String(product.categoria||'')).toLocaleLowerCase('es');list.append(row);
+        const input=document.createElement('input');input.className='input-form';input.type='number';input.min='0';input.max=String(Math.min(1000,Math.max(0,Number(product.stock||0))));input.step='1';input.value=String(Number(product.stock||0)>0?(selection.find(item=>String(item.id)===String(product.id))?.cantidad||0):0);input.disabled=Number(product.stock||0)<=0;input.setAttribute('aria-label','Cantidad de '+product.nombre);quantities.set(String(product.id),input);const controls=document.createElement('span');controls.className='pric-product-stepper';
+        for(const [label,delta] of [['−',-1],['+',1]]){
+          const button=document.createElement('button');button.type='button';button.className='pric-media-button';
+          button.textContent=label;button.disabled=input.disabled;
+          button.setAttribute('aria-label',(delta<0?'Restar':'Sumar')+' una unidad de '+product.nombre);
+          button.onclick=event=>{event.preventDefault();input.value=String(Math.max(0,Math.min(Number(input.max),Number(input.value||0)+delta)));input.dispatchEvent(new Event('input',{bubbles:true}));};
+          if(delta<0)controls.append(button,input);else controls.append(button);
+        }
+        row.append(text,controls);row.dataset.search=(String(product.nombre||'')+' '+String(product.categoria||'')).toLocaleLowerCase('es');list.append(row);
       }
       if(!ordered.length){const empty=document.createElement('p');empty.textContent='No hay productos cargados.';list.append(empty);}
       const status=document.createElement('p');status.className='pric-product-picker-status';status.setAttribute('aria-live','polite');
