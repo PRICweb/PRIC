@@ -50,3 +50,20 @@ body.panel-activo #panel-metricas-club > details.pric-admin-accordion:not(.pric-
 }@media(max-width:767px){
  #pric-report-records .report-table tbody,#pric-report-records .report-table tfoot{box-sizing:border-box;max-width:100%}
 }
+#btn-agregar-tiempo-juego{margin-top:8px!important;width:100%}
+.gestion-extra-time{list-style:none;margin:10px 0;padding:0}
+.gestion-extra-time li{display:flex;align-items:center;gap:10px;padding:8px 0}
+.gestion-extra-time li span{flex:1;min-width:0}
+.pric-extra-time-dialog{background:white;color:#07152b;border:1px solid #d7dfeb;border-radius:14px;width:min(460px,calc(100vw - 32px));max-height:85dvh;overflow:auto;box-sizing:border-box;padding:20px}
+.pric-extra-time-dialog::backdrop{background:rgba(7,21,43,.35)}
+.pric-extra-time-dialog h2{margin:0 0 12px;font-size:20px}
+.pric-extra-time-dialog p{line-height:1.5}
+.pric-extra-time-options{display:grid;gap:10px;margin:16px 0}
+.pric-extra-time-options button{text-align:left;width:100%}
+.gestion-extra-time{width:100%;box-sizing:border-box;align-self:stretch}.gestion-extra-time li{width:100%;box-sizing:border-box}.gestion-extra-time li button{flex:0 0 32px;color:#07152b;background:white;border:0;min-height:32px;font-size:20px}
+
+.pric-sales-history{margin-top:28px;width:100%;min-width:0}.pric-sales-history h3{margin:0 0 14px}.pric-sales-history table{width:100%;table-layout:fixed}.pric-sales-history td{overflow-wrap:anywhere}.pric-sales-history th:first-child{width:23%}.pric-sales-history th:last-child{width:60px}.venta-caja-borrar{border:0;border-radius:50%;width:30px;height:30px;background:#fee2e2;color:#dc2626;font-size:20px;cursor:pointer}.venta-caja-borrar:disabled{opacity:.5;cursor:wait}.pric-sales-history>button{margin:12px 10px 0 0}@media(max-width:700px){.pric-sales-history table{font-size:12px}.pric-sales-history th,.pric-sales-history td{padding:8px 4px}.pric-sales-history th:first-child{width:23%}.pric-sales-history th:last-child{width:34px}.pric-sales-history th:nth-child(3){width:24%}}
+
+.pric-sales-history{grid-column:1/-1;flex-basis:100%}
+
+.pric-sales-history h3{display:block!important;font-size:16px;color:#07152b}
