@@ -28,3 +28,19 @@
 .pric-grouped-report .report-chart-plot{overflow-x:auto}
 .pric-grouped-report .report-chart-card svg{min-height:145px}
 .pric-grouped-report .report-chart>p{grid-column:1/-1;grid-row:2;margin:0}
+/* Registros: selección múltiple y tablas uniformes sin detalle individual. */
+.pric-records .record-categories{border:0;padding:0;margin:22px 0;color:#07152b;min-width:0}
+.pric-records .record-categories legend{font:inherit;font-weight:600;margin-bottom:12px}
+.pric-records .record-categories-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 18px;margin-bottom:14px}
+.pric-records .record-categories-options label{display:flex;align-items:center;gap:9px;min-height:36px;cursor:pointer;font-size:.9rem}
+.pric-records .record-categories-options input{width:17px;height:17px;accent-color:#07152b;flex:none;margin:0}
+.pric-records .record-tables{display:grid;gap:32px;margin-top:24px;min-width:0}
+.pric-records .record-category-result{min-width:0;max-width:100%}
+.pric-records .record-category-result>h3{font-size:1rem!important;font-weight:600;margin:0 0 14px!important;color:#07152b}
+.pric-records .record-note{margin:10px 0 0;line-height:1.5}
+body.panel-activo #pric-sales-margin tfoot,body.panel-activo #pric-sales-margin tfoot td,body.panel-activo .pric-records .report-table tfoot,body.panel-activo .pric-records .report-table tfoot td{background:#f7f8fa!important;font-weight:700}
+body.panel-activo #pric-sales-margin tfoot td{border-top:1px solid #d7dfeb!important;padding:12px 10px!important}
+.pric-records .record-grand-total{padding-top:8px}
+@media(max-width:767px){.pric-records .record-categories-options{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 10px}.pric-records .record-tables{gap:26px}.pric-records .record-categories-options label{font-size:.82rem;line-height:1.35}.pric-records .record-category-result h3{line-height:1.4}body.panel-activo #pric-sales-margin tfoot tr{background:#f7f8fa!important}#pric-sales-margin tfoot td:first-child{grid-column:1/-1!important}#pric-sales-margin tfoot td:last-child{font-weight:700!important}}
+body.panel-activo #pric-report-records .record-category-result>h3{display:block!important}
+@media(max-width:767px){body.panel-activo #pric-sales-margin tfoot td:last-child::before{content:'Margen total'!important}body.panel-activo #pric-sales-margin tfoot td:first-child::before{content:none!important}}

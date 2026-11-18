@@ -1,15 +1,16 @@
 (function(root){
 'use strict';
 const cents=x=>{const n=Number(x??0),c=Math.round(n*100);if(!Number.isFinite(n)||!Number.isSafeInteger(c))throw Error('Hay un importe inválido en los registros del período.');return c;},modes={indoor:'Pádel in',outdoor:'Pádel out',tenis_indoor:'Tenis in',tenis_outdoor:'Tenis out',padel:'Pádel',tenis:'Tenis',sin_modalidad:'Sin modalidad identificada'};
-const groups=[...['Turnos','Turnos + Ventas','Profesores'].map((label,i)=>({label,options:Object.entries(modes).map(([mode,name])=>({key:['turnos','combinado','profesores'][i]+':'+mode,label:name,metric:'importe'}))})),{label:'Ventas',options:[['turnos','En turnos · Todas las modalidades'],...Object.entries(modes).map(([mode,name])=>['turnos_'+mode,'En turnos · '+name]),['caja','En caja'],['ctacte','En Cta Cte']].map(([key,label])=>({key:'ventas:'+key,label,metric:'importe'}))},{label:'Ajustes',options:[['ingreso_libre','Ingresos extraordinarios'],['egreso','Egresos extraordinarios'],['retiro_capital','Retiros de capital'],['ajuste_caja','Ajustes de caja'],['ajuste_bancario','Ajustes bancarios']].map(([key,label])=>({key:'ajustes:'+key,label,metric:'importe'}))},{label:'Compras',options:[{key:'compras:cantidad',label:'Cantidad por producto',metric:'unidades'},{key:'compras:costo',label:'Costo unitario medio por producto',metric:'costo'},{key:'compras:total',label:'Importe gastado por producto',metric:'importe'}]},{label:'Empleados',options:[{key:'empleados:sueldos',label:'Sueldos abonados',metric:'importe'}]}];
+const filterModes=Object.entries(modes).filter(([id])=>id!=='sin_modalidad').concat([['todas','Todos']]);
+const groups=[...['Turnos','Turnos + Ventas','Profesores'].map((label,i)=>({label,options:filterModes.map(([mode,name])=>({key:['turnos','combinado','profesores'][i]+':'+mode,label:name,metric:'importe'}))})),{label:'Ventas',options:[['turnos','En turnos · Todos'],...filterModes.filter(([id])=>id!=='todas').map(([mode,name])=>['turnos_'+mode,'En turnos · '+name]),['caja','En caja · Todos'],['ctacte','En Cta Cte']].map(([key,label])=>({key:'ventas:'+key,label,metric:'importe'}))},{label:'Ajustes',options:[['ingreso_libre','Ingresos extraordinarios'],['egreso','Egresos extraordinarios'],['retiro_capital','Retiros de capital'],['ajuste_caja','Ajustes de caja'],['ajuste_bancario','Ajustes bancarios']].map(([key,label])=>({key:'ajustes:'+key,label,metric:'importe'}))},{label:'Compras',options:[{key:'compras:cantidad',label:'Cantidad por producto',metric:'unidades'},{key:'compras:costo',label:'Costo unitario medio por producto',metric:'costo'},{key:'compras:total',label:'Importe gastado por producto',metric:'importe'}]},{label:'Empleados',options:[{key:'empleados:sueldos',label:'Sueldos abonados',metric:'importe'}]}];
 groups.splice(2,0,groups.splice(3,1)[0]);
-groups.splice(2,0,{label:'Ocasiones especiales',options:[['todas','Todas las modalidades'],...Object.entries(modes).filter(([key])=>key!=='sin_modalidad')].map(([key,label])=>({key:'especiales:'+key,label,metric:'importe'}))});
-const saleModes=[['todas','Todas las modalidades'],...Object.entries(modes)];
+groups.splice(2,0,{label:'Ocasiones especiales',options:[['todas','Todos'],...Object.entries(modes).filter(([key])=>key!=='sin_modalidad')].map(([key,label])=>({key:'especiales:'+key,label,metric:'importe'}))});
+const saleModes=filterModes;
 const sales=groups.find(g=>g.label==='Ventas');
 sales.options.splice(sales.options.findIndex(o=>o.key==='ventas:ctacte'),0,...saleModes.filter(([id])=>id!=='todas').map(([id,label])=>({key:'ventas:caja_'+id,label:'En caja · '+label,metric:'importe'})),...saleModes.map(([id,label])=>({key:'ventas:ambas_'+id,label:'En turnos + caja · '+label,metric:'importe'})));
 
 function mode(x){const n=String(x||'').replace(/^padel_/,'');return ['indoor','outdoor','tenis_indoor','tenis_outdoor'].includes(n)?n:'sin_modalidad';}
-function matches(actual,wanted){return wanted==='padel'?['indoor','outdoor'].includes(actual):wanted==='tenis'?actual.startsWith('tenis_'):actual===wanted;}
+function matches(actual,wanted){return wanted==='todas'||wanted==='todos'?true:wanted==='padel'?['indoor','outdoor'].includes(actual):wanted==='tenis'?actual.startsWith('tenis_'):actual===wanted;}
 function build(data,key,tools,productFilter){tools=tools||root?.PricProductReports;if(!tools)throw Error('No se pudieron preparar los informes.');const [kind,choice]=key.split(':'),occurrences=data.ocurrencias||[],movements=(data.movimientos||[]).filter(x=>!x.anulado),receipts=(data.pagos||[]).filter(x=>!x.anulado),operations=new Map();
  function get(id,date,source={}){const composite=id||'registro:'+date+':'+operations.size;let o=operations.get(composite);if(!o){o={id:composite,fecha:String(date||''),concepto:source.jugador||source.turnoReferencia||source.detalle||source.titulo||'Turno',modalidad:mode(source.modalidad),esClase:!!source.esClase||source.tipo==='clase',esEspecial:source.esEspecial===true||source.tipoEvento==='Especial',turnos:0,horas:0,service:{efectivo:0,transferencia:0,monto:0},goods:{efectivo:0,transferencia:0,monto:0}};operations.set(composite,o);}return o;}
  for(const o of occurrences){const row=get(o.id||o.reservaId+'@'+o.fecha,o.fecha,o);row.turnos=1;row.horas=Number(o.duracion||0)/60;row.concepto=[o.jugador||'Turno',o.hora?o.hora+' hs':'',o.canchaNombre?'Cancha '+o.canchaNombre:('Cancha '+o.cancha)].filter(Boolean).join(' · ');}
@@ -72,11 +73,11 @@ function chartPeriods(result,from,to){
 function records(data,label,tools){
   const group=groups.find(g=>g.label===label),kind=group.options[0].key.split(':')[0];
   let options=group.options;
-  if(['turnos','combinado','profesores'].includes(kind))options=options.filter(o=>['indoor','outdoor','tenis_indoor','tenis_outdoor','sin_modalidad'].includes(o.key.split(':')[1]));
+  if(['turnos','combinado','profesores'].includes(kind))options=[{key:kind+':todas',label:'Todos'}];
   if(kind==='especiales')options=options.filter(o=>o.key==='especiales:todas');
   if(kind==='ventas')options=options.filter(o=>['ventas:turnos','ventas:caja','ventas:ctacte'].includes(o.key));
   if(kind==='compras')options=options.filter(o=>o.key==='compras:total');
-  const rows=options.flatMap(o=>build(data,o.key,tools).rows.map(r=>({...r,categoriaRegistro:o.label,origen:r.modalidad&&r.modalidad!=='sin_modalidad'?modes[r.modalidad]:o.label})));
+  const rows=options.flatMap(o=>build(data,o.key,tools).rows.map(r=>({...r,categoriaRegistro:o.label,origen:['turnos','combinado','profesores'].includes(kind)?modes[mode(r.modalidad)]:(r.modalidad&&r.modalidad!=='sin_modalidad'?modes[r.modalidad]:o.label)})));
   rows.sort((a,b)=>String(a.fecha).localeCompare(String(b.fecha))||String(a.concepto).localeCompare(String(b.concepto)));
   return rows;
 }
