@@ -817,7 +817,7 @@
     .pric-club-location{flex:1;min-width:0;font-size:13px;overflow-wrap:anywhere}
     .pric-club-contact a:focus-visible{outline:2px solid #07152b;outline-offset:3px}
   </style>
-<link rel="stylesheet" href="pric-design.css?v=20261006-publicacion"><script src="media-client.js"></script><script src="reservation-schedule.js?v=20261102-canchas"></script><script src="number-entry.js?v=20261027"></script><style>#reservation-loading{position:fixed;inset:0;z-index:2147480000;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;color:#07152b;font:16px 'Segoe UI',sans-serif}#reservation-loading[hidden]{display:none!important}#reservation-loading img{width:min(280px,70vw);height:auto;clip-path:inset(calc(100% - var(--reserve-progress,5%)) 0 0);transition:clip-path .5s ease}#reservation-loading p{margin:0;color:#52627a}@media(prefers-reduced-motion:reduce){#reservation-loading img{clip-path:none;transition:none}}</style></head>
+<link rel="stylesheet" href="pric-design.css?v=20261006-publicacion"><script src="media-client.js"></script><script src="court-tariffs.js?v=20261121-luces"></script><script src="reservation-schedule.js?v=20261121-tarifas"></script><script src="number-entry.js?v=20261027"></script><style>#reservation-loading{position:fixed;inset:0;z-index:2147480000;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;color:#07152b;font:16px 'Segoe UI',sans-serif}#reservation-loading[hidden]{display:none!important}#reservation-loading img{width:min(280px,70vw);height:auto;clip-path:inset(calc(100% - var(--reserve-progress,5%)) 0 0);transition:clip-path .5s ease}#reservation-loading p{margin:0;color:#52627a}@media(prefers-reduced-motion:reduce){#reservation-loading img{clip-path:none;transition:none}}</style></head>
 <body><div id="reservation-loading" role="status" aria-label="Cargando reservas"><img src="pwa/icon-512.png" alt="PRIC"><p>Cargando</p></div><script src="reservation-loading.js?v=20261102" ></script>
   <div id="mensaje-error">
     <strong>Error:</strong> No se especificó el club en la URL o el club no existe.<br />
@@ -1011,7 +1011,7 @@
     let canchasTenisGlobal = 0;
     let canchasTenisIndoorGlobal = 0;
     let canchasTenisOutdoorGlobal = 0;
-    let horariosPorDiaGlobal = {};let preciosTenisModalidadesGlobal={};
+    let horariosPorDiaGlobal = {};let preciosTenisModalidadesGlobal={};let tarifasModalidadesGlobal={};let horaLucesModalidadesGlobal={};
     let cierresClubGlobal = [];
     let anticipacionMaximaDiasGlobal = 30;
     let senaModalidadesGlobal = {};
@@ -1161,7 +1161,7 @@
       canchasTenisIndoorGlobal = tiene(d,'canchasTenisIndoor') ? Math.max(0,toInt(d.canchasTenisIndoor,0)) : canchasTenisIndoorGlobal;
       canchasTenisOutdoorGlobal = tiene(d,'canchasTenisOutdoor') ? Math.max(0,toInt(d.canchasTenisOutdoor,0)) : (canchasTenisIndoorGlobal===0?canchasTenisGlobal:canchasTenisOutdoorGlobal);
       if(tiene(d,'canchasTenisIndoor')||tiene(d,'canchasTenisOutdoor'))canchasTenisGlobal=canchasTenisIndoorGlobal+canchasTenisOutdoorGlobal;
-      preciosTenisModalidadesGlobal=d.preciosTenisModalidades||{};
+      preciosTenisModalidadesGlobal=d.preciosTenisModalidades||{};tarifasModalidadesGlobal=d.tarifasModalidades||{};horaLucesModalidadesGlobal=d.horaLucesModalidades||{};
       horariosPorDiaGlobal = d.horariosPorDia && typeof d.horariosPorDia==='object' ? d.horariosPorDia : horariosPorDiaGlobal;
       cierresClubGlobal = Array.isArray(d.cierresClub) ? d.cierresClub : cierresClubGlobal;
       anticipacionMaximaDiasGlobal = tiene(d,'anticipacionMaximaDias') ? Math.max(0,Math.min(730,toInt(d.anticipacionMaximaDias,30))) : anticipacionMaximaDiasGlobal;
@@ -1363,7 +1363,7 @@
       const duracionMinutos = Math.max(1, toInt(duracion, 90));
       const inicioMinutos = window.aMinutos(horaInicio || '00:00');
       const lucesMinutos = window.aMinutos(
-        horaLucesConfiguradaValida() ? horaLucesGlobal : '18:00'
+        (typeof horaLucesModalidadesGlobal!=='undefined'&&horaLucesModalidadesGlobal[modalidad])||(horaLucesConfiguradaValida() ? horaLucesGlobal : '18:00')
       );
       const finMinutos = inicioMinutos + duracionMinutos;
 
@@ -1395,6 +1395,7 @@
 
     function calcularPagoSena(modalidad, duracion, horaInicio = reservaEnProcesoHora) {
       const desglose = calcularPrecioPorIluminacion(modalidad, horaInicio, duracion);
+      const tariff=window.PricCourtTariffs?.select({tarifasModalidades:typeof tarifasModalidadesGlobal==='undefined'?{}:tarifasModalidadesGlobal},modalidad,typeof fechaSeleccionada==='undefined'?window.PricCourtTariffs.today():fechaSeleccionada);if(tariff){desglose.total=window.PricCourtTariffs.quote(tariff,horaInicio,duracion);desglose.totalSinRedondear=desglose.total;}
       const porcentaje = Math.max(0, Math.min(100, toNum(desglose.cfg.porcentajeSena, 0)));
       const sena = Math.max(0, Math.round(desglose.total * porcentaje / 100));
 
@@ -1405,7 +1406,7 @@
         nombre: desglose.cfg.nombre,
         minutosSinLuz: desglose.minutosSinLuz,
         minutosConLuz: desglose.minutosConLuz,
-        horaLuces: horaLucesConfiguradaValida() ? horaLucesGlobal : '18:00',
+        horaLuces: (typeof horaLucesModalidadesGlobal!=='undefined'&&horaLucesModalidadesGlobal[modalidad])||(horaLucesConfiguradaValida() ? horaLucesGlobal : '18:00'),
         totalSinRedondear: desglose.totalSinRedondear,
         duracionBase: desglose.precios.duracionBase
       };

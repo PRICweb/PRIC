@@ -1,0 +1,8 @@
+(function(){
+ 'use strict';let pending=false;
+ function current(){return document.querySelector?.('#panel-config-club .pric-desktop-selected')||[...(document.querySelectorAll?.('#panel-config-club .pric-subview-active')||[])].at(-1)||null;}function dirty(scope){return !!window.PricConfigDraft?.hasChanges?.(scope);}
+ function confirmLeave(){return new Promise(resolve=>{const dialog=document.createElement('dialog');dialog.className='pric-tariff-date-dialog';dialog.setAttribute('aria-labelledby','pric-unsaved-title');dialog.innerHTML='<h3 id="pric-unsaved-title">Cambios sin guardar</h3><p>Hay cambios en Configuración que todavía no guardaste.</p><div class="pric-tariff-dialog-actions"><button type="button" class="pric-media-button">Volver</button><button type="button" class="btn-modal btn-guardar">Salir</button></div>';const buttons=dialog.querySelectorAll('button');function finish(value){dialog.close();dialog.remove();resolve(value);}buttons[0].onclick=()=>finish(false);buttons[1].onclick=()=>finish(true);dialog.oncancel=e=>{e.preventDefault();finish(false);};document.body.append(dialog);dialog.showModal();buttons[0].focus();});}
+ function allow(view,resume,target){const scope=current();if(window.__vistaPanelClubActual!=='config'||(view==='config'&&!scope&&!target)||(target&&target===scope)||!dirty(scope))return true;if(!pending){pending=true;confirmLeave().then(yes=>{pending=false;if(yes)resume(true);});}return false;}
+ window.PricConfigLeaveGuard={allow,transition:(target,resume)=>allow('config',resume,target||{}),dirty:()=>dirty(current())};
+ window.addEventListener('beforeunload',event=>{if(window.__vistaPanelClubActual==='config'&&dirty()){event.preventDefault();event.returnValue='';}});
+})();

@@ -29,8 +29,8 @@ document.addEventListener('DOMContentLoaded',()=>{
   catch(e){if(request===revision){output.replaceChildren();status.textContent=e.message||'No se pudieron generar los registros.';}}
   finally{if(request===revision)load.disabled=false;}
  };
- checks.addEventListener('change',()=>clear());all.onclick=()=>{const next=selected().length!==api.categories.length;checks.querySelectorAll('input').forEach(n=>n.checked=next);clear();};from.onchange=to.onchange=()=>{cache=null;clear();};
- root.addEventListener('pric-session-ended',()=>{club=null;cache=null;clear();});root.addEventListener('pric-view-change',()=>{if(club&&club!==root.CLUB_DOC_ID_ACTUAL){club=null;cache=null;clear();}});
+ checks.addEventListener('change',()=>clear());all.onclick=()=>{const next=selected().length!==api.categories.length;checks.querySelectorAll('input').forEach(n=>n.checked=next);clear();};from.onchange=to.onchange=()=>{clear();};
+ root.addEventListener('pric-session-ended',()=>{club=null;clear();});root.addEventListener('pric-view-change',()=>{if(club&&club!==root.CLUB_DOC_ID_ACTUAL){club=null;clear();}});
 });
 })(typeof window==='object'?window:null,function(){
 'use strict';
