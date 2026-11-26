@@ -4,7 +4,7 @@
  function mode(v){return ({indoor:'padel_indoor',outdoor:'padel_outdoor',tennis_indoor:'tenis_indoor',tennis_outdoor:'tenis_outdoor',tenis:'tenis_outdoor'})[v]||v;}
  const hm=s=>{const [h,m]=String(s).split(':').map(Number);return h*60+m;};
  const today=(now=Date.now())=>new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Argentina/Buenos_Aires',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(now));
- function legacy(d,m){m=mode(m);const prefix=m==='padel_indoor'?'Indoor':m==='padel_outdoor'?'Outdoor':'Tenis',specific=d.preciosTenisModalidades?.[m],prices={};for(const duration of [60,90,120]){prices[duration]={};for(const light of ['sinLuz','conLuz']){const cap=light[0].toUpperCase()+light.slice(1);prices[duration][light]=Number(specific?.[duration]?.[light]??d['precio'+prefix+duration+cap]??(Number(d['precio'+prefix+cap]??d['precio'+prefix]??0)*duration/30));}}return {activa:false,horaCambio:'17:00',antes:0,despues:0,precios:prices,horaLuces:d.horaLucesModalidades?.[m]||d.horaLuces||'18:00'};}
+ function legacy(d,m){m=mode(m);if(d.modalidadesPersonalizadas?.[m]){const c=d.modalidadesPersonalizadas[m];return {activa:false,horaCambio:'17:00',antes:0,despues:0,precios:c.precios,horaLuces:c.horaLuces};}const prefix=m==='padel_indoor'?'Indoor':m==='padel_outdoor'?'Outdoor':'Tenis',specific=d.preciosTenisModalidades?.[m],prices={};for(const duration of [60,90,120]){prices[duration]={};for(const light of ['sinLuz','conLuz']){const cap=light[0].toUpperCase()+light.slice(1);prices[duration][light]=Number(specific?.[duration]?.[light]??d['precio'+prefix+duration+cap]??(Number(d['precio'+prefix+cap]??d['precio'+prefix]??0)*duration/30));}}return {activa:false,horaCambio:'17:00',antes:0,despues:0,precios:prices,horaLuces:d.horaLucesModalidades?.[m]||d.horaLuces||'18:00'};}
  function stamp(r){const raw=r?.fechaRegistro||r?.creadaEn||r?.creadoEn||r?.createdAt;return typeof raw?.toMillis==='function'?raw.toMillis():raw?.seconds?raw.seconds*1000:typeof raw==='number'?raw:Date.parse(raw)||0;}
  function select(d,m,date,r,now=Date.now()){
   const versions=d.tarifasModalidades?.[mode(m)];if(!Array.isArray(versions)||!versions.length)return null;
@@ -20,7 +20,7 @@
  function schedule(before,after,requests,now=Date.now()){
   const result=JSON.parse(JSON.stringify(before.tarifasModalidades||{}));
   for(const [m,raw]of Object.entries(requests||{})){
-   if(!modes.includes(m)||!raw||typeof raw.activa!=='boolean')throw Error('Tarifa de modalidad inválida.');
+   if((!modes.includes(m)&&!after.modalidadesPersonalizadas?.[m])||!raw||typeof raw.activa!=='boolean')throw Error('Tarifa de modalidad inválida.');
    const desde=raw.desde==='ahora'?today(now):String(raw.desde||'');if(!/^\d{4}-\d{2}-\d{2}$/.test(desde)||!Number.isFinite(Date.parse(desde+'T12:00:00Z'))||new Date(desde+'T12:00:00Z').toISOString().slice(0,10)!==desde||desde<today(now))throw Error('Elegí desde hoy o una fecha futura para los precios.');
    if(!/^([01]\d|2[0-3]):(00|30)$/.test(raw.horaCambio||''))throw Error('Elegí el horario de cambio de tarifa.');
    for(const key of ['antes','despues'])if(typeof raw[key]!=='number'||!Number.isFinite(raw[key])||raw[key]<0||raw[key]>1e9)throw Error('Completá tarifas por hora válidas.');

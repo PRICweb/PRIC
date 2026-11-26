@@ -817,7 +817,7 @@
     .pric-club-location{flex:1;min-width:0;font-size:13px;overflow-wrap:anywhere}
     .pric-club-contact a:focus-visible{outline:2px solid #07152b;outline-offset:3px}
   </style>
-<link rel="stylesheet" href="pric-design.css?v=20261006-publicacion"><script src="media-client.js"></script><script src="court-tariffs.js?v=20261121-luces"></script><script src="reservation-schedule.js?v=20261121-tarifas"></script><script src="number-entry.js?v=20261027"></script><style>#reservation-loading{position:fixed;inset:0;z-index:2147480000;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;color:#07152b;font:16px 'Segoe UI',sans-serif}#reservation-loading[hidden]{display:none!important}#reservation-loading img{width:min(280px,70vw);height:auto;clip-path:inset(calc(100% - var(--reserve-progress,5%)) 0 0);transition:clip-path .5s ease}#reservation-loading p{margin:0;color:#52627a}@media(prefers-reduced-motion:reduce){#reservation-loading img{clip-path:none;transition:none}}</style></head>
+<link rel="stylesheet" href="pric-design.css?v=20261006-publicacion"><script src="media-client.js"></script><script src="custom-modalities.js?v=20261126-publicacion"></script><script src="court-tariffs.js?v=20261121-luces"></script><script src="reservation-schedule.js?v=20261121-tarifas"></script><script src="number-entry.js?v=20261027"></script><style>#reservation-loading{position:fixed;inset:0;z-index:2147480000;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;color:#07152b;font:16px 'Segoe UI',sans-serif}#reservation-loading[hidden]{display:none!important}#reservation-loading img{width:min(280px,70vw);height:auto;clip-path:inset(calc(100% - var(--reserve-progress,5%)) 0 0);transition:clip-path .5s ease}#reservation-loading p{margin:0;color:#52627a}@media(prefers-reduced-motion:reduce){#reservation-loading img{clip-path:none;transition:none}}</style></head>
 <body><div id="reservation-loading" role="status" aria-label="Cargando reservas"><img src="pwa/icon-512.png" alt="PRIC"><p>Cargando</p></div><script src="reservation-loading.js?v=20261102" ></script>
   <div id="mensaje-error">
     <strong>Error:</strong> No se especificó el club en la URL o el club no existe.<br />
@@ -1011,7 +1011,7 @@
     let canchasTenisGlobal = 0;
     let canchasTenisIndoorGlobal = 0;
     let canchasTenisOutdoorGlobal = 0;
-    let horariosPorDiaGlobal = {};let preciosTenisModalidadesGlobal={};let tarifasModalidadesGlobal={};let horaLucesModalidadesGlobal={};
+    let horariosPorDiaGlobal = {};let preciosTenisModalidadesGlobal={};let modalidadesPersonalizadasGlobal={};let tarifasModalidadesGlobal={};let horaLucesModalidadesGlobal={};
     let cierresClubGlobal = [];
     let anticipacionMaximaDiasGlobal = 30;
     let senaModalidadesGlobal = {};
@@ -1161,7 +1161,7 @@
       canchasTenisIndoorGlobal = tiene(d,'canchasTenisIndoor') ? Math.max(0,toInt(d.canchasTenisIndoor,0)) : canchasTenisIndoorGlobal;
       canchasTenisOutdoorGlobal = tiene(d,'canchasTenisOutdoor') ? Math.max(0,toInt(d.canchasTenisOutdoor,0)) : (canchasTenisIndoorGlobal===0?canchasTenisGlobal:canchasTenisOutdoorGlobal);
       if(tiene(d,'canchasTenisIndoor')||tiene(d,'canchasTenisOutdoor'))canchasTenisGlobal=canchasTenisIndoorGlobal+canchasTenisOutdoorGlobal;
-      preciosTenisModalidadesGlobal=d.preciosTenisModalidades||{};tarifasModalidadesGlobal=d.tarifasModalidades||{};horaLucesModalidadesGlobal=d.horaLucesModalidades||{};
+      preciosTenisModalidadesGlobal=d.preciosTenisModalidades||{};modalidadesPersonalizadasGlobal=d.modalidadesPersonalizadas||{};tarifasModalidadesGlobal=d.tarifasModalidades||{};horaLucesModalidadesGlobal=d.horaLucesModalidades||{};
       horariosPorDiaGlobal = d.horariosPorDia && typeof d.horariosPorDia==='object' ? d.horariosPorDia : horariosPorDiaGlobal;
       cierresClubGlobal = Array.isArray(d.cierresClub) ? d.cierresClub : cierresClubGlobal;
       anticipacionMaximaDiasGlobal = tiene(d,'anticipacionMaximaDias') ? Math.max(0,Math.min(730,toInt(d.anticipacionMaximaDias,30))) : anticipacionMaximaDiasGlobal;
@@ -1267,7 +1267,7 @@
       row.hidden=!row.children.length;
     }
 
-    function labelModalidad(valor) {
+    function labelModalidad(valor) {if(modalidadesPersonalizadasGlobal[valor])return modalidadesPersonalizadasGlobal[valor].nombre;
       if (valor === 'padel_indoor' || valor === 'indoor') return 'Pádel Indoor';
       if (valor === 'padel_outdoor' || valor === 'outdoor') return 'Pádel Outdoor';
       if (valor === 'tenis_indoor') return 'Tenis Indoor';
@@ -1275,7 +1275,7 @@
       return 'Modalidad';
     }
 
-    function configPagoModalidad(valor) {
+    function configPagoModalidad(valor) {const custom=typeof modalidadesPersonalizadasGlobal!=='undefined'&&modalidadesPersonalizadasGlobal[valor];if(custom)return {modalidad:custom.id,nombre:custom.nombre,precios:custom.precios,porcentajeSena:custom.porcentaje,horaLuces:custom.horaLuces};
       const policy=senaModalidadesGlobal?.[valor];const deposit=fallback=>policy?.modo==='sin_sena'?0:Math.max(0,Math.min(100,toNum(policy?.porcentaje,fallback)));const specific=preciosTenisModalidadesGlobal[valor];if(specific)return {precios:specific,porcentajeSena:deposit(toNum(senaTenisGlobal,0)),nombre:valor==='tenis_indoor'?'Tenis Indoor':'Tenis Outdoor'};
       if(valor==='padel_indoor') valor='indoor';
       if(valor==='padel_outdoor') valor='outdoor';
@@ -1362,7 +1362,7 @@
       const cfg = configPagoModalidad(modalidad);
       const duracionMinutos = Math.max(1, toInt(duracion, 90));
       const inicioMinutos = window.aMinutos(horaInicio || '00:00');
-      const lucesMinutos = window.aMinutos(
+      const lucesMinutos = window.aMinutos(cfg.horaLuces||
         (typeof horaLucesModalidadesGlobal!=='undefined'&&horaLucesModalidadesGlobal[modalidad])||(horaLucesConfiguradaValida() ? horaLucesGlobal : '18:00')
       );
       const finMinutos = inicioMinutos + duracionMinutos;
@@ -1532,7 +1532,7 @@
       const opciones = [];
       if (canchasIndoorGlobal > 0) opciones.push({ value: 'padel_indoor', label: 'Pádel Indoor', detalle: `${canchasIndoorGlobal} cancha${canchasIndoorGlobal === 1 ? '' : 's'}` });
       for(const [value,label,count] of [['padel_outdoor','Pádel Outdoor',canchasOutdoorGlobal],['tenis_indoor','Tenis Indoor',canchasTenisIndoorGlobal],['tenis_outdoor','Tenis Outdoor',canchasTenisOutdoorGlobal]])if(count>0)opciones.push({value,label,detalle:`${count} cancha${count===1?'':'s'}`});
-      return opciones;
+      return opciones.concat(Object.values(typeof modalidadesPersonalizadasGlobal==='undefined'?{}:modalidadesPersonalizadasGlobal).filter(m=>m.canchas>0).map(m=>({value:m.id,label:m.nombre,detalle:m.canchas+' canchas'})));
     }
 
     function actualizarSelectorModalidades() {
@@ -1620,7 +1620,7 @@
       const ti=canchasTenisIndoorGlobal, to=canchasTenisOutdoorGlobal||(!ti?canchasTenisGlobal:0);
       for(let i=0;i<ti;i++,numero++)canchas.push({numero,modalidad:'tenis_indoor',label:nombresTenisIndoorGlobal[i]||`Tenis Indoor ${i+1}`,precio:precioTenisGlobal,duracionBase:duracionTenisGlobal||60});
       for(let i=0;i<to;i++,numero++)canchas.push({numero,modalidad:'tenis_outdoor',label:nombresTenisOutdoorGlobal[i]||`Tenis Outdoor ${i+1}`,precio:precioTenisGlobal,duracionBase:duracionTenisGlobal||60});
-      return canchas;
+      return canchas.concat(window.PricCustomModalities.courts({canchasIndoor:canchasIndoorGlobal,canchasOutdoor:canchasOutdoorGlobal,canchasTenisIndoor:canchasTenisIndoorGlobal,canchasTenisOutdoor:canchasTenisOutdoorGlobal,modalidadesPersonalizadas:modalidadesPersonalizadasGlobal}).map(c=>({numero:Number(c.id),modalidad:c.mode,label:c.name,precio:0,duracionBase:modalidadesPersonalizadasGlobal[c.mode].duracion})));
     }
 
     function reservaAplicaEnFecha(reserva, fecha) {
@@ -1652,7 +1652,7 @@
       });
     }
 
-    function duracionSugeridaParaModalidad(modalidad){const tennis=String(modalidad).startsWith('tenis');const value=tennis?duracionTenisGlobal:modalidad==='padel_outdoor'?duracionOutdoorGlobal:duracionIndoorGlobal;return [60,90,120].includes(value)?value:tennis?60:90;}
+    function duracionSugeridaParaModalidad(modalidad){if(modalidadesPersonalizadasGlobal[modalidad])return modalidadesPersonalizadasGlobal[modalidad].duracion;const tennis=String(modalidad).startsWith('tenis');const value=tennis?duracionTenisGlobal:modalidad==='padel_outdoor'?duracionOutdoorGlobal:duracionIndoorGlobal;return [60,90,120].includes(value)?value:tennis?60:90;}
 
     function resumenModalidades(canchas) {
       const grupos = { indoor: 0, outdoor: 0, tenis: 0 };
